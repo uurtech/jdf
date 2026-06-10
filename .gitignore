@@ -36,3 +36,4 @@ spec/examples/*.pdf
 
 # Claude
 .claude/
+CLAUDE.md
