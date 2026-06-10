@@ -15,52 +15,49 @@ interface ElementRendererProps {
   styles: Record<string, Style>;
   resources?: Resources;
   document?: JdfDocument;
+  onNavigatePage?: (pageIndex: number) => void;
 }
 
 export function ElementRenderer(props: ElementRendererProps) {
   const positionStyle = () => {
     const el = props.element as any;
     const style: Record<string, string> = {};
-
     if (el.position) {
       style["position"] = "absolute";
       if (el.position.x != null) style["left"] = `${unitToPx(el.position.x)}px`;
       if (el.position.y != null) style["top"] = `${unitToPx(el.position.y)}px`;
     }
-
-    if (el.width) {
-      style["width"] = `${unitToPx(el.width)}px`;
-    }
-
+    if (el.width) style["width"] = `${unitToPx(el.width)}px`;
+    if (el.height) style["height"] = `${unitToPx(el.height)}px`;
     return style;
   };
 
   return (
     <div style={positionStyle()}>
-      <Switch fallback={<div class="text-xs text-gray-400">[{(props.element as any).type}]</div>}>
-        <Match when={(props.element as any).type === "text"}>
-          <TextElementView element={props.element as any} styles={props.styles} />
+      <Switch fallback={<div class="text-xs text-gray-400">[unknown: {(props.element as any).type}]</div>}>
+        <Match when={props.element.type === "text"}>
+          <TextElementView element={props.element as any} styles={props.styles} onNavigatePage={props.onNavigatePage} />
         </Match>
-        <Match when={(props.element as any).type === "richtext"}>
-          <RichTextElementView element={props.element as any} styles={props.styles} />
+        <Match when={props.element.type === "richtext"}>
+          <RichTextElementView element={props.element as any} styles={props.styles} onNavigatePage={props.onNavigatePage} />
         </Match>
-        <Match when={(props.element as any).type === "image"}>
+        <Match when={props.element.type === "image"}>
           <ImageElementView element={props.element as any} styles={props.styles} resources={props.resources} />
         </Match>
-        <Match when={(props.element as any).type === "table"}>
+        <Match when={props.element.type === "table"}>
           <TableElementView element={props.element as any} styles={props.styles} />
         </Match>
-        <Match when={(props.element as any).type === "list"}>
+        <Match when={props.element.type === "list"}>
           <ListElementView element={props.element as any} styles={props.styles} />
         </Match>
-        <Match when={(props.element as any).type === "shape"}>
+        <Match when={props.element.type === "shape"}>
           <ShapeElementView element={props.element as any} styles={props.styles} />
         </Match>
-        <Match when={(props.element as any).type === "collapsible"}>
-          <CollapsibleElementView element={props.element as any} styles={props.styles} resources={props.resources} document={props.document} />
+        <Match when={props.element.type === "collapsible"}>
+          <CollapsibleElementView element={props.element as any} styles={props.styles} resources={props.resources} document={props.document} onNavigatePage={props.onNavigatePage} />
         </Match>
-        <Match when={(props.element as any).type === "toc"}>
-          <TocElementView element={props.element as any} styles={props.styles} document={props.document} />
+        <Match when={props.element.type === "toc"}>
+          <TocElementView element={props.element as any} styles={props.styles} document={props.document} onNavigatePage={props.onNavigatePage} />
         </Match>
       </Switch>
     </div>

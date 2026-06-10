@@ -15,8 +15,10 @@ Yaratıcı/maintainer: **Ugur Kazdal** (`@uurtech`). Solo proje, MIT, GitHub: `h
   - Frontend: `src/App.tsx`, `components/viewer/*` (element renderer'ları), `components/shared/*` (Toolbar, Sidebar, SearchPanel, WelcomeScreen).
   - Backend: `src-tauri/src/commands/mod.rs` — Tauri commands: `open_document`, `save_document`, `validate_document`, `search_document`, `import_pdf`, `import_markdown`, `export_pdf`.
   - Rust deps: `tauri 2`, `tauri-plugin-dialog/fs`, `pdf-extract 0.7`, `printpdf 0.7`, `pulldown-cmark 0.12`, `libc` (stderr suppress).
-- `tools/jdf-cli` — şu an sadece `src/commands/import-md.ts` (package.json/entry yok — bkz. eksikler).
-- `spec/` — boş (schema/examples yok — bkz. eksikler).
+- `tools/jdf-cli` (`@jdf/cli`) — `src/index.ts` entry, `validate` (Ajv ile schema kontrolü) + `import` (md→jdf, pdf placeholder).
+- `spec/jdf-schema.json` — JSON Schema (draft-07) tüm element tipleri + style + resources tanımlı.
+- `spec/examples/hello-world.jdf` — heading, richtext, list, table, collapsible, toc, footer template'i içeren demo.
+- `apps/viewer/src/components/markdown/MarkdownViewer.tsx` — `marked` ile native MD render (paged JDF view ile toggle).
 
 ## Format konvansiyonları
 
@@ -35,32 +37,33 @@ Yaratıcı/maintainer: **Ugur Kazdal** (`@uurtech`). Solo proje, MIT, GitHub: `h
 4. `apps/viewer/src-tauri/src/commands/mod.rs` — `extract_text` (search için) + `export_pdf` (PDF render)
 5. `spec/jdf-schema.json` — schema (henüz yok)
 
-## Bilinen eksikler / boşluklar (2026-06-10)
+## Bilinen eksikler / hâlâ todo (2026-06-10 sonrası)
 
-**Spec katmanı:**
-- `spec/jdf-schema.json` **yok**. README "JSON Schema with autocomplete" diye reklam ediyor.
-- `spec/examples/` **boş** (`.DS_Store` hariç). README `hello-world.jdf` örneğinden bahsediyor; CLI komut örnekleri buna referans veriyor.
-
-**CLI (`tools/jdf-cli/`) tamamen kırık:**
-- `package.json` yok.
-- `src/index.ts` (entry) yok.
-- README'deki `npx tsx src/index.ts validate/import` komutları **çalışmaz**.
-- `validate` ve PDF `import` komutları implement edilmemiş; sadece `import-md.ts` var.
-
-**Kod tarafı:**
-- `export_pdf` (`commands/mod.rs:77`) yalnızca `text` + `richtext` basıyor; `image`/`table`/`list`/`shape`/`collapsible`/`toc` PDF export'ta sessizce atlanıyor.
-- `validate_document` çok yüzeysel — sadece `$jdf`/`meta`/`pages` varlığı, element-level şema doğrulaması yok.
-- `import_pdf` text-only (pdf-extract crate'i image/table çıkaramaz; roadmap'te todo).
-
-**Test/CI:**
-- Hiç test yok (Rust unit, TS, e2e).
-- GitHub Actions yok.
-
-**Hijyen:**
-- `.DS_Store` dosyaları repo içinde (`/.DS_Store`, `spec/.DS_Store`, `spec/examples/.DS_Store`) — `.gitignore`'da listeli ama tracked olabilir. Kontrol: `git ls-files | grep DS_Store`.
+**Hâlâ açık olanlar:**
+- PDF import: image/table çıkarımı yok (pdf-extract crate'i sınırlı; roadmap todo).
+- WYSIWYG editor mode — JSON görünür ama UI'dan düzenleme henüz yok.
+- Windows/Linux build & CI/CD — GitHub Actions yok.
+- Test yok (TS/Rust/e2e).
+- VS Code extension, online viewer — roadmap todo.
 - `packages/jdf-core/package.json` minimal (description/repository/license/author yok).
 
-**Roadmap'te todo:** WYSIWYG editor, PDF→image/table extraction, Windows/Linux build, CI/CD, VS Code extension, online viewer.
+**Çözülen (önceki turda kapatıldı):**
+- `spec/jdf-schema.json` ve `spec/examples/hello-world.jdf` ✅
+- CLI'ın `package.json`/entry/validate/import komutları ✅
+- Renderer ↔ types uyuşmazlıkları (heading, list ordered, richtext bold/italic/link, table headers/borders/altRow, image src+resource+fit, header/footer template, shape stroke object) ✅
+- `export_pdf` artık list/table/collapsible/shape de basıyor (image/toc placeholder kalıyor) ✅
+- `import_markdown` Rust tarafında: tablo, blockquote, link, image, hr, GFM, strikethrough/tasklist desteği ✅
+- `validate_document` element-level şema kontrolü ve warning ayrımı ✅
+
+**UX düzeltmeleri (önceki turda kapatıldı):**
+- WelcomeScreen: recent files listesi, drag-drop hint, dark/help shortcuts.
+- Sidebar: thumbnail preview (her sayfa içeriğinin renkli mini-haritası), aktif sayfa highlight.
+- SearchPanel: regex'siz multi-match per element, vurgulu before/match/after, keyboard nav.
+- Toolbar: close button (⌘W), modified indicator, file type chip, dark/help butonları, MD↔Paged view toggle.
+- HelpOverlay: `?` ile kısayol panosu (üç sütun: File / View / Navigate).
+- Dark mode: tüm renkler tutarlı (`@custom-variant dark`), markdown body için ayrı kurallar.
+- MarkdownViewer: tek scroll'lu native render, GFM tablo/code/blockquote/task list, dark mode uyumlu.
+- Print CSS: aside ve toolbar gizli, gölgesiz sayfa.
 
 ## Çalışma tercihleri
 

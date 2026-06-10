@@ -14,7 +14,7 @@ export const MM_TO_PX = 3.7795275591;
 export const IN_TO_PX = 96;
 export const PT_TO_PX = 1.3333333333;
 
-export function unitToPx(value: number, unit: string): number {
+export function unitToPx(value: number, unit: string = "mm"): number {
   switch (unit) {
     case "mm": return value * MM_TO_PX;
     case "in": return value * IN_TO_PX;

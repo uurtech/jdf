@@ -8,6 +8,7 @@ interface CollapsibleElementViewProps {
   styles: Record<string, Style>;
   resources?: Resources;
   document?: JdfDocument;
+  onNavigatePage?: (pageIndex: number) => void;
 }
 
 export function CollapsibleElementView(props: CollapsibleElementViewProps) {
@@ -15,21 +16,19 @@ export function CollapsibleElementView(props: CollapsibleElementViewProps) {
   const css = () => resolveStyle(props.element.style, props.styles);
 
   return (
-    <div style={css()} class="border border-gray-200 rounded-lg overflow-hidden">
+    <div style={css()} class="border border-gray-200 rounded-lg overflow-hidden bg-white">
       <button
         class="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
         onClick={() => setExpanded(!expanded())}
+        type="button"
       >
-        <span
-          class="text-xs transition-transform"
-          style={{ transform: expanded() ? "rotate(90deg)" : "rotate(0deg)" }}
-        >
-          &#9654;
+        <span class="text-xs transition-transform inline-block" style={{ transform: expanded() ? "rotate(90deg)" : "rotate(0deg)" }}>
+          ▶
         </span>
-        {props.element.title || "Section"}
+        <span class="flex-1">{props.element.title || "Section"}</span>
       </button>
       <Show when={expanded()}>
-        <div class="px-4 py-3 space-y-2">
+        <div class="px-4 py-3 space-y-2 relative">
           <For each={props.element.elements || []}>
             {(child) => (
               <ElementRenderer
@@ -37,6 +36,7 @@ export function CollapsibleElementView(props: CollapsibleElementViewProps) {
                 styles={props.styles}
                 resources={props.resources}
                 document={props.document}
+                onNavigatePage={props.onNavigatePage}
               />
             )}
           </For>

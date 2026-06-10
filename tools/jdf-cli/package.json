@@ -1,0 +1,21 @@
+{
+  "name": "@jdf/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "jdf": "src/index.ts" },
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@jdf/core": "workspace:*",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.5.0"
+  }
+}

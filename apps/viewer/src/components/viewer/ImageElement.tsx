@@ -1,4 +1,4 @@
-import type { ImageElement, Style, Resources } from "@jdf/core";
+import type { ImageElement, Style, Resources, ImageResource } from "@jdf/core";
 import { resolveStyle } from "./PageRenderer";
 
 interface ImageElementViewProps {
@@ -7,36 +7,48 @@ interface ImageElementViewProps {
   resources?: Resources;
 }
 
+function lookupResource(resources: Resources | undefined, key: string): ImageResource | undefined {
+  if (!resources) return undefined;
+  const direct = (resources as any)[key];
+  if (direct && typeof direct === "object" && "data" in direct) return direct as ImageResource;
+  const inImages = resources.images?.[key];
+  if (inImages) return inImages;
+  return undefined;
+}
+
 export function ImageElementView(props: ImageElementViewProps) {
   const css = () => resolveStyle(props.element.style, props.styles);
 
-  const src = () => {
+  const src = (): string => {
     const el = props.element;
-    // Inline base64
-    if (el.src?.startsWith("data:")) return el.src;
-    // Resource reference
-    if (el.resource && props.resources) {
-      const res = props.resources[el.resource];
+    if (el.src?.startsWith("data:") || el.src?.startsWith("http")) return el.src;
+    if (el.resource) {
+      const res = lookupResource(props.resources, el.resource);
       if (res?.data) {
         const mime = res.mimeType || "image/png";
+        if (res.data.startsWith("data:")) return res.data;
         return `data:${mime};base64,${res.data}`;
       }
       if (res?.path) return res.path;
     }
-    // Direct path or URL
     return el.src || "";
+  };
+
+  const fitClass = () => {
+    switch (props.element.fit) {
+      case "cover": return "object-cover";
+      case "fill": return "object-fill";
+      case "none": return "object-none";
+      default: return "object-contain";
+    }
   };
 
   return (
     <img
       src={src()}
       alt={props.element.alt || ""}
-      style={{
-        ...css(),
-        "max-width": "100%",
-        height: "auto",
-      }}
-      class="rounded"
+      class={`${fitClass()} block`}
+      style={{ ...css(), "max-width": "100%", width: "100%", height: "auto" }}
     />
   );
 }

@@ -1,5 +1,5 @@
 import { For, Show } from "solid-js";
-import type { TableElement, Style } from "@jdf/core";
+import type { TableElement, Style, TableCellValue, TableBorders } from "@jdf/core";
 import { resolveStyle, styleToCss } from "./PageRenderer";
 
 interface TableElementViewProps {
@@ -7,23 +7,78 @@ interface TableElementViewProps {
   styles: Record<string, Style>;
 }
 
+function cellText(c: TableCellValue): string {
+  return typeof c === "string" ? c : c.content;
+}
+
+function cellAttrs(c: TableCellValue) {
+  if (typeof c === "string") return {};
+  return { colspan: c.colspan, rowspan: c.rowspan };
+}
+
 export function TableElementView(props: TableElementViewProps) {
   const css = () => resolveStyle(props.element.style, props.styles);
-  const headerStyle = () => props.element.headerStyle ? styleToCss(typeof props.element.headerStyle === "string" ? (props.styles[props.element.headerStyle] || {}) : props.element.headerStyle) : {};
-  const rowStyle = () => props.element.rowStyle ? styleToCss(typeof props.element.rowStyle === "string" ? (props.styles[props.element.rowStyle] || {}) : props.element.rowStyle) : {};
-  const alternatingColor = () => props.element.alternatingRowColor;
-  const showBorders = () => props.element.borders !== false;
+
+  const headerCss = () => {
+    const s = props.element.headerStyle;
+    if (!s) return {};
+    if (typeof s === "string") return styleToCss(props.styles[s] || {});
+    if (Array.isArray(s)) { let m = {}; for (const k of s) m = { ...m, ...styleToCss(props.styles[k] || {}) }; return m; }
+    return styleToCss(s);
+  };
+
+  const rowCss = () => {
+    const s = props.element.rowStyle;
+    if (!s) return {};
+    if (typeof s === "string") return styleToCss(props.styles[s] || {});
+    if (Array.isArray(s)) { let m = {}; for (const k of s) m = { ...m, ...styleToCss(props.styles[k] || {}) }; return m; }
+    return styleToCss(s);
+  };
+
+  const altRowCss = () => {
+    const s = props.element.alternateRowStyle;
+    if (!s) {
+      const c = props.element.alternatingRowColor;
+      return c ? { "background-color": c } : {};
+    }
+    if (typeof s === "string") return styleToCss(props.styles[s] || {});
+    if (Array.isArray(s)) { let m = {}; for (const k of s) m = { ...m, ...styleToCss(props.styles[k] || {}) }; return m; }
+    return styleToCss(s);
+  };
+
+  const borders = (): TableBorders => {
+    const b = props.element.borders;
+    if (b === false) return { outer: false, inner: false };
+    if (b === true || b === undefined) return { outer: true, inner: true, color: "#e2e8f0", width: 1 };
+    return { outer: true, inner: true, color: "#e2e8f0", width: 1, ...b };
+  };
+
+  const headers = () => props.element.headers ?? props.element.columns?.map((c) => c.header || "").filter((h) => h !== "");
+
+  const colAlign = (i: number) => props.element.columns?.[i]?.align;
 
   return (
     <div style={css()} class="overflow-x-auto">
-      <table class={`w-full text-sm ${showBorders() ? "border-collapse border border-gray-200" : ""}`}>
-        <Show when={props.element.headers}>
+      <table
+        class="w-full border-collapse"
+        style={{
+          "font-size": "14px",
+          ...(borders().outer ? { border: `${borders().width || 1}px solid ${borders().color || "#e2e8f0"}` } : {}),
+        }}
+      >
+        <Show when={headers() && headers()!.length > 0}>
           <thead>
-            <tr style={headerStyle()}>
-              <For each={props.element.headers}>
-                {(header) => (
-                  <th class={`px-3 py-2 text-left font-semibold bg-gray-50 ${showBorders() ? "border border-gray-200" : ""}`}>
-                    {header}
+            <tr style={headerCss()}>
+              <For each={headers()!}>
+                {(h, i) => (
+                  <th
+                    class="px-3 py-2 font-semibold bg-gray-50"
+                    style={{
+                      "text-align": colAlign(i()) || "left",
+                      ...(borders().inner ? { border: `${borders().width || 1}px solid ${borders().color || "#e2e8f0"}` } : {}),
+                    }}
+                  >
+                    {h}
                   </th>
                 )}
               </For>
@@ -35,14 +90,21 @@ export function TableElementView(props: TableElementViewProps) {
             {(row, rowIdx) => (
               <tr
                 style={{
-                  ...rowStyle(),
-                  ...(alternatingColor() && rowIdx() % 2 === 1 ? { "background-color": alternatingColor()! } : {}),
+                  ...rowCss(),
+                  ...(rowIdx() % 2 === 1 ? altRowCss() : {}),
                 }}
               >
                 <For each={row}>
-                  {(cell) => (
-                    <td class={`px-3 py-2 ${showBorders() ? "border border-gray-200" : ""}`}>
-                      {cell}
+                  {(cell, colIdx) => (
+                    <td
+                      class="px-3 py-2 align-top"
+                      style={{
+                        "text-align": colAlign(colIdx()) || "left",
+                        ...(borders().inner ? { border: `${borders().width || 1}px solid ${borders().color || "#e2e8f0"}` } : {}),
+                      }}
+                      {...cellAttrs(cell)}
+                    >
+                      {cellText(cell)}
                     </td>
                   )}
                 </For>
