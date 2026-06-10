@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+target/
+*.dmg
+
+# Tauri generated
+apps/viewer/src-tauri/gen/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+
+# Temp
+*.tmp
+.cache/
+
+# PDF files in examples (too large for git)
+spec/examples/*.pdf
+
+# Claude
+.claude/

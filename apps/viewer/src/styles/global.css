@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Inter";
+  src: local("Inter"), local("Inter-Regular");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: local("JetBrains Mono"), local("JetBrainsMono-Regular");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --page-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.page-shadow {
+  box-shadow: var(--page-shadow);
+}
+
+.jdf-page {
+  -webkit-font-smoothing: subpixel-antialiased;
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+.jdf-page p, .jdf-page span, .jdf-page td, .jdf-page th, .jdf-page li {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.jdf-page table { border-spacing: 0; }
+
+/* Dark mode */
+.dark header { background: #1e293b; border-color: #334155; }
+.dark header span, .dark header button { color: #e2e8f0; }
+.dark .bg-gray-50 { background: #0f172a !important; }
+.dark .border-gray-200 { border-color: #334155 !important; }
+.dark .text-gray-500 { color: #94a3b8; }
+.dark .text-gray-400 { color: #64748b; }
+
+@media print {
+  header, [class*="sidebar"], [class*="search"] { display: none !important; }
+  body { background: white !important; }
+  .page-shadow { box-shadow: none !important; margin: 0 !important; }
+  .jdf-page { page-break-after: always; }
+}
+
+.scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-spin { animation: spin 1s linear infinite; }

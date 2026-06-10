@@ -1,0 +1,12 @@
+{
+  "name": "jdf",
+  "version": "0.1.0",
+  "private": true,
+  "description": "JDF (JSON Document Format) - A human-readable document format",
+  "scripts": {
+    "dev": "pnpm --filter @jdf/viewer dev",
+    "build": "pnpm --filter @jdf/viewer build",
+    "tauri": "pnpm --filter @jdf/viewer tauri",
+    "typecheck": "pnpm -r typecheck"
+  }
+}
