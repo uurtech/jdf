@@ -17,8 +17,30 @@
     "targets": "all",
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "fileAssociations": [
-      { "ext": ["jdf"], "mimeType": "application/jdf+json", "description": "JDF Document", "role": "Editor" },
-      { "ext": ["md", "markdown"], "mimeType": "text/markdown", "description": "Markdown Document", "role": "Viewer" }
+      {
+        "ext": ["jdf"],
+        "mimeType": "application/jdf+json",
+        "description": "JDF Document",
+        "role": "Editor",
+        "rank": "Owner",
+        "name": "JDF Document"
+      },
+      {
+        "ext": ["md", "markdown"],
+        "mimeType": "text/markdown",
+        "description": "Markdown Document",
+        "role": "Viewer",
+        "rank": "Alternate",
+        "name": "Markdown Document"
+      },
+      {
+        "ext": ["pdf"],
+        "mimeType": "application/pdf",
+        "description": "PDF Document",
+        "role": "Viewer",
+        "rank": "Alternate",
+        "name": "PDF Document"
+      }
     ],
     "macOS": { "minimumSystemVersion": "10.15" }
   }

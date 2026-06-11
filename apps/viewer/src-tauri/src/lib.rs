@@ -1,12 +1,26 @@
 mod commands;
 
-use tauri::{Emitter, Manager};
+use std::sync::Mutex;
+use tauri::{Emitter, Manager, RunEvent};
+
+#[derive(Default)]
+struct PendingFile(Mutex<Option<String>>);
+
+fn try_emit_open(handle: &tauri::AppHandle, path: &str) -> bool {
+    if let Some(window) = handle.get_webview_window("main") {
+        let _ = window.emit("open-file", path.to_string());
+        true
+    } else {
+        false
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .manage(PendingFile::default())
         .invoke_handler(tauri::generate_handler![
             commands::open_document,
             commands::save_document,
@@ -17,21 +31,64 @@ pub fn run() {
             commands::export_pdf,
         ])
         .setup(|app| {
+            // Handle file path passed as the first CLI arg (Finder "Open With…", `open file.jdf`)
             let args: Vec<String> = std::env::args().collect();
             if let Some(file_path) = args.get(1) {
-                if file_path.ends_with(".jdf") || file_path.ends_with(".md") || file_path.ends_with(".pdf") {
+                let lower = file_path.to_lowercase();
+                if lower.ends_with(".jdf") || lower.ends_with(".md") || lower.ends_with(".markdown") || lower.ends_with(".pdf") {
                     let path = file_path.clone();
+                    let pending = app.state::<PendingFile>();
+                    *pending.0.lock().unwrap() = Some(path.clone());
                     let handle = app.handle().clone();
                     tauri::async_runtime::spawn(async move {
-                        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-                        if let Some(window) = handle.get_webview_window("main") {
-                            let _ = window.emit("open-file", path);
+                        // Wait until the webview is ready, then emit
+                        for _ in 0..40 {
+                            tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+                            if try_emit_open(&handle, &path) {
+                                if let Some(p) = handle.try_state::<PendingFile>() {
+                                    *p.0.lock().unwrap() = None;
+                                }
+                                break;
+                            }
                         }
                     });
                 }
             }
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|app_handle, event| {
+        // macOS only: double-clicking a file in Finder fires Opened with the path
+        #[cfg(target_os = "macos")]
+        if let RunEvent::Opened { urls } = &event {
+            for url in urls {
+                let path = match url.to_file_path() {
+                    Ok(p) => p.to_string_lossy().to_string(),
+                    Err(_) => url.to_string(),
+                };
+                let lower = path.to_lowercase();
+                if !(lower.ends_with(".jdf") || lower.ends_with(".md") || lower.ends_with(".markdown") || lower.ends_with(".pdf")) {
+                    continue;
+                }
+                if !try_emit_open(app_handle, &path) {
+                    if let Some(pending) = app_handle.try_state::<PendingFile>() {
+                        *pending.0.lock().unwrap() = Some(path.clone());
+                    }
+                    let path_clone = path.clone();
+                    let handle = app_handle.clone();
+                    tauri::async_runtime::spawn(async move {
+                        for _ in 0..40 {
+                            tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+                            if try_emit_open(&handle, &path_clone) {
+                                break;
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        let _ = (app_handle, event);
+    });
 }
