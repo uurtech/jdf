@@ -354,43 +354,177 @@ fn parse_color(s: &str) -> Option<printpdf::Rgb> {
 // --- Helpers ---
 
 fn text_to_jdf(text: &str, title: &str) -> serde_json::Value {
+    let content_w = 166.0f64;
     let max_y = 247.0f64;
-    let w = 166.0f64;
+    let body_size = 10.5f64;
+    let body_lh = body_size * 0.36;
+
+    let raw_pages: Vec<&str> = if text.contains('\u{000C}') {
+        text.split('\u{000C}').collect()
+    } else {
+        vec![text]
+    };
+
+    let is_bullet_line = |t: &str| -> bool {
+        let trimmed = t.trim_start();
+        trimmed.starts_with('●') || trimmed.starts_with('•') || trimmed.starts_with('○')
+            || trimmed.starts_with("- ") || trimmed.starts_with("* ") || trimmed.starts_with("· ")
+    };
+    let strip_bullet = |t: &str| -> String {
+        t.trim_start().trim_start_matches(|c: char| "●•○·-* ".contains(c)).trim().to_string()
+    };
+    let is_numbered_bullet = |t: &str| -> bool {
+        let trimmed = t.trim_start();
+        let mut chars = trimmed.chars();
+        let mut digits = 0;
+        while let Some(c) = chars.next() {
+            if c.is_ascii_digit() { digits += 1; continue; }
+            if digits > 0 && (c == '.' || c == ')') {
+                if let Some(next) = chars.next() { return next == ' '; }
+                return false;
+            }
+            break;
+        }
+        false
+    };
+    let strip_numbered = |t: &str| -> String {
+        let trimmed = t.trim_start();
+        let mut idx = 0;
+        for (i, c) in trimmed.char_indices() {
+            if c.is_ascii_digit() { idx = i + c.len_utf8(); continue; }
+            if c == '.' || c == ')' { idx = i + c.len_utf8(); break; }
+            break;
+        }
+        trimmed[idx..].trim().to_string()
+    };
+
+    fn classify_heading(line: &str) -> Option<u8> {
+        let t = line.trim();
+        if t.is_empty() || t.len() > 90 { return None; }
+        if t.ends_with('.') || t.ends_with(',') || t.ends_with(';') || t.ends_with(':') { return None; }
+        let letters: String = t.chars().filter(|c| c.is_alphabetic()).collect();
+        if letters.len() < 2 { return None; }
+        let upper = letters.chars().filter(|c| c.is_uppercase()).count();
+        let ratio = upper as f64 / letters.len() as f64;
+        if ratio > 0.85 && t.len() <= 60 { return Some(1); }
+        if t.split_whitespace().count() <= 8 && t.split_whitespace().all(|w| {
+            w.chars().next().map(|c| c.is_uppercase() || !c.is_alphabetic()).unwrap_or(false)
+        }) {
+            if t.len() <= 60 { return Some(2); }
+        }
+        None
+    }
+
     let mut pages: Vec<serde_json::Value> = Vec::new();
     let mut els: Vec<serde_json::Value> = Vec::new();
     let mut y = 5.0f64;
     let mut pn = 1usize;
-    let mut first = true;
+    let mut first_block = true;
 
-    for block in text.split("\n\n").map(|b| b.trim()).filter(|b| !b.is_empty()) {
-        let is_bullet = block.lines().all(|l| {
-            let t = l.trim();
-            t.starts_with('●') || t.starts_with('•') || t.starts_with('○') || t.starts_with("* ")
-        }) && block.lines().count() >= 2;
-        let is_heading = !is_bullet && block.len() < 80 && !block.contains('.') &&
-            (first || block.chars().filter(|c| c.is_uppercase()).count() as f64 / block.len().max(1) as f64 > 0.4);
-        let h = if is_heading { 10.0 } else if is_bullet { block.lines().count() as f64 * 5.0 + 3.0 } else { (block.len() as f64 / 80.0).ceil() * 4.5 + 3.0 };
+    let push_page = |pages: &mut Vec<serde_json::Value>, els: &mut Vec<serde_json::Value>, y: &mut f64, pn: &mut usize| {
+        if !els.is_empty() {
+            pages.push(serde_json::json!({"id": format!("page-{}", pn), "elements": els.clone()}));
+            els.clear();
+            *y = 5.0;
+            *pn += 1;
+        }
+    };
 
-        if y + h > max_y && !els.is_empty() {
-            pages.push(serde_json::json!({"id": format!("page-{}", pn), "elements": els}));
-            els = Vec::new(); y = 5.0; pn += 1;
+    let estimate_height = |chars: usize| -> f64 {
+        let lines = ((chars as f64) / 78.0).ceil().max(1.0);
+        lines * body_lh + 2.5
+    };
+
+    for raw_page in raw_pages.iter().filter(|p| !p.trim().is_empty()) {
+        let blocks: Vec<&str> = raw_page.split("\n\n").map(|b| b.trim_matches(['\n', '\r', ' '])).filter(|b| !b.is_empty()).collect();
+
+        for block in blocks {
+            let lines: Vec<&str> = block.lines().map(|l| l.trim_end()).filter(|l| !l.is_empty()).collect();
+            if lines.is_empty() { continue; }
+
+            let bullet_count = lines.iter().filter(|l| is_bullet_line(l)).count();
+            let numbered_count = lines.iter().filter(|l| is_numbered_bullet(l)).count();
+            let is_list = bullet_count >= lines.len().saturating_sub(0).max(1) && bullet_count >= 2;
+            let is_numbered_list = !is_list && numbered_count >= 2 && numbered_count >= lines.len() / 2;
+
+            if is_list || is_numbered_list {
+                let items: Vec<serde_json::Value> = lines.iter()
+                    .map(|l| if is_numbered_list { strip_numbered(l) } else { strip_bullet(l) })
+                    .filter(|s| !s.is_empty())
+                    .map(|s| serde_json::json!({"content": s}))
+                    .collect();
+                if items.is_empty() { continue; }
+                let h = items.len() as f64 * body_lh * 1.4 + 4.0;
+                if y + h > max_y { push_page(&mut pages, &mut els, &mut y, &mut pn); }
+                els.push(serde_json::json!({
+                    "type":"list",
+                    "listType": if is_numbered_list { "ordered" } else { "unordered" },
+                    "position": {"x": 0, "y": y},
+                    "width": content_w,
+                    "style": {"fontFamily":"Inter","fontSize": body_size,"lineHeight":1.6,"color":"#334155"},
+                    "items": items
+                }));
+                y += h;
+                first_block = false;
+                continue;
+            }
+
+            // Try heading detection on a single-line block
+            if lines.len() == 1 {
+                if let Some(level) = classify_heading(lines[0]) {
+                    let actual_level = if first_block { 1 } else { level + 1 };
+                    let size = match actual_level { 1 => 22.0, 2 => 16.0, 3 => 13.0, _ => 11.5 };
+                    let h = size * 0.5 + 6.0;
+                    if y + h > max_y { push_page(&mut pages, &mut els, &mut y, &mut pn); }
+                    els.push(serde_json::json!({
+                        "type":"text",
+                        "content": lines[0].trim(),
+                        "heading": actual_level,
+                        "tocEntry": lines[0].trim(),
+                        "tocLevel": actual_level,
+                        "position": {"x": 0, "y": y},
+                        "width": content_w,
+                        "style": {"fontFamily":"Inter","fontSize": size,"fontWeight":"bold","color": if actual_level <= 2 { "#0f172a" } else { "#1e293b" }}
+                    }));
+                    y += h;
+                    first_block = false;
+                    continue;
+                }
+            }
+
+            // Default: paragraph (preserves line breaks within block as soft breaks → join with space)
+            let content = lines.join(" ");
+            let h = estimate_height(content.chars().count());
+            if y + h > max_y { push_page(&mut pages, &mut els, &mut y, &mut pn); }
+            els.push(serde_json::json!({
+                "type":"text",
+                "content": content,
+                "position": {"x": 0, "y": y},
+                "width": content_w,
+                "style": {"fontFamily":"Inter","fontSize": body_size,"lineHeight":1.55,"color":"#334155"}
+            }));
+            y += h;
+            first_block = false;
         }
 
-        if is_bullet {
-            let items: Vec<serde_json::Value> = block.lines().map(|l| l.trim().trim_start_matches(|c:char| "●•○* ".contains(c)).trim())
-                .filter(|l| !l.is_empty()).map(|l| serde_json::json!({"content": l})).collect();
-            els.push(serde_json::json!({"type":"list","listType":"unordered","position":{"x":0,"y":y},"width":w,"style":{"fontFamily":"Inter","fontSize":10,"lineHeight":1.6,"color":"#334155"},"items":items}));
-        } else if is_heading {
-            let sz = if first { 22 } else { 13 };
-            els.push(serde_json::json!({"type":"text","content":block.replace('\n'," "),"position":{"x":0,"y":y},"width":w,"heading":true,"tocEntry":block.replace('\n'," "),"style":{"fontFamily":"Inter","fontSize":sz,"fontWeight":"bold","color": if first {"#0f172a"} else {"#2563eb"}}}));
-        } else {
-            els.push(serde_json::json!({"type":"text","content":block.replace('\n'," "),"position":{"x":0,"y":y},"width":w,"style":{"fontFamily":"Inter","fontSize":10,"lineHeight":1.6,"color":"#334155"}}));
-        }
-        y += h; first = false;
+        // Page boundary from PDF formfeed
+        push_page(&mut pages, &mut els, &mut y, &mut pn);
     }
-    if !els.is_empty() { pages.push(serde_json::json!({"id": format!("page-{}", pn), "elements": els})); }
-    if pages.is_empty() { pages.push(serde_json::json!({"id":"page-1","elements":[{"type":"text","content":"(Empty)","position":{"x":0,"y":20},"width":166,"style":{"fontSize":11,"color":"#94a3b8"}}]})); }
-    serde_json::json!({"$jdf":"1.0.0","meta":{"title":title,"pageSize":"A4","unit":"mm","margins":{"top":25,"right":22,"bottom":25,"left":22}},"pages":pages})
+
+    push_page(&mut pages, &mut els, &mut y, &mut pn);
+    if pages.is_empty() {
+        pages.push(serde_json::json!({"id":"page-1","elements":[{"type":"text","content":"(Empty PDF — no extractable text)","position":{"x":0,"y":20},"width":166,"style":{"fontSize":11,"color":"#94a3b8","fontStyle":"italic"}}]}));
+    }
+    serde_json::json!({
+        "$jdf":"1.0.0",
+        "meta":{"title": title,"pageSize":"A4","unit":"mm","margins":{"top":25,"right":22,"bottom":25,"left":22}},
+        "styles":{
+            "heading1":{"fontFamily":"Inter","fontSize":22,"fontWeight":"bold","color":"#0f172a"},
+            "heading2":{"fontFamily":"Inter","fontSize":16,"fontWeight":"bold","color":"#1e293b"},
+            "body":{"fontFamily":"Inter","fontSize":body_size,"lineHeight":1.6,"color":"#334155"}
+        },
+        "pages": pages
+    })
 }
 
 fn markdown_to_jdf(md: &str, title: &str) -> serde_json::Value {
