@@ -15,58 +15,112 @@ It's JSON. Every consequence below falls out of that:
 
 ## Install
 
-macOS, no extra repo needed:
+macOS — one command:
 
 ```bash
-brew install --cask https://raw.githubusercontent.com/uurtech/jdf/master/Casks/jdf-viewer.rb
+brew install uurtech/jdf/jdf
 ```
 
-That's it — `brew` reads the Cask straight from this repo, downloads the `.dmg` from the GitHub release, and installs `JDF Viewer.app` into `/Applications`.
+Or two commands if you'd rather tap first:
 
-To upgrade later, run the same command again.
+```bash
+brew tap uurtech/jdf
+brew install jdf
+```
 
-Or build from source:
+Either way, `brew` clones the tap, downloads the latest `.dmg` from the GitHub release, and installs `JDF Viewer.app` into `/Applications`.
+
+Upgrade later:
+
+```bash
+brew upgrade --cask jdf
+```
+
+The Cask formula lives in a tiny separate tap repo: [`uurtech/homebrew-jdf/Casks/jdf.rb`](https://github.com/uurtech/homebrew-jdf/blob/main/Casks/jdf.rb). A copy is also kept in this repo at [`Casks/jdf-viewer.rb`](Casks/jdf-viewer.rb) for reference.
+
+Build from source:
 
 ```bash
 git clone https://github.com/uurtech/jdf.git
 cd jdf
 pnpm install
-pnpm tauri build   # produces .app + .dmg in apps/viewer/src-tauri/target/release/bundle/
+pnpm tauri build      # produces .app + .dmg in apps/viewer/src-tauri/target/release/bundle/
 ```
 
 Requires Node 20+, pnpm 9+, Rust stable, Xcode CLT (macOS).
 
-## What it does
+Linux and Windows builds (`.deb`, `.AppImage`, `.rpm`, `.msi`, `.exe`) are produced by the GitHub Actions release workflow on every tag — see the [latest release](https://github.com/uurtech/jdf/releases/latest).
 
-**Render**
+## Open & edit
 
-`text` (with `heading: 1-6`), `richtext` (per-run bold/italic/underline/color/fontSize/link), `image` (`src` URL or `resource` base64; `fit: contain|cover|fill|none`), `table` (headers, rows, borders, alternating rows, column alignment), `list` (ordered, unordered, nested with per-item type override), `shape` (rect, circle, ellipse, line, SVG path), `collapsible`, `toc`.
+**Open**: drag any `.jdf`, `.pdf`, or `.md` onto the welcome screen, double-click in Finder (file associations are registered), or `Cmd+O`.
 
-Page sizes: A4, A3, A5, Letter, Legal, Tabloid, custom. Portrait or landscape, doc-level or per-page. Margins, headers, footers (template strings with `{{pageNumber}} {{totalPages}} {{title}} {{author}}`, or full element trees).
+**Edit a paragraph**: double-click it. The whole paragraph (or heading, list item, table cell, collapsible title, image src/alt) becomes an inline editor. Type. Press `Enter` or click anywhere else — the change saves to disk in ~150 ms.
 
-**Edit**
+**Restructure**: hover any element. A floating toolbar pops up in the top-right corner with **↑ Move up · ↓ Move down · ⧉ Duplicate · × Delete**. No right-click, no menu hunting.
 
-Double-click any element in the viewer — text, heading, list item, table cell, header, collapsible title, image src/alt. Inline editor opens for that element only. `Enter` commits, `Esc` cancels, `Cmd+Enter` for multi-line. Auto-saves to disk after a short debounce.
+**Insert new elements**: the Insert bar at the top of every page lets you append a Text / Rich text / List / Table / Shape / Image / Section / TOC element with a single click.
 
-Or flip to **JSON view** in the toolbar and edit the JSON directly. Both paths land at the same file on disk.
+**Pages**: the sidebar shows a thumbnail preview of every page. Click `+` for a new page. Hover any thumbnail and click the red `×` to delete it.
 
-**Import**
+**Undo / redo**: `⌘Z` / `⌘⇧Z` — 100-step history. Includes every text edit, structural change, and JSON view commit.
 
-- `.md` — opens with native Markdown render (continuous scroll), or toggle to paged JDF view. Full GFM.
-- `.pdf` — full-fidelity import via PDF.js. Every text run keeps its **position** (mm), **font family**, **size**, **weight**, **style**, **color**. Embedded raster images are extracted, base64'd into `resources.images`, and placed at their original position/size. Background rectangles, lines, and stroked paths land as `shape` elements with their fill/stroke colors. Heading levels are inferred from font size. The result opens identical to the PDF and is fully editable.
+**Multiple windows**: `⌘N` or the toolbar "New" button. Compare two documents side-by-side.
 
-**Export**
+**Memory model**:
+- A `.jdf` opens in memory and **auto-saves** to its source file on every commit.
+- A `.pdf` or `.md` is converted to JDF in memory only — the original file is never touched. The toolbar shows `● Unsaved (in memory)` while you edit. If you close the window with unsaved changes, you get a prompt to save it as `.jdf` or discard.
+- The JSON view is a live two-way bind. Edit JSON, blur or `Cmd+S`, and the rendered view follows. Edit visually, the JSON updates as you go.
 
-- `.jdf` save (auto-save while editing, plus `Cmd+S` for "Save As").
-- `.pdf` export — respects page size, orientation, text colors, real TOC. Renders text/richtext/list/table/collapsible/shape. Image embeds are placeholders for now.
+## What it renders
 
-**Search**
+| Element | Capabilities |
+|---|---|
+| `text` | `heading: 1-6`, `align`, `tocEntry`, internal/external `link`, full `style` |
+| `richtext` | per-run `bold`/`italic`/`underline`/`strikethrough`/`color`/`fontSize`/`fontFamily`/`link` |
+| `image` | embedded base64 (`resource`) or referenced (`src` URL/path); `fit: contain\|cover\|fill\|none` |
+| `table` | headers, rows with string or `{content, colspan, rowspan}` cells, alternating rows, configurable inner/outer borders, column alignment, cell-level styles |
+| `list` | ordered / unordered, mixed nested (per-item `listType` overrides parent) |
+| `shape` | `rect`, `circle`, `ellipse`, `line`, SVG `path`; fill, stroke (string or `{color, width}` object), opacity |
+| `collapsible` | expandable section with nested elements |
+| `toc` | auto-generated from headings, hierarchical (`tocLevel` / `heading` level), `depth` filter, click-to-navigate |
 
-`Cmd+F`. In paged JDF view: multi-match results across pages. In Markdown view: line-by-line with live `<mark>` highlights in the rendered output.
+Page sizes: A4, A3, A5, Letter, Legal, Tabloid, custom (`{width, height}` mm). Portrait or landscape, doc-level or per-page. Margins, headers, footers (template strings with `{{pageNumber}} {{totalPages}} {{title}} {{author}}`, or full element trees).
+
+## PDF import: full fidelity
+
+Drag a `.pdf` onto the viewer and you get an editable JDF copy that **looks identical to the original** — no "best effort", no placeholders.
+
+Per text run, the importer extracts:
+- **position** (mm) — via PDF.js `viewport.convertToViewportPoint`, accounting for rotation, CropBox, and MediaBox offset.
+- **font family** — looked up from PDF.js `commonObjs` cache, mapped to `Inter / Times New Roman / JetBrains Mono` based on the original font name.
+- **font size** in points (from the text matrix scale).
+- **bold / italic** — detected from the real font name (`Helvetica-Bold`, `Times-Italic`, etc).
+- **color** — from `setFillRGBColor / setFillGray / setFillCMYKColor` walked over the operator list, snapshotted at each text-show op.
+- **opacity** — from `ca` / `CA` in `setGState`.
+- **invisible text** — text rendering mode 3 (used for OCR layers) is filtered out.
+- **link annotations** — `getAnnotations()` rectangles are matched to text runs and emitted as JDF `link`s.
+
+For graphics:
+- **Vector shapes**: rectangles, lines, and arbitrary paths from `constructPath` are emitted as `shape: rect | line | path` with their fills, strokes, stroke widths, and `opacity`. Cubic and quadratic Bezier curves preserved as SVG `C` segments.
+- **Embedded images**: `paintImageXObject` ops are followed back to `page.objs`, decoded into RGBA via canvas, encoded to base64 PNG, stored in `resources.images`, and placed at their original transform on the page.
+
+The result: PDF heading → JDF heading element with right size, right font, right color, right position. PDF table → individual cell text elements at the right grid coordinates. PDF logo → embedded base64 image at its real placement. Then you double-click any of it to edit.
+
+## PDF export
+
+Round-trip back to `.pdf` via the toolbar (or `Cmd+Shift+E`). Respects:
+- `meta.pageSize` and `pageOrientation` (A4 / A3 / A5 / Letter / Legal / Tabloid / custom; portrait / landscape; doc-level + per-page overrides).
+- `style.color` on every text element via `set_fill_color`.
+- Text, richtext, lists, tables, collapsibles, shapes — all rendered.
+- **Embedded images**: base64 → image crate decoder → printpdf `ImageXObject`. The Markdown / PDF imports' images come back out the other end.
+- TOC — iterated from the document's headings into a real PDF table-of-contents.
+
+## Markdown
+
+`.md` opens with a continuous-scroll, GitHub-style render (`marked`, full GFM: tables, blockquotes, code, links, images, task lists, hr, strikethrough). Toolbar toggle flips to the paged JDF render of the same content. `Cmd+F` highlights matches inline with `<mark>` tags in the live MD output, line-by-line.
 
 ## Format
-
-Every JDF doc has these top-level fields:
 
 ```json
 {
@@ -87,7 +141,7 @@ Every JDF doc has these top-level fields:
 }
 ```
 
-Positions in mm (default), font sizes in pt. A4 content area: 166×247 mm with the default 22/25 mm margins.
+Positions in mm (default), font sizes in pt. A4 content area: 166 × 247 mm with the default 22 / 25 mm margins.
 
 Full schema: [`spec/jdf-schema.json`](spec/jdf-schema.json). Working example: [`spec/examples/hello-world.jdf`](spec/examples/hello-world.jdf).
 
@@ -107,10 +161,12 @@ pnpm start import README.md -o out.jdf
 
 ## Keyboard shortcuts
 
-| | |
+| Shortcut | Action |
 |---|---|
 | `Cmd+O` / `Cmd+W` | Open / close |
+| `Cmd+N` | New window |
 | `Cmd+S` / `Cmd+Shift+E` | Save As `.jdf` / Export PDF |
+| `Cmd+Z` / `Cmd+Shift+Z` | Undo / redo |
 | `Cmd+F` | Search |
 | `Cmd+B` | Sidebar |
 | `Cmd+D` | Dark mode |
@@ -125,37 +181,46 @@ pnpm start import README.md -o out.jdf
 
 ```
 spec/                JSON Schema + examples
-packages/jdf-core/   TypeScript types
+packages/jdf-core/   TypeScript types + utils
 apps/viewer/         Tauri v2 app
-  src/               SolidJS + Tailwind v4 frontend
-  src-tauri/         Rust backend (PDF/MD parse, export, search)
-tools/jdf-cli/       Validate + import CLI
+  src/
+    components/      element renderers, JSON view, MD view, sidebar, toolbar
+    edit/            mutation API + undo/redo history
+    import/          PDF.js → JDF converter
+  src-tauri/         Rust backend (MD parse, PDF export with image embed, search)
+tools/jdf-cli/       Ajv validate + MD→JDF importer
+Casks/               Homebrew cask formula
+.github/workflows/   CI (typecheck, schema validate, cargo check on 3 OSes)
+                     + release (tag → multi-OS bundles)
 ```
 
-Stack: Tauri v2, SolidJS, Tailwind v4, Vite, Rust (`pdf-extract`, `printpdf`, `pulldown-cmark`), Ajv, marked.
+Stack: Tauri v2, SolidJS, Tailwind v4, Vite, Rust (`pdf-extract`, `printpdf`, `pulldown-cmark`, `image`), Ajv, marked, pdfjs-dist.
 
 ## Status
 
-What's there:
+Done:
 - Full element rendering, edit-in-place + auto-save, JSON view, Markdown viewer.
-- PDF/MD import, PDF export with page size/orientation/colors/TOC and **embedded images**.
-- **Structural editing**: insert / delete / move / duplicate elements via context menu (right-click) and the Insert bar; add / delete pages via the sidebar.
-- **Undo / redo** (`⌘Z` / `⌘⇧Z`) — 100-step history.
-- **Multiple windows** (`⌘N` or "New" button) — open documents side-by-side.
-- **Windows / Linux / macOS** builds via GitHub Actions (`.dmg`, `.deb`, `.AppImage`, `.rpm`, `.msi`, `.exe`).
+- PDF import with positions, fonts, colors, opacity, links, vector shapes, embedded images.
+- PDF export with page size, orientation, colors, real TOC, **embedded images**.
+- Structural editing: hover action bar (move / duplicate / delete), Insert bar, page add/delete in sidebar.
+- Undo / redo (100 steps, all mutations).
+- Multiple windows (`⌘N`).
+- macOS / Linux / Windows builds via GitHub Actions release workflow.
 - JSON Schema, CLI validate, CI on all three OSes.
+- Homebrew tap (`uurtech/jdf`).
 
-What's not (yet):
-- PDF table detection (cells come in as separate text elements; geometry-based grouping is on the roadmap).
+Not yet:
+- PDF table detection (cells come in as separate text elements at correct coordinates; geometry-based row/column grouping is on the roadmap).
 - Multi-page overflow on PDF export.
-- VS Code extension.
-- Web viewer.
+- VS Code extension (preview + schema hint).
+- Web-based viewer.
+- Apple notarization (the cask runs `xattr -cr` to clear quarantine, but a notarized build would silence Gatekeeper entirely).
 
-See [`CHANGELOG.md`](CHANGELOG.md) for what shipped.
+See [`CHANGELOG.md`](CHANGELOG.md) for the per-release log.
 
 ## Contributing
 
-[`CONTRIBUTING.md`](CONTRIBUTING.md). Short version: `pnpm typecheck` + `cargo check` must pass.
+[`CONTRIBUTING.md`](CONTRIBUTING.md). Short version: `pnpm typecheck` + `cargo check` must pass before opening a PR.
 
 ## License
 

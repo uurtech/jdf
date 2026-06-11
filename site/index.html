@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JDF — JSON Document Format</title>
+  <meta name="description" content="A document format that's just JSON. Renders like PDF, edits like code, diffs like text. Open source, MIT, made by Ugur Kazdal." />
+  <meta name="theme-color" content="#1d4ed8" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="JDF — JSON Document Format" />
+  <meta property="og:description" content="A document format that's just JSON. Renders like PDF, edits like code, diffs like text." />
+  <meta property="og:url" content="https://uurtech.github.io/jdf/" />
+  <meta property="og:image" content="https://uurtech.github.io/jdf/og.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:creator" content="@uurtech" />
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 1024 1024" width="28" height="28" aria-hidden="true">
+        <defs>
+          <linearGradient id="brand-grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#3b82f6"/>
+            <stop offset="1" stop-color="#1d4ed8"/>
+          </linearGradient>
+        </defs>
+        <rect width="1024" height="1024" rx="225" fill="url(#brand-grad)"/>
+        <text x="512" y="512" font-family="Inter, sans-serif" font-size="380" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text>
+      </svg>
+      <span>JDF</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#why">Why</a>
+      <a href="#features">Features</a>
+      <a href="#format">Format</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">GitHub →</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="logo-large">
+        <svg viewBox="0 0 1024 1024" width="120" height="120" aria-hidden="true">
+          <defs>
+            <linearGradient id="hero-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#3b82f6"/>
+              <stop offset="1" stop-color="#1d4ed8"/>
+            </linearGradient>
+          </defs>
+          <rect width="1024" height="1024" rx="225" fill="url(#hero-grad)"/>
+          <text x="512" y="512" font-family="Inter, sans-serif" font-size="380" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text>
+        </svg>
+      </div>
+      <h1>A document format that's just JSON.</h1>
+      <p class="lead">
+        Renders like PDF. Edits like code. Diffs like text. Open <code>.jdf</code> in any editor — clean, syntax-highlighted source. Open it in JDF Viewer — a beautifully rendered, fully editable page. Edit either side, the other follows.
+      </p>
+
+      <div class="cta">
+        <button class="copy" data-copy="brew install uurtech/jdf/jdf">
+          <code>brew install uurtech/jdf/jdf</code>
+          <span class="copy-hint">click to copy</span>
+        </button>
+        <a class="btn-secondary" href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+            <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.4 7.86 10.92.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.25 3.34.95.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.16 1.18.92-.26 1.91-.39 2.89-.39.98 0 1.97.13 2.89.39 2.2-1.49 3.16-1.18 3.16-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.4-5.25 5.68.41.36.78 1.05.78 2.12v3.14c0 .31.21.66.79.55C20.21 21.4 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/>
+          </svg>
+          View on GitHub
+        </a>
+      </div>
+
+      <p class="install-alt">
+        Or two commands: <code>brew tap uurtech/jdf && brew install jdf</code> · <a href="https://github.com/uurtech/jdf/releases/latest">all platforms</a>
+      </p>
+    </section>
+
+    <section id="why" class="why">
+      <h2>Why JDF</h2>
+      <p class="section-lead">It's JSON. Every consequence below falls out of that.</p>
+
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="why-icon">📂</div>
+          <h3>Every tool already works</h3>
+          <p><code>cat</code>, <code>grep</code>, <code>jq</code>, VS Code, every linter, every diff tool. No plugin, no learning curve.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">🔀</div>
+          <h3><code>git diff</code> is real</h3>
+          <p>Change one heading, the diff is one line. Documents review the same way as code.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">⚡</div>
+          <h3>Generate with one line</h3>
+          <p><code>JSON.stringify(doc)</code>. No PDF library, no font dictionaries, no encoding rules.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">✓</div>
+          <h3>JSON Schema validates</h3>
+          <p>Autocomplete in your editor. CLI validation in CI. Type-safe generation.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">🔍</div>
+          <h3>Search is text search</h3>
+          <p><code>grep "TODO" *.jdf</code> works. <code>jq</code> queries pull every table cell on the page.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">∞</div>
+          <h3>No vendor, no lock-in</h3>
+          <p>Opens the same way today and in 20 years. JSON has no proprietary owner.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="example">
+      <h2>What a JDF file looks like</h2>
+      <div class="example-grid">
+        <div class="code">
+<pre><code><span class="punc">{</span>
+  <span class="key">"$jdf"</span><span class="punc">:</span> <span class="str">"1.0.0"</span><span class="punc">,</span>
+  <span class="key">"meta"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"title"</span><span class="punc">:</span> <span class="str">"Hello"</span><span class="punc">,</span> <span class="key">"pageSize"</span><span class="punc">:</span> <span class="str">"A4"</span> <span class="punc">},</span>
+  <span class="key">"styles"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"h1"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"fontSize"</span><span class="punc">:</span> <span class="num">22</span><span class="punc">,</span> <span class="key">"fontWeight"</span><span class="punc">:</span> <span class="str">"bold"</span> <span class="punc">}</span>
+  <span class="punc">},</span>
+  <span class="key">"pages"</span><span class="punc">:</span> <span class="punc">[{</span>
+    <span class="key">"elements"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Hello, JDF"</span><span class="punc">,</span>
+        <span class="key">"heading"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span> <span class="key">"style"</span><span class="punc">:</span> <span class="str">"h1"</span><span class="punc">,</span>
+        <span class="key">"position"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"x"</span><span class="punc">:</span> <span class="num">0</span><span class="punc">,</span> <span class="key">"y"</span><span class="punc">:</span> <span class="num">5</span> <span class="punc">},</span>
+        <span class="key">"width"</span><span class="punc">:</span> <span class="num">166</span> <span class="punc">},</span>
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"list"</span><span class="punc">,</span> <span class="key">"listType"</span><span class="punc">:</span> <span class="str">"unordered"</span><span class="punc">,</span>
+        <span class="key">"items"</span><span class="punc">:</span> <span class="punc">[</span>
+          <span class="punc">{</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Just JSON"</span> <span class="punc">},</span>
+          <span class="punc">{</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Diffable"</span> <span class="punc">},</span>
+          <span class="punc">{</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Editable anywhere"</span> <span class="punc">}</span>
+        <span class="punc">],</span>
+        <span class="key">"position"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"x"</span><span class="punc">:</span> <span class="num">0</span><span class="punc">,</span> <span class="key">"y"</span><span class="punc">:</span> <span class="num">25</span> <span class="punc">},</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">166</span> <span class="punc">}</span>
+    <span class="punc">]</span>
+  <span class="punc">}]</span>
+<span class="punc">}</span></code></pre>
+        </div>
+        <div class="render-preview">
+          <div class="render-page">
+            <h3 class="render-h1">Hello, JDF</h3>
+            <ul class="render-list">
+              <li>Just JSON</li>
+              <li>Diffable</li>
+              <li>Editable anywhere</li>
+            </ul>
+          </div>
+          <div class="render-arrow">→ rendered</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="features">
+      <h2>Features</h2>
+
+      <div class="features-grid">
+        <article class="feature">
+          <h3>Edit in place</h3>
+          <p>Double-click any paragraph, heading, list item, table cell, image — inline editor opens for that element only. <code>Enter</code> commits. Auto-saves to disk in 150ms.</p>
+        </article>
+
+        <article class="feature">
+          <h3>Restructure on hover</h3>
+          <p>Mouse over any element → floating bar appears with <strong>↑ Move up · ↓ Move down · ⧉ Duplicate · × Delete</strong>. No right-click, no menu hunting.</p>
+        </article>
+
+        <article class="feature">
+          <h3>Insert anything</h3>
+          <p>Insert bar at the top of every page. Click to add: text, rich text, list, table, shape, image, collapsible section, auto-generated TOC.</p>
+        </article>
+
+        <article class="feature">
+          <h3>Live JSON view</h3>
+          <p>Toggle <strong>View ↔ JSON</strong>. Two-way bound. Edit JSON directly with <code>Cmd+S</code> — visual render follows. Edit visually — JSON updates live.</p>
+        </article>
+
+        <article class="feature">
+          <h3>PDF import — full fidelity</h3>
+          <p>Drag a PDF on the viewer. Every text run keeps its <strong>position, font, weight, color, opacity, link</strong>. Embedded images extracted. Vector shapes (rect/line/path) preserved with fills and strokes. Looks identical to the original — and it's editable.</p>
+        </article>
+
+        <article class="feature">
+          <h3>PDF export</h3>
+          <p>Round-trip back to <code>.pdf</code>. Honors page size, orientation, text colors, real TOC, embedded images. Renders text/list/table/collapsible/shape.</p>
+        </article>
+
+        <article class="feature">
+          <h3>Markdown viewer</h3>
+          <p>Open <code>.md</code> for a continuous-scroll, GitHub-style render with full GFM. Toggle to paged JDF view. <code>Cmd+F</code> highlights matches inline.</p>
+        </article>
+
+        <article class="feature">
+          <h3>Undo / redo · multi-window</h3>
+          <p><code>⌘Z</code> · <code>⌘⇧Z</code> — 100-step history covering every text edit, structural change, and JSON commit. <code>⌘N</code> for a new window — compare two documents side-by-side.</p>
+        </article>
+
+        <article class="feature">
+          <h3>JSON Schema + CLI</h3>
+          <p>Draft-07 schema. <code>jdf validate file.jdf</code> reports path-level errors with Ajv. CI on three OSes (macOS, Linux, Windows) on every PR.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="comparison">
+      <h2>PDF vs JDF</h2>
+      <div class="cmp-table">
+        <div class="cmp-row cmp-head">
+          <div></div>
+          <div>PDF</div>
+          <div>JDF</div>
+        </div>
+        <div class="cmp-row"><div>Format</div><div>Binary blob</div><div class="good">Human-readable JSON</div></div>
+        <div class="cmp-row"><div>Open with</div><div>Adobe Reader (~250 MB)</div><div class="good">Any text editor or JDF Viewer (~14 MB)</div></div>
+        <div class="cmp-row"><div>Edit a typo</div><div>Acrobat or Word roundtrip</div><div class="good">Double-click → type → done</div></div>
+        <div class="cmp-row"><div>Auto-save while editing</div><div>—</div><div class="good">✓ debounced, with status indicator</div></div>
+        <div class="cmp-row"><div>Raw view</div><div>—</div><div class="good">Live two-way JSON view</div></div>
+        <div class="cmp-row"><div><code>git diff</code></div><div>Meaningless binary</div><div class="good">Clean, line-level</div></div>
+        <div class="cmp-row"><div>Generate from code</div><div>reportlab, pdfkit, weeks</div><div class="good"><code>JSON.stringify(doc)</code></div></div>
+        <div class="cmp-row"><div>Schema validation</div><div>None</div><div class="good">JSON Schema + Ajv CLI</div></div>
+        <div class="cmp-row"><div>Search programmatically</div><div>Custom binary parsing</div><div class="good"><code>grep</code>, <code>jq</code>, <code>ripgrep</code></div></div>
+        <div class="cmp-row"><div>Vendor lock-in</div><div>Adobe</div><div class="good">None — it's JSON</div></div>
+      </div>
+    </section>
+
+    <section id="format" class="format">
+      <h2>Format</h2>
+      <p class="section-lead">Every JDF document has these top-level fields:</p>
+      <table class="spec-table">
+        <thead><tr><th>Field</th><th>Required</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>$jdf</code></td><td>yes</td><td>Format version (semver)</td></tr>
+          <tr><td><code>meta</code></td><td>yes</td><td>title, author, page size, margins, language</td></tr>
+          <tr><td><code>styles</code></td><td>no</td><td>Reusable named style definitions</td></tr>
+          <tr><td><code>resources</code></td><td>no</td><td>Embedded fonts and base64 images</td></tr>
+          <tr><td><code>header</code> · <code>footer</code></td><td>no</td><td>Repeating header/footer with template vars or full element trees</td></tr>
+          <tr><td><code>pages</code></td><td>yes</td><td>Array of pages, each with its own elements</td></tr>
+        </tbody>
+      </table>
+      <p class="spec-link">
+        Element types: <code>text</code> (with heading 1-6), <code>richtext</code>, <code>image</code>, <code>table</code>, <code>list</code>, <code>shape</code>, <code>collapsible</code>, <code>toc</code>.
+        Full schema: <a href="https://github.com/uurtech/jdf/blob/master/spec/jdf-schema.json">spec/jdf-schema.json</a> ·
+        Working example: <a href="https://github.com/uurtech/jdf/blob/master/spec/examples/hello-world.jdf">hello-world.jdf</a>.
+      </p>
+    </section>
+
+    <section id="install" class="install">
+      <h2>Install</h2>
+      <div class="install-grid">
+        <div class="install-card">
+          <h3>macOS</h3>
+          <pre><code>brew install uurtech/jdf/jdf</code></pre>
+          <p class="install-note">Or two commands: <code>brew tap uurtech/jdf && brew install jdf</code></p>
+        </div>
+        <div class="install-card">
+          <h3>Linux / Windows</h3>
+          <p>Grab a build from the <a href="https://github.com/uurtech/jdf/releases/latest" target="_blank" rel="noopener">latest release</a> — <code>.deb</code>, <code>.AppImage</code>, <code>.rpm</code>, <code>.msi</code>, <code>.exe</code> all built by GitHub Actions on every tag.</p>
+        </div>
+        <div class="install-card">
+          <h3>From source</h3>
+          <pre><code>git clone https://github.com/uurtech/jdf.git
+cd jdf
+pnpm install
+pnpm tauri build</code></pre>
+          <p class="install-note">Requires Node 20+, pnpm 9+, Rust stable.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <div class="brand">
+          <svg viewBox="0 0 1024 1024" width="22" height="22" aria-hidden="true">
+            <defs>
+              <linearGradient id="footer-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#3b82f6"/>
+                <stop offset="1" stop-color="#1d4ed8"/>
+              </linearGradient>
+            </defs>
+            <rect width="1024" height="1024" rx="225" fill="url(#footer-grad)"/>
+            <text x="512" y="512" font-family="Inter, sans-serif" font-size="380" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text>
+          </svg>
+          <span>JDF</span>
+        </div>
+        <p class="footer-tag">A document format that's just JSON.</p>
+      </div>
+
+      <div>
+        <h4>Project</h4>
+        <ul>
+          <li><a href="https://github.com/uurtech/jdf">Source on GitHub</a></li>
+          <li><a href="https://github.com/uurtech/jdf/releases">Releases</a></li>
+          <li><a href="https://github.com/uurtech/jdf/blob/master/spec/jdf-schema.json">JSON Schema</a></li>
+          <li><a href="https://github.com/uurtech/jdf/blob/master/CHANGELOG.md">Changelog</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Author</h4>
+        <ul>
+          <li><a href="https://uurtech.com" target="_blank" rel="noopener">Ugur Kazdal</a></li>
+          <li><a href="https://github.com/uurtech" target="_blank" rel="noopener">@uurtech</a></li>
+          <li>MIT License</li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-copy">© <span id="year"></span> Ugur Kazdal · <a href="https://uurtech.com" target="_blank" rel="noopener">uurtech.com</a></p>
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    document.querySelectorAll("[data-copy]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const text = btn.getAttribute("data-copy");
+        try {
+          await navigator.clipboard.writeText(text);
+          const original = btn.querySelector(".copy-hint");
+          if (original) {
+            const prev = original.textContent;
+            original.textContent = "copied ✓";
+            btn.classList.add("copied");
+            setTimeout(() => {
+              original.textContent = prev;
+              btn.classList.remove("copied");
+            }, 1500);
+          }
+        } catch {}
+      });
+    });
+  </script>
+</body>
+</html>
