@@ -1,8 +1,12 @@
+import { Show } from "solid-js";
 import type { ImageElement, Style, Resources, ImageResource } from "@jdf/core";
 import { resolveStyle } from "./PageRenderer";
+import { Editable } from "../shared/Editable";
+import { useEdit, type ElementPath } from "../../edit/context";
 
 interface ImageElementViewProps {
   element: ImageElement;
+  path: ElementPath;
   styles: Record<string, Style>;
   resources?: Resources;
 }
@@ -17,6 +21,7 @@ function lookupResource(resources: Resources | undefined, key: string): ImageRes
 }
 
 export function ImageElementView(props: ImageElementViewProps) {
+  const edit = useEdit();
   const css = () => resolveStyle(props.element.style, props.styles);
 
   const src = (): string => {
@@ -44,11 +49,20 @@ export function ImageElementView(props: ImageElementViewProps) {
   };
 
   return (
-    <img
-      src={src()}
-      alt={props.element.alt || ""}
-      class={`${fitClass()} block`}
-      style={{ ...css(), "max-width": "100%", width: "100%", height: "auto" }}
-    />
+    <div>
+      <img
+        src={src()}
+        alt={props.element.alt || ""}
+        class={`${fitClass()} block`}
+        style={{ ...css(), "max-width": "100%", width: "100%", height: "auto" }}
+      />
+      <Show when={edit.enabled}>
+        <div class="text-[10px] text-gray-400 mt-1">
+          src: <Editable value={props.element.src || ""} onCommit={(v) => edit.updateField(props.path, "src", v)} placeholder="(empty)" />
+          {" · alt: "}
+          <Editable value={props.element.alt || ""} onCommit={(v) => edit.updateField(props.path, "alt", v)} placeholder="(empty)" />
+        </div>
+      </Show>
+    </div>
   );
 }

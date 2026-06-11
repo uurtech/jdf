@@ -108,26 +108,78 @@ pub fn import_markdown(path: String) -> Result<serde_json::Value, String> {
     Ok(markdown_to_jdf(&content, &title))
 }
 
+fn page_size_mm(name: &str) -> (f32, f32) {
+    match name {
+        "A3" => (297.0, 420.0),
+        "A4" => (210.0, 297.0),
+        "A5" => (148.0, 210.0),
+        "Letter" => (215.9, 279.4),
+        "Legal" => (215.9, 355.6),
+        "Tabloid" => (279.4, 431.8),
+        _ => (210.0, 297.0),
+    }
+}
+
+fn resolve_page_dim(page: &serde_json::Value, document: &serde_json::Value) -> (f32, f32) {
+    let meta_size = document.get("meta").and_then(|m| m.get("pageSize"));
+    let page_size = page.get("pageSize").or(meta_size);
+    let (mut w, mut h) = match page_size {
+        Some(v) if v.is_string() => page_size_mm(v.as_str().unwrap()),
+        Some(v) if v.is_object() => (
+            v.get("width").and_then(|x| x.as_f64()).unwrap_or(210.0) as f32,
+            v.get("height").and_then(|x| x.as_f64()).unwrap_or(297.0) as f32,
+        ),
+        _ => (210.0, 297.0),
+    };
+    let orient = page.get("pageOrientation").and_then(|o| o.as_str())
+        .or_else(|| document.get("meta").and_then(|m| m.get("pageOrientation")).and_then(|o| o.as_str()))
+        .unwrap_or("portrait");
+    if orient == "landscape" { std::mem::swap(&mut w, &mut h); }
+    (w, h)
+}
+
+fn resolve_margins(page: &serde_json::Value, document: &serde_json::Value) -> (f32, f32, f32, f32) {
+    let meta_m = document.get("meta").and_then(|m| m.get("margins"));
+    let page_m = page.get("margins");
+    let pick = |key: &str, default: f32| -> f32 {
+        page_m.and_then(|m| m.get(key)).and_then(|v| v.as_f64())
+            .or_else(|| meta_m.and_then(|m| m.get(key)).and_then(|v| v.as_f64()))
+            .map(|v| v as f32).unwrap_or(default)
+    };
+    (pick("top", 25.0), pick("right", 22.0), pick("bottom", 25.0), pick("left", 22.0))
+}
+
+fn get_color(el: &serde_json::Value, doc: &serde_json::Value) -> Option<printpdf::Rgb> {
+    let style = el.get("style")?;
+    if let Some(c) = style.get("color").and_then(|c| c.as_str()) { return parse_color(c); }
+    if let Some(name) = style.as_str() {
+        if let Some(c) = doc.get("styles").and_then(|s| s.get(name)).and_then(|s| s.get("color")).and_then(|c| c.as_str()) {
+            return parse_color(c);
+        }
+    }
+    None
+}
+
 #[tauri::command]
 pub async fn export_pdf(document: serde_json::Value, path: String) -> Result<(), String> {
     use printpdf::*;
     let title = document.get("meta").and_then(|m| m.get("title")).and_then(|t| t.as_str()).unwrap_or("Document");
     let pages = document.get("pages").and_then(|p| p.as_array()).ok_or("No pages")?;
-    let (doc, first_page, first_layer) = PdfDocument::new(title, Mm(210.0), Mm(297.0), "Layer 1");
+    let first_dim = pages.first().map(|p| resolve_page_dim(p, &document)).unwrap_or((210.0, 297.0));
+    let (doc, first_page, first_layer) = PdfDocument::new(title, Mm(first_dim.0), Mm(first_dim.1), "Layer 1");
     let font = doc.add_builtin_font(BuiltinFont::Helvetica).map_err(|e| format!("{}", e))?;
     let font_bold = doc.add_builtin_font(BuiltinFont::HelveticaBold).map_err(|e| format!("{}", e))?;
     let font_italic = doc.add_builtin_font(BuiltinFont::HelveticaOblique).map_err(|e| format!("{}", e))?;
     let font_mono = doc.add_builtin_font(BuiltinFont::Courier).map_err(|e| format!("{}", e))?;
 
-    let margin_left = 22.0f32;
-    let margin_top = 25.0f32;
-
     for (i, page) in pages.iter().enumerate() {
-        let (cp, cl) = if i == 0 { (first_page.clone(), first_layer.clone()) } else { doc.add_page(Mm(210.0), Mm(297.0), "Layer 1") };
+        let (page_w, page_h) = resolve_page_dim(page, &document);
+        let (m_top, _m_right, _m_bottom, m_left) = resolve_margins(page, &document);
+        let (cp, cl) = if i == 0 { (first_page.clone(), first_layer.clone()) } else { doc.add_page(Mm(page_w), Mm(page_h), "Layer 1") };
         let layer = doc.get_page(cp).get_layer(cl);
         if let Some(elements) = page.get("elements").and_then(|e| e.as_array()) {
             for el in elements {
-                draw_element(&layer, el, &document, &font, &font_bold, &font_italic, &font_mono, margin_left, margin_top);
+                draw_element(&layer, el, &document, &font, &font_bold, &font_italic, &font_mono, m_left, m_top, page_h);
             }
         }
     }
@@ -146,6 +198,7 @@ fn draw_element(
     font_mono: &printpdf::IndirectFontRef,
     margin_left: f32,
     margin_top: f32,
+    page_h: f32,
 ) {
     use printpdf::*;
     let tp = el.get("type").and_then(|t| t.as_str()).unwrap_or("");
@@ -157,7 +210,13 @@ fn draw_element(
     let italic = is_italic(el, document);
     let f = if bold { font_bold } else if italic { font_italic } else { font };
 
-    let to_pdf_y = |y: f32, line: f32| Mm(297.0 - margin_top - y - line * fs * 0.4);
+    let to_pdf_y = |y: f32, line: f32| Mm(page_h - margin_top - y - line * fs * 0.4);
+
+    if let Some(c) = get_color(el, document) {
+        layer.set_fill_color(Color::Rgb(c));
+    } else {
+        layer.set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None)));
+    }
 
     match tp {
         "text" => {
@@ -222,7 +281,7 @@ fn draw_element(
             if el.get("expanded").and_then(|e| e.as_bool()).unwrap_or(false) {
                 if let Some(children) = el.get("elements").and_then(|e| e.as_array()) {
                     for child in children {
-                        draw_element(layer, child, document, font, font_bold, font_italic, font_mono, margin_left, margin_top);
+                        draw_element(layer, child, document, font, font_bold, font_italic, font_mono, margin_left, margin_top, page_h);
                     }
                 }
             }
@@ -233,10 +292,10 @@ fn draw_element(
             if shape == "rect" {
                 let line = printpdf::Line {
                     points: vec![
-                        (printpdf::Point::new(Mm(margin_left + px), Mm(297.0 - margin_top - py)), false),
-                        (printpdf::Point::new(Mm(margin_left + px + width), Mm(297.0 - margin_top - py)), false),
-                        (printpdf::Point::new(Mm(margin_left + px + width), Mm(297.0 - margin_top - py - h)), false),
-                        (printpdf::Point::new(Mm(margin_left + px), Mm(297.0 - margin_top - py - h)), false),
+                        (printpdf::Point::new(Mm(margin_left + px), Mm(page_h - margin_top - py)), false),
+                        (printpdf::Point::new(Mm(margin_left + px + width), Mm(page_h - margin_top - py)), false),
+                        (printpdf::Point::new(Mm(margin_left + px + width), Mm(page_h - margin_top - py - h)), false),
+                        (printpdf::Point::new(Mm(margin_left + px), Mm(page_h - margin_top - py - h)), false),
                     ],
                     is_closed: true,
                 };
@@ -248,10 +307,34 @@ fn draw_element(
                 }
             }
         }
-        "toc" | "image" => {
-            // image: not embedded into PDF (would need image decode); placeholder text
-            let label = if tp == "image" { "[image]" } else { "[Table of Contents]" };
-            layer.use_text(label.to_string(), fs, Mm(margin_left + px), to_pdf_y(py, 0.0), font_italic);
+        "toc" => {
+            if let Some(pages) = document.get("pages").and_then(|p| p.as_array()) {
+                let depth = el.get("depth").and_then(|d| d.as_u64()).unwrap_or(6) as u8;
+                let mut row: f32 = 0.0;
+                for (pi, page) in pages.iter().enumerate() {
+                    if let Some(elements) = page.get("elements").and_then(|e| e.as_array()) {
+                        for ce in elements {
+                            if ce.get("type").and_then(|t| t.as_str()) != Some("text") { continue; }
+                            let level = ce.get("tocLevel").and_then(|l| l.as_u64())
+                                .or_else(|| ce.get("heading").and_then(|h| h.as_u64()))
+                                .unwrap_or(1) as u8;
+                            if level > depth { continue; }
+                            let title = ce.get("tocEntry").and_then(|t| t.as_str())
+                                .or_else(|| if ce.get("heading").is_some() { ce.get("content").and_then(|c| c.as_str()) } else { None });
+                            if let Some(t) = title {
+                                let indent = (level as f32 - 1.0) * 4.0;
+                                layer.use_text(t.to_string(), fs, Mm(margin_left + px + indent), to_pdf_y(py, row), f);
+                                layer.use_text(format!("{}", pi + 1), fs, Mm(margin_left + px + width - 8.0), to_pdf_y(py, row), f);
+                                row += 1.4;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        "image" => {
+            let label = el.get("alt").and_then(|a| a.as_str()).unwrap_or("[image]");
+            layer.use_text(format!("[{}]", label), fs, Mm(margin_left + px), to_pdf_y(py, 0.0), font_italic);
         }
         _ => {}
     }

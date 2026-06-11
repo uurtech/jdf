@@ -1,9 +1,12 @@
 import { For } from "solid-js";
 import type { RichTextElement, Style, RichTextRun, Link } from "@jdf/core";
 import { resolveStyle, styleToCss } from "./PageRenderer";
+import { Editable } from "../shared/Editable";
+import { useEdit, type ElementPath } from "../../edit/context";
 
 interface RichTextElementViewProps {
   element: RichTextElement;
+  path: ElementPath;
   styles: Record<string, Style>;
   onNavigatePage?: (pageIndex: number) => void;
 }
@@ -34,7 +37,32 @@ function linkInfo(link: Link | undefined) {
 }
 
 export function RichTextElementView(props: RichTextElementViewProps) {
+  const edit = useEdit();
   const containerCss = () => resolveStyle(props.element.style, props.styles);
+  const fullText = () => (props.element.runs || []).map((r) => r.text).join("");
+
+  function commitWholeParagraph(next: string) {
+    const runs = props.element.runs || [];
+    if (runs.length === 1) {
+      edit.updateField(props.path, "runs.0.text", next);
+      return;
+    }
+    edit.updateField(props.path, "runs", [{ text: next }]);
+  }
+
+  if (edit.enabled) {
+    const isLong = () => fullText().length > 60 || fullText().includes("\n");
+    return (
+      <Editable
+        as="p"
+        value={fullText()}
+        multiline={isLong()}
+        onCommit={commitWholeParagraph}
+        class="m-0 whitespace-pre-wrap"
+        style={containerCss() as any}
+      />
+    );
+  }
 
   return (
     <p class="m-0" style={containerCss()}>
@@ -42,6 +70,7 @@ export function RichTextElementView(props: RichTextElementViewProps) {
         {(run) => {
           const css = runCss(run, props.styles);
           const link = linkInfo(run.link);
+
           if (link) {
             return (
               <a

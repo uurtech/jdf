@@ -27,14 +27,14 @@ const SECTIONS: { title: string; rows: { keys: string[]; label: string }[] }[] =
     ],
   },
   {
-    title: "Navigate",
+    title: "Edit & Navigate",
     rows: [
+      { keys: ["dbl-click"], label: "Edit element (.jdf only)" },
+      { keys: ["Enter"], label: "Commit edit" },
+      { keys: ["Esc"], label: "Cancel / close" },
       { keys: ["←"], label: "Previous page" },
       { keys: ["→"], label: "Next page" },
-      { keys: ["⌘", "↑"], label: "Go to first" },
-      { keys: ["⌘", "↓"], label: "Go to last" },
       { keys: ["?"], label: "Show this help" },
-      { keys: ["Esc"], label: "Close panels" },
     ],
   },
 ];

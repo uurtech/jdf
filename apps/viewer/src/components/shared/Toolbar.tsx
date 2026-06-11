@@ -1,18 +1,19 @@
 import { Show } from "solid-js";
 import type { JdfDocument } from "@jdf/core";
 
-export type ViewMode = "jdf" | "markdown";
+export type ViewMode = "jdf" | "markdown" | "json";
 
 interface ToolbarProps {
   document: JdfDocument | null;
   fileName?: string;
   fileType?: "jdf" | "md" | "pdf";
   isMarkdown?: boolean;
+  isEditableFile?: boolean;
+  savingState: "idle" | "saving" | "saved" | "error";
   viewMode: ViewMode;
   zoom: number;
   currentPage: number;
   totalPages: number;
-  modified?: boolean;
   darkMode: boolean;
   onZoomIn: () => void;
   onZoomOut: () => void;
@@ -30,6 +31,15 @@ interface ToolbarProps {
 }
 
 export function Toolbar(props: ToolbarProps) {
+  const savingLabel = () => {
+    switch (props.savingState) {
+      case "saving": return { text: "Saving…", color: "text-amber-500" };
+      case "saved": return { text: "✓ Saved", color: "text-green-500" };
+      case "error": return { text: "Save failed", color: "text-red-500" };
+      default: return null;
+    }
+  };
+
   return (
     <header
       class="h-12 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 flex items-center px-3 gap-2 shrink-0 select-none transition-colors"
@@ -44,7 +54,7 @@ export function Toolbar(props: ToolbarProps) {
         </button>
         <Show when={props.document}>
           <button onClick={props.onSaveJdf} class="px-2.5 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="Save as JDF (⌘S)">
-            Save
+            Save As
           </button>
           <button onClick={props.onExportPdf} class="px-2.5 py-1 text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors font-medium" title="Export PDF (⌘⇧E)">
             PDF
@@ -63,7 +73,7 @@ export function Toolbar(props: ToolbarProps) {
             </svg>
           </button>
 
-          <button onClick={props.onClose} class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="Close document (⌘W)">
+          <button onClick={props.onClose} class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="Close (⌘W)">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
               <line x1="2" y1="2" x2="10" y2="10" />
               <line x1="10" y1="2" x2="2" y2="10" />
@@ -75,13 +85,13 @@ export function Toolbar(props: ToolbarProps) {
           <span class="text-xs text-gray-700 dark:text-gray-200 font-medium truncate max-w-44">
             {props.fileName || props.document!.meta.title}
           </span>
-          <Show when={props.modified}>
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-500" title="Unsaved changes" />
-          </Show>
           <Show when={props.fileType && props.fileType !== "jdf"}>
             <span class="text-[9px] uppercase font-bold tracking-wider text-gray-400 dark:text-gray-500 px-1 py-0.5 border border-gray-300 dark:border-slate-600 rounded">
               {props.fileType}
             </span>
+          </Show>
+          <Show when={savingLabel()}>
+            <span class={`text-[10px] font-medium ${savingLabel()!.color}`}>{savingLabel()!.text}</span>
           </Show>
         </div>
 
@@ -103,6 +113,27 @@ export function Toolbar(props: ToolbarProps) {
           </div>
         </Show>
 
+        <Show when={props.isEditableFile}>
+          <div class="h-5 w-px bg-gray-200 dark:bg-slate-700 mx-1" />
+          <div class="inline-flex bg-gray-100 dark:bg-slate-700 rounded p-0.5" style={{ "-webkit-app-region": "no-drag" }}>
+            <button
+              onClick={() => props.onSetViewMode("jdf")}
+              class={`px-2.5 py-1 text-[11px] rounded transition-colors ${props.viewMode === "jdf" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-white shadow-sm font-medium" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"}`}
+              title="Visual document view"
+            >
+              View
+            </button>
+            <button
+              onClick={() => props.onSetViewMode("json")}
+              class={`px-2.5 py-1 text-[11px] rounded transition-colors ${props.viewMode === "json" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-white shadow-sm font-medium" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"}`}
+              title="Raw JSON view"
+            >
+              JSON
+            </button>
+          </div>
+
+        </Show>
+
         <div class="flex-1" />
 
         <button onClick={props.onToggleSearch} class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="Search (⌘F)" style={{ "-webkit-app-region": "no-drag" }}>
@@ -119,7 +150,7 @@ export function Toolbar(props: ToolbarProps) {
               onClick={() => props.onPageChange(Math.max(0, props.currentPage - 1))}
               disabled={props.currentPage === 0}
               class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded disabled:opacity-20 transition-colors"
-              title="Previous page"
+              title="Previous"
             >
               ‹
             </button>
@@ -130,22 +161,23 @@ export function Toolbar(props: ToolbarProps) {
               onClick={() => props.onPageChange(Math.min(props.totalPages - 1, props.currentPage + 1))}
               disabled={props.currentPage >= props.totalPages - 1}
               class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded disabled:opacity-20 transition-colors"
-              title="Next page"
+              title="Next"
             >
               ›
             </button>
           </div>
         </Show>
 
-        <div class="h-5 w-px bg-gray-200 dark:bg-slate-700 mx-1" />
-
-        <div class="flex items-center gap-0.5" style={{ "-webkit-app-region": "no-drag" }}>
-          <button onClick={props.onZoomOut} class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded text-sm transition-colors" title="Zoom out (⌘-)">−</button>
-          <button onClick={props.onZoomReset} class="text-[11px] text-gray-500 dark:text-gray-400 w-11 text-center font-mono hover:text-gray-800 dark:hover:text-gray-100 transition-colors" title="Reset zoom (⌘0)">
-            {Math.round(props.zoom * 100)}%
-          </button>
-          <button onClick={props.onZoomIn} class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded text-sm transition-colors" title="Zoom in (⌘+)">+</button>
-        </div>
+        <Show when={props.viewMode !== "json"}>
+          <div class="h-5 w-px bg-gray-200 dark:bg-slate-700 mx-1" />
+          <div class="flex items-center gap-0.5" style={{ "-webkit-app-region": "no-drag" }}>
+            <button onClick={props.onZoomOut} class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded text-sm transition-colors" title="Zoom out (⌘-)">−</button>
+            <button onClick={props.onZoomReset} class="text-[11px] text-gray-500 dark:text-gray-400 w-11 text-center font-mono hover:text-gray-800 dark:hover:text-gray-100 transition-colors" title="Reset (⌘0)">
+              {Math.round(props.zoom * 100)}%
+            </button>
+            <button onClick={props.onZoomIn} class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded text-sm transition-colors" title="Zoom in (⌘+)">+</button>
+          </div>
+        </Show>
       </Show>
 
       <Show when={!props.document}>
@@ -155,7 +187,7 @@ export function Toolbar(props: ToolbarProps) {
       <div class="h-5 w-px bg-gray-200 dark:bg-slate-700 mx-1" />
 
       <div class="flex items-center gap-0.5" style={{ "-webkit-app-region": "no-drag" }}>
-        <button onClick={props.onToggleDark} class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="Toggle dark mode (⌘D)">
+        <button onClick={props.onToggleDark} class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="Dark mode (⌘D)">
           <Show when={props.darkMode} fallback={
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
               <circle cx="7" cy="7" r="2.5" />
@@ -170,7 +202,7 @@ export function Toolbar(props: ToolbarProps) {
             </svg>
           </Show>
         </button>
-        <button onClick={props.onToggleHelp} class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="Keyboard shortcuts (?)">
+        <button onClick={props.onToggleHelp} class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="Shortcuts (?)">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="7" cy="7" r="5.5" />
             <path d="M5.5 5.5a1.5 1.5 0 0 1 3 0c0 1-1.5 1.2-1.5 2.2" />

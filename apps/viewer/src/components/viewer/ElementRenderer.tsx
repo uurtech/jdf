@@ -9,9 +9,11 @@ import { ListElementView } from "./ListElement";
 import { ShapeElementView } from "./ShapeElement";
 import { CollapsibleElementView } from "./CollapsibleElement";
 import { TocElementView } from "./TocElement";
+import type { ElementPath } from "../../edit/context";
 
 interface ElementRendererProps {
   element: Element;
+  path: ElementPath;
   styles: Record<string, Style>;
   resources?: Resources;
   document?: JdfDocument;
@@ -36,25 +38,25 @@ export function ElementRenderer(props: ElementRendererProps) {
     <div style={positionStyle()}>
       <Switch fallback={<div class="text-xs text-gray-400">[unknown: {(props.element as any).type}]</div>}>
         <Match when={props.element.type === "text"}>
-          <TextElementView element={props.element as any} styles={props.styles} onNavigatePage={props.onNavigatePage} />
+          <TextElementView element={props.element as any} styles={props.styles} path={props.path} onNavigatePage={props.onNavigatePage} />
         </Match>
         <Match when={props.element.type === "richtext"}>
-          <RichTextElementView element={props.element as any} styles={props.styles} onNavigatePage={props.onNavigatePage} />
+          <RichTextElementView element={props.element as any} styles={props.styles} path={props.path} onNavigatePage={props.onNavigatePage} />
         </Match>
         <Match when={props.element.type === "image"}>
-          <ImageElementView element={props.element as any} styles={props.styles} resources={props.resources} />
+          <ImageElementView element={props.element as any} styles={props.styles} resources={props.resources} path={props.path} />
         </Match>
         <Match when={props.element.type === "table"}>
-          <TableElementView element={props.element as any} styles={props.styles} />
+          <TableElementView element={props.element as any} styles={props.styles} path={props.path} />
         </Match>
         <Match when={props.element.type === "list"}>
-          <ListElementView element={props.element as any} styles={props.styles} />
+          <ListElementView element={props.element as any} styles={props.styles} path={props.path} />
         </Match>
         <Match when={props.element.type === "shape"}>
           <ShapeElementView element={props.element as any} styles={props.styles} />
         </Match>
         <Match when={props.element.type === "collapsible"}>
-          <CollapsibleElementView element={props.element as any} styles={props.styles} resources={props.resources} document={props.document} onNavigatePage={props.onNavigatePage} />
+          <CollapsibleElementView element={props.element as any} styles={props.styles} resources={props.resources} document={props.document} path={props.path} onNavigatePage={props.onNavigatePage} />
         </Match>
         <Match when={props.element.type === "toc"}>
           <TocElementView element={props.element as any} styles={props.styles} document={props.document} onNavigatePage={props.onNavigatePage} />

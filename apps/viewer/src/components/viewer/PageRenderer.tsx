@@ -63,22 +63,32 @@ function resolveTemplateVars(text: string, pageIndex: number, totalPages: number
     .replace(/\{\{author\}\}/g, document.meta?.author || "");
 }
 
-function HeaderFooterView(props: { hf: HeaderFooter; pageIndex: number; totalPages: number; document: JdfDocument; styles: Record<string, Style>; position: "top" | "bottom" }) {
+function HeaderFooterView(props: { hf: HeaderFooter; pageIndex: number; totalPages: number; document: JdfDocument; styles: Record<string, Style>; onNavigatePage?: (p: number) => void }) {
   const css = () => resolveStyle(props.hf.style, props.styles);
-  if (props.hf.content) {
-    const text = resolveTemplateVars(props.hf.content, props.pageIndex, props.totalPages, props.document);
-    return <div class="text-xs text-gray-500 px-1" style={css()}>{text}</div>;
-  }
-  if (props.hf.elements?.length) {
-    return (
-      <div class="relative" style={{ height: props.hf.height ? `${unitToPx(props.hf.height)}px` : "auto" }}>
-        <For each={props.hf.elements}>
-          {(el) => <ElementRenderer element={el} styles={props.styles} resources={props.document.resources} document={props.document} />}
+  const hasElements = () => Array.isArray(props.hf.elements) && props.hf.elements!.length > 0;
+  const hasContent = () => typeof props.hf.content === "string" && props.hf.content.length > 0;
+
+  return (
+    <div class="text-xs text-gray-500" style={{ ...css(), ...(props.hf.height ? { height: `${unitToPx(props.hf.height)}px` } : {}), position: "relative" }}>
+      <Show when={hasElements()}>
+        <For each={props.hf.elements!}>
+          {(el, i) => (
+            <ElementRenderer
+              element={el}
+              path={["__hf__", props.pageIndex, i()]}
+              styles={props.styles}
+              resources={props.document.resources}
+              document={props.document}
+              onNavigatePage={props.onNavigatePage}
+            />
+          )}
         </For>
-      </div>
-    );
-  }
-  return null;
+      </Show>
+      <Show when={!hasElements() && hasContent()}>
+        <div class="px-1">{resolveTemplateVars(props.hf.content!, props.pageIndex, props.totalPages, props.document)}</div>
+      </Show>
+    </div>
+  );
 }
 
 export function PageRenderer(props: PageRendererProps) {
@@ -86,6 +96,8 @@ export function PageRenderer(props: PageRendererProps) {
   const margins = () => ({ ...DEFAULT_MARGINS, ...(props.document.meta.margins || {}), ...(props.page.margins || {}) });
   const header = () => props.page.header || props.document.header;
   const footer = () => props.page.footer || props.document.footer;
+  const headerHeight = () => header()?.height ?? 0;
+  const footerHeight = () => footer()?.height ?? 0;
 
   return (
     <div
@@ -97,24 +109,32 @@ export function PageRenderer(props: PageRendererProps) {
       }}
     >
       <Show when={header()}>
-        <div class="absolute left-0 right-0 top-0" style={{ "padding-top": `${unitToPx(margins().top! / 2)}px`, "padding-left": `${unitToPx(margins().left!)}px`, "padding-right": `${unitToPx(margins().right!)}px` }}>
-          <HeaderFooterView hf={header()!} pageIndex={props.pageIndex} totalPages={props.totalPages} document={props.document} styles={props.styles} position="top" />
+        <div
+          class="absolute left-0 right-0 top-0"
+          style={{
+            "padding-top": `${unitToPx(margins().top! / 2)}px`,
+            "padding-left": `${unitToPx(margins().left!)}px`,
+            "padding-right": `${unitToPx(margins().right!)}px`,
+          }}
+        >
+          <HeaderFooterView hf={header()!} pageIndex={props.pageIndex} totalPages={props.totalPages} document={props.document} styles={props.styles} onNavigatePage={props.onNavigatePage} />
         </div>
       </Show>
 
       <div
         class="relative"
         style={{
-          "padding-top": `${unitToPx(margins().top!)}px`,
+          "padding-top": `${unitToPx(margins().top! + headerHeight())}px`,
           "padding-right": `${unitToPx(margins().right!)}px`,
-          "padding-bottom": `${unitToPx(margins().bottom!)}px`,
+          "padding-bottom": `${unitToPx(margins().bottom! + footerHeight())}px`,
           "padding-left": `${unitToPx(margins().left!)}px`,
         }}
       >
         <For each={props.page.elements}>
-          {(element) => (
+          {(element, index) => (
             <ElementRenderer
               element={element}
+              path={["pages", props.pageIndex, "elements", index()]}
               styles={props.document.styles || {}}
               resources={props.document.resources}
               document={props.document}
@@ -125,8 +145,15 @@ export function PageRenderer(props: PageRendererProps) {
       </div>
 
       <Show when={footer()}>
-        <div class="absolute left-0 right-0 bottom-0" style={{ "padding-bottom": `${unitToPx(margins().bottom! / 2)}px`, "padding-left": `${unitToPx(margins().left!)}px`, "padding-right": `${unitToPx(margins().right!)}px` }}>
-          <HeaderFooterView hf={footer()!} pageIndex={props.pageIndex} totalPages={props.totalPages} document={props.document} styles={props.styles} position="bottom" />
+        <div
+          class="absolute left-0 right-0 bottom-0"
+          style={{
+            "padding-bottom": `${unitToPx(margins().bottom! / 2)}px`,
+            "padding-left": `${unitToPx(margins().left!)}px`,
+            "padding-right": `${unitToPx(margins().right!)}px`,
+          }}
+        >
+          <HeaderFooterView hf={footer()!} pageIndex={props.pageIndex} totalPages={props.totalPages} document={props.document} styles={props.styles} onNavigatePage={props.onNavigatePage} />
         </div>
       </Show>
     </div>

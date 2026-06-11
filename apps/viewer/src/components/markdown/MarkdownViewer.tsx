@@ -4,14 +4,28 @@ import { marked } from "marked";
 interface MarkdownViewerProps {
   content: string;
   zoom: number;
+  searchQuery?: string;
 }
 
 marked.setOptions({ gfm: true, breaks: false });
 
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function highlightHtml(html: string, query: string): string {
+  if (!query.trim()) return html;
+  const re = new RegExp(`(${escapeRegex(query)})`, "gi");
+  return html.replace(/(>)([^<]+)(<)/g, (_m, open, text, close) => {
+    return open + text.replace(re, '<mark class="md-search-hit">$1</mark>') + close;
+  });
+}
+
 export function MarkdownViewer(props: MarkdownViewerProps) {
   const html = createMemo(() => {
     try {
-      return marked.parse(props.content) as string;
+      const raw = marked.parse(props.content) as string;
+      return props.searchQuery ? highlightHtml(raw, props.searchQuery) : raw;
     } catch (e) {
       return `<pre class="text-red-500 text-sm">Markdown parse error: ${String(e)}</pre>`;
     }

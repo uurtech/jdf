@@ -209,3 +209,42 @@ html, body {
 /* Selection */
 ::selection { background: rgba(37, 99, 235, 0.25); }
 .dark ::selection { background: rgba(96, 165, 250, 0.4); }
+
+/* Editable elements (.jdf only) — minimal hover hint */
+.edit-mode .editable-target {
+  cursor: text;
+  border-radius: 3px;
+  transition: background-color 0.12s ease;
+}
+.edit-mode .editable-target:hover {
+  background-color: rgba(37, 99, 235, 0.06);
+}
+.dark .edit-mode .editable-target:hover {
+  background-color: rgba(96, 165, 250, 0.08);
+}
+
+.editable-active {
+  border: none;
+  outline: 2px solid rgba(37, 99, 235, 0.7);
+  outline-offset: 2px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 3px;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+}
+.dark .editable-active {
+  background: rgba(15, 23, 42, 0.95);
+  outline-color: rgba(96, 165, 250, 0.7);
+}
+.editable-active:focus { outline-width: 2px; }
+
+.md-search-hit {
+  background: rgba(250, 204, 21, 0.5);
+  color: inherit;
+  padding: 1px 2px;
+  border-radius: 2px;
+}
+.dark .md-search-hit {
+  background: rgba(234, 179, 8, 0.45);
+}

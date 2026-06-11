@@ -6,6 +6,7 @@ interface DocumentViewerProps {
   document: JdfDocument;
   zoom: number;
   currentPage: number;
+  editable: boolean;
   onPageChange: (page: number) => void;
 }
 
@@ -41,7 +42,7 @@ export function DocumentViewer(props: DocumentViewerProps) {
   }
 
   return (
-    <div ref={containerRef} class="h-full overflow-auto bg-gray-100 dark:bg-slate-900 transition-colors" onScroll={handleScroll}>
+    <div ref={containerRef} class={`h-full overflow-auto bg-gray-100 dark:bg-slate-900 transition-colors ${props.editable ? "edit-mode" : ""}`} onScroll={handleScroll}>
       <div class="flex flex-col items-center gap-8 py-8" style={{ transform: `scale(${props.zoom})`, "transform-origin": "top center" }}>
         <For each={props.document.pages}>
           {(page, index) => (
