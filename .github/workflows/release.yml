@@ -45,7 +45,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: apps/viewer/src-tauri
+          workspaces: apps/reader/src-tauri
 
       - name: Install Linux deps
         if: matrix.platform == 'ubuntu-22.04'
@@ -59,28 +59,28 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build Tauri bundles
-        run: pnpm --filter @jdf/viewer tauri build --target ${{ matrix.target }}
+        run: pnpm --filter @jdf/reader tauri build --target ${{ matrix.target }}
 
       - name: Upload bundles
         uses: actions/upload-artifact@v4
         with:
-          name: jdf-viewer-${{ matrix.target }}
+          name: jdf-reader-${{ matrix.target }}
           path: |
-            apps/viewer/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
-            apps/viewer/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
-            apps/viewer/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
-            apps/viewer/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm
-            apps/viewer/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
-            apps/viewer/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
 
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            apps/viewer/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
-            apps/viewer/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
-            apps/viewer/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
-            apps/viewer/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm
-            apps/viewer/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
-            apps/viewer/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe

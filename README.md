@@ -1,6 +1,6 @@
 # JDF — JSON Document Format
 
-A document format that's just JSON. Open `.jdf` in any text editor and you see the source. Open it in JDF Viewer and you see a rendered page. Edit either side, the other reflects it.
+A document format that's just JSON. Open `.jdf` in any text editor and you see the source. Open it in JDF Reader and you see a rendered page. Edit either side, the other reflects it.
 
 ## Why JDF
 
@@ -28,7 +28,7 @@ brew tap uurtech/jdf
 brew install jdf
 ```
 
-Either way, `brew` clones the tap, downloads the latest `.dmg` from the GitHub release, and installs `JDF Viewer.app` into `/Applications`.
+Either way, `brew` clones the tap, downloads the latest `.dmg` from the GitHub release, and installs `JDF Reader.app` into `/Applications`.
 
 Upgrade later:
 
@@ -36,7 +36,7 @@ Upgrade later:
 brew upgrade --cask jdf
 ```
 
-The Cask formula lives in a tiny separate tap repo: [`uurtech/homebrew-jdf/Casks/jdf.rb`](https://github.com/uurtech/homebrew-jdf/blob/main/Casks/jdf.rb). A copy is also kept in this repo at [`Casks/jdf-viewer.rb`](Casks/jdf-viewer.rb) for reference.
+The Cask formula lives in a tiny separate tap repo: [`uurtech/homebrew-jdf/Casks/jdf.rb`](https://github.com/uurtech/homebrew-jdf/blob/main/Casks/jdf.rb). A copy is also kept in this repo at [`Casks/jdf-reader.rb`](Casks/jdf-reader.rb) for reference.
 
 Build from source:
 
@@ -44,7 +44,7 @@ Build from source:
 git clone https://github.com/uurtech/jdf.git
 cd jdf
 pnpm install
-pnpm tauri build      # produces .app + .dmg in apps/viewer/src-tauri/target/release/bundle/
+pnpm tauri build      # produces .app + .dmg in apps/reader/src-tauri/target/release/bundle/
 ```
 
 Requires Node 20+, pnpm 9+, Rust stable, Xcode CLT (macOS).
@@ -182,7 +182,7 @@ pnpm start import README.md -o out.jdf
 ```
 spec/                JSON Schema + examples
 packages/jdf-core/   TypeScript types + utils
-apps/viewer/         Tauri v2 app
+apps/reader/         Tauri v2 app
   src/
     components/      element renderers, JSON view, MD view, sidebar, toolbar
     edit/            mutation API + undo/redo history

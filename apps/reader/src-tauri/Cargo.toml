@@ -1,11 +1,11 @@
 [package]
-name = "jdf-viewer"
+name = "jdf-reader"
 version = "0.1.0"
-description = "JDF Document Format Viewer"
+description = "JDF (JSON Document Format) Reader"
 edition = "2021"
 
 [lib]
-name = "jdf_viewer_lib"
+name = "jdf_reader_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

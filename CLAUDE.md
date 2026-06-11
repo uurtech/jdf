@@ -11,14 +11,14 @@ Yaratıcı/maintainer: **Ugur Kazdal** (`@uurtech`). Solo proje, MIT, GitHub: `h
 ## Repo yapısı (pnpm monorepo)
 
 - `packages/jdf-core` (`@jdf/core`) — sadece TS types + page-size/unit util (defaults.ts). Build adımı yok, `src/index.ts` doğrudan export.
-- `apps/viewer` (`@jdf/viewer`) — Tauri v2 + SolidJS + Tailwind v4 desktop app.
+- `apps/reader` (`@jdf/reader`) — Tauri v2 + SolidJS + Tailwind v4 desktop app.
   - Frontend: `src/App.tsx`, `components/viewer/*` (element renderer'ları), `components/shared/*` (Toolbar, Sidebar, SearchPanel, WelcomeScreen).
   - Backend: `src-tauri/src/commands/mod.rs` — Tauri commands: `open_document`, `save_document`, `validate_document`, `search_document`, `import_pdf`, `import_markdown`, `export_pdf`.
   - Rust deps: `tauri 2`, `tauri-plugin-dialog/fs`, `pdf-extract 0.7`, `printpdf 0.7`, `pulldown-cmark 0.12`, `libc` (stderr suppress).
 - `tools/jdf-cli` (`@jdf/cli`) — `src/index.ts` entry, `validate` (Ajv ile schema kontrolü) + `import` (md→jdf, pdf placeholder).
 - `spec/jdf-schema.json` — JSON Schema (draft-07) tüm element tipleri + style + resources tanımlı.
 - `spec/examples/hello-world.jdf` — heading, richtext, list, table, collapsible, toc, footer template'i içeren demo.
-- `apps/viewer/src/components/markdown/MarkdownViewer.tsx` — `marked` ile native MD render (paged JDF view ile toggle).
+- `apps/reader/src/components/markdown/MarkdownViewer.tsx` — `marked` ile native MD render (paged JDF view ile toggle).
 
 ## Format konvansiyonları
 
@@ -32,9 +32,9 @@ Yaratıcı/maintainer: **Ugur Kazdal** (`@uurtech`). Solo proje, MIT, GitHub: `h
 ## Yeni element eklerken güncellenecek yerler
 
 1. `packages/jdf-core/src/types.ts` — TS interface
-2. `apps/viewer/src/components/viewer/ElementRenderer.tsx` — dispatch
-3. `apps/viewer/src/components/viewer/XxxElement.tsx` — UI
-4. `apps/viewer/src-tauri/src/commands/mod.rs` — `extract_text` (search için) + `export_pdf` (PDF render)
+2. `apps/reader/src/components/viewer/ElementRenderer.tsx` — dispatch
+3. `apps/reader/src/components/viewer/XxxElement.tsx` — UI
+4. `apps/reader/src-tauri/src/commands/mod.rs` — `extract_text` (search için) + `export_pdf` (PDF render)
 5. `spec/jdf-schema.json` — schema (henüz yok)
 
 ## Bilinen eksikler / hâlâ todo (2026-06-10 sonrası)

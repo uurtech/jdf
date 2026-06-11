@@ -16,7 +16,7 @@ export async function importMarkdown(inputPath: string, outputPath?: string) {
 
   fs.writeFileSync(output, JSON.stringify(doc, null, 2));
   console.log(`\nDone! Created ${doc.pages.length} page(s)`);
-  console.log(`Open with: open -a "JDF Viewer" "${output}"`);
+  console.log(`Open with: open -a "JDF Reader" "${output}"`);
 }
 
 function convertMarkdownToJdf(md: string, title: string): JdfDocument {

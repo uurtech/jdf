@@ -1,5 +1,5 @@
 {
-  "productName": "JDF Viewer",
+  "productName": "JDF Reader",
   "version": "0.1.0",
   "identifier": "dev.jdf.viewer",
   "build": {
@@ -9,7 +9,7 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [{ "title": "JDF Viewer", "width": 1200, "height": 800, "minWidth": 800, "minHeight": 600 }],
+    "windows": [{ "title": "JDF Reader", "width": 1200, "height": 800, "minWidth": 800, "minHeight": 600 }],
     "security": { "csp": null }
   },
   "bundle": {

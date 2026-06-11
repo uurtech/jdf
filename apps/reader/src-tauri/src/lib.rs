@@ -28,7 +28,7 @@ fn open_in_new_window(app: tauri::AppHandle, path: String) -> Result<(), String>
         &label,
         WebviewUrl::App("index.html".into()),
     )
-    .title("JDF Viewer")
+    .title("JDF Reader")
     .inner_size(1200.0, 800.0)
     .min_inner_size(800.0, 600.0)
     .build()

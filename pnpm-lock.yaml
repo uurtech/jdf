@@ -8,7 +8,7 @@ importers:
 
   .: {}
 
-  apps/viewer:
+  apps/reader:
     dependencies:
       '@jdf/core':
         specifier: workspace:*

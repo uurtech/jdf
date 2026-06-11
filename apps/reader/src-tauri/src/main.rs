@@ -1,5 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    jdf_viewer_lib::run()
+    jdf_reader_lib::run()
 }
