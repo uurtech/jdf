@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Embed JDF on the web — jdfjs</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg" />
+  <link rel="stylesheet" href="../../docs.css" />
+  <link rel="stylesheet" href="https://unpkg.com/jdfjs/dist/jdfjs.css" />
+  <script type="module" src="https://unpkg.com/jdfjs"></script>
+  <script defer src="../../docs.js"></script>
+</head>
+<body>
+  <header class="docs-nav">
+    <a class="brand" href="../../"><svg viewBox="0 0 1024 1024" width="26" height="26"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs><rect width="1024" height="1024" rx="225" fill="url(#g)"/><text x="512" y="512" font-family="Inter,sans-serif" font-size="380" font-weight="900" fill="#fff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text></svg><span>JDF</span><span style="color:var(--muted);font-weight:500">/ docs</span></a>
+    <nav class="nav-links"><a href="../../">Home</a><a href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">GitHub ↗</a></nav>
+  </header>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" data-base="../"></aside>
+
+    <main class="docs-content">
+      <h1>Embed JDF on the web</h1>
+      <p><strong>jdfjs</strong> is a JavaScript library that turns any <code>.jdf</code> URL into a fully styled, scrollable, searchable embed in your web page. Think PDF.js — but the file you point at is plain JSON, so you can also generate it, diff it, and edit it with any tool.</p>
+
+      <div class="callout">
+        <strong>The whole library:</strong> 25 kB minified + gzipped. No framework. No dependencies you have to install. Works in every modern browser.
+      </div>
+
+      <h2>Hello, embed</h2>
+      <p>Drop these three lines into any HTML page and you have a fully working JDF viewer:</p>
+
+<pre><code><span class="punc">&lt;</span><span class="key">link</span> <span class="key">rel</span><span class="punc">=</span><span class="str">"stylesheet"</span> <span class="key">href</span><span class="punc">=</span><span class="str">"https://unpkg.com/jdfjs/dist/jdfjs.css"</span><span class="punc">&gt;</span>
+<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/jdfjs"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
+
+<span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"/whitepaper.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+
+      <p>Result, rendered live below — this is a <strong>real <code>&lt;jdf&gt;</code> tag</strong> in this page, not a screenshot:</p>
+
+      <div class="example-frame">
+        <div class="example-frame-label">Live: &lt;jdf src="../../examples/hello-world.jdf"&gt;</div>
+        <jdf src="../../examples/hello-world.jdf" data-jdf-zoom="0.8"></jdf>
+      </div>
+
+      <h2>Three ways to embed</h2>
+
+      <h3>1. Custom element <code>&lt;jdf-viewer&gt;</code> — recommended</h3>
+      <p>A standards-compliant Web Component. The <code>src</code> attribute is reactive — change it via JS and the embed re-renders.</p>
+<pre><code><span class="punc">&lt;</span><span class="key">jdf-viewer</span> <span class="key">src</span><span class="punc">=</span><span class="str">"/doc.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf-viewer</span><span class="punc">&gt;</span>
+
+<span class="com">&lt;!-- update programmatically --&gt;</span>
+<span class="punc">&lt;</span><span class="key">script</span><span class="punc">&gt;</span>
+  document.querySelector(<span class="str">"jdf-viewer"</span>).<span class="key">setAttribute</span>(<span class="str">"src"</span><span class="punc">,</span> <span class="str">"/other.jdf"</span>)<span class="punc">;</span>
+<span class="punc">&lt;/</span><span class="key">script</span><span class="punc">&gt;</span></code></pre>
+
+      <h3>2. Shorthand tag <code>&lt;jdf&gt;</code></h3>
+      <p>The most concise. Behaves like <code>&lt;img&gt;</code> or <code>&lt;video&gt;</code>:</p>
+<pre><code><span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"/doc.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+      <p>Note: <code>&lt;jdf&gt;</code> is not a registered HTML element, so the browser treats it as a generic inline-block container. Most browsers handle this fine; for stricter validation use <code>&lt;jdf-viewer&gt;</code>.</p>
+
+      <h3>3. Data attribute <code>data-jdf</code> — retrofit into existing layouts</h3>
+      <p>Add <code>data-jdf</code> to any element you already have. Useful for CMS templates or component frameworks where you can't add new tag names.</p>
+<pre><code><span class="punc">&lt;</span><span class="key">div</span> <span class="key">data-jdf</span><span class="punc">=</span><span class="str">"/doc.jdf"</span>
+     <span class="key">data-jdf-zoom</span><span class="punc">=</span><span class="str">"1.2"</span>
+     <span class="key">data-jdf-sidebar</span><span class="punc">=</span><span class="str">"true"</span>
+     <span class="key">style</span><span class="punc">=</span><span class="str">"height: 800px"</span><span class="punc">&gt;&lt;/</span><span class="key">div</span><span class="punc">&gt;</span></code></pre>
+
+      <h2>Configuration</h2>
+      <p>All three forms accept the same options. As HTML attributes, prefix with <code>data-jdf-</code>:</p>
+
+      <table>
+        <thead><tr><th>Attribute</th><th>JS option</th><th>Type</th><th>Default</th></tr></thead>
+        <tbody>
+          <tr><td><code>src</code></td><td><code>(url arg)</code></td><td>string</td><td>required</td></tr>
+          <tr><td><code>data-jdf-zoom</code></td><td><code>zoom</code></td><td>number</td><td><code>1</code></td></tr>
+          <tr><td><code>data-jdf-sidebar</code></td><td><code>sidebar</code></td><td>boolean</td><td><code>false</code></td></tr>
+          <tr><td><code>data-jdf-toolbar</code></td><td><code>toolbar</code></td><td>boolean</td><td><code>true</code></td></tr>
+          <tr><td><code>data-jdf-dark-mode</code></td><td><code>darkMode</code></td><td>"auto" · "light" · "dark"</td><td><code>"auto"</code></td></tr>
+          <tr><td><code>data-jdf-page</code></td><td><code>initialPage</code></td><td>integer (0-based)</td><td><code>0</code></td></tr>
+        </tbody>
+      </table>
+
+      <p>To opt out of auto-init for a specific element, add <code>data-jdf-manual</code>. For SPA pages where you mount content async, call <code>scanForJdfElements()</code> manually:</p>
+<pre><code><span class="key">import</span> { scanForJdfElements } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
+<span class="com">// after your async content lands</span>
+scanForJdfElements()<span class="punc">;</span></code></pre>
+
+      <h2>Programmatic API</h2>
+      <p>For full control, install via npm and use the JS API directly:</p>
+
+<pre><code>npm install jdfjs</code></pre>
+
+<pre><code><span class="key">import</span> { embed<span class="punc">,</span> render<span class="punc">,</span> JDFViewer } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
+<span class="key">import</span> <span class="str">"jdfjs/style.css"</span><span class="punc">;</span>
+
+<span class="com">// 1. Embed by URL</span>
+<span class="key">const</span> v1 <span class="punc">=</span> <span class="key">await</span> embed(<span class="str">"#viewer"</span><span class="punc">,</span> <span class="str">"/doc.jdf"</span><span class="punc">,</span> {
+  zoom<span class="punc">:</span> <span class="num">1.2</span><span class="punc">,</span>
+  sidebar<span class="punc">:</span> <span class="key">true</span><span class="punc">,</span>
+  onPageChange<span class="punc">:</span> (i) <span class="punc">=&gt;</span> console.log(<span class="str">"on page"</span><span class="punc">,</span> i)<span class="punc">,</span>
+})<span class="punc">;</span>
+v1.goToPage(<span class="num">2</span>)<span class="punc">;</span>
+v1.setZoom(<span class="num">1.5</span>)<span class="punc">;</span>
+
+<span class="com">// 2. Render an in-memory document</span>
+<span class="key">const</span> doc <span class="punc">=</span> { $jdf<span class="punc">:</span> <span class="str">"1.0.0"</span><span class="punc">,</span> meta<span class="punc">:</span> { title<span class="punc">:</span> <span class="str">"Hi"</span> }<span class="punc">,</span> pages<span class="punc">:</span> [...] }<span class="punc">;</span>
+<span class="key">const</span> v2 <span class="punc">=</span> render(<span class="str">"#out"</span><span class="punc">,</span> doc)<span class="punc">;</span>
+
+<span class="com">// 3. Class form for advanced wiring</span>
+<span class="key">const</span> el <span class="punc">=</span> document.getElementById(<span class="str">"v"</span>)<span class="punc">;</span>
+<span class="key">const</span> v3 <span class="punc">=</span> <span class="key">new</span> JDFViewer(el<span class="punc">,</span> doc<span class="punc">,</span> { darkMode<span class="punc">:</span> <span class="str">"dark"</span> })<span class="punc">;</span>
+v3.setDocument(otherDoc)<span class="punc">;</span> <span class="com">// hot-swap</span></code></pre>
+
+      <p>See the <a href="api.html">API reference</a> for every method, option, and event. See <a href="examples.html">live examples</a> for sidebar / dark mode / multi-page setups. See <a href="frameworks.html">framework integrations</a> for React, Vue, Svelte snippets.</p>
+
+      <h2>Hosting your <code>.jdf</code> file</h2>
+      <p>Just put it on a URL. JDF files are static JSON — every static host works. The fetch needs to succeed with CORS allowed if cross-origin.</p>
+
+      <ul>
+        <li><strong>GitHub Pages / Cloudflare Pages / Netlify / Vercel:</strong> drop a <code>.jdf</code> in your <code>public/</code> folder, link to it.</li>
+        <li><strong>S3 / R2 / GCS:</strong> upload + set public read + CORS allowed.</li>
+        <li><strong>CDN:</strong> works as expected. <code>.jdf</code> files compress well (~80% gzip) so set <code>Content-Encoding: gzip</code>.</li>
+      </ul>
+
+      <p>Suggested response headers:</p>
+<pre><code>Content-Type: application/json
+Cache-Control: public, max-age=3600
+Access-Control-Allow-Origin: *</code></pre>
+
+      <h2>Browser support</h2>
+      <p>Chrome 88+, Firefox 87+, Safari 14+, Edge 88+. The library uses ES modules, <code>IntersectionObserver</code>, <code>customElements</code>, and the <code>fetch</code> API — all baseline in browsers shipped after early 2021.</p>
+
+      <div class="next-prev">
+        <a href="../getting-started.html" class="prev"><span class="label">← Previous</span><span class="title">Getting started</span></a>
+        <a href="examples.html" class="next"><span class="label">Next →</span><span class="title">Live examples</span></a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

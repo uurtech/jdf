@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting started — JDF</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+  <link rel="stylesheet" href="../docs.css" />
+  <link rel="stylesheet" href="https://unpkg.com/jdfjs/dist/jdfjs.css" />
+  <script type="module" src="https://unpkg.com/jdfjs"></script>
+  <script defer src="../docs.js"></script>
+</head>
+<body>
+  <header class="docs-nav">
+    <a class="brand" href="../"><svg viewBox="0 0 1024 1024" width="26" height="26"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs><rect width="1024" height="1024" rx="225" fill="url(#g)"/><text x="512" y="512" font-family="Inter,sans-serif" font-size="380" font-weight="900" fill="#fff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text></svg><span>JDF</span><span style="color:var(--muted);font-weight:500">/ docs</span></a>
+    <nav class="nav-links"><a href="../">Home</a><a href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">GitHub ↗</a></nav>
+  </header>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" data-base="./"></aside>
+
+    <main class="docs-content">
+      <h1>Getting started</h1>
+      <p>Five minutes from "what is JDF" to "I have a document on my website".</p>
+
+      <h2>1. See it in your browser</h2>
+      <p>Below is a real <code>&lt;jdf&gt;</code> tag pointing at a file. The page you're reading right now uses <code>jdfjs</code> to embed it.</p>
+
+      <div class="example-frame">
+        <div class="example-frame-label">Live: &lt;jdf src="../examples/hello-world.jdf"&gt;</div>
+        <jdf src="../examples/hello-world.jdf" data-jdf-zoom="0.85"></jdf>
+      </div>
+
+      <h2>2. Embed one in your site</h2>
+      <p>Three lines of HTML, no build step:</p>
+<pre><code><span class="punc">&lt;</span><span class="key">link</span> <span class="key">rel</span><span class="punc">=</span><span class="str">"stylesheet"</span> <span class="key">href</span><span class="punc">=</span><span class="str">"https://unpkg.com/jdfjs/dist/jdfjs.css"</span><span class="punc">&gt;</span>
+<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/jdfjs"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
+
+<span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"/whitepaper.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+      <p>That's the whole thing. The script auto-detects every <code>&lt;jdf&gt;</code> tag, fetches the URL, and renders the document in place. <a href="embed/">Full embed docs →</a></p>
+
+      <h2>3. Or install the desktop reader</h2>
+      <p>To read, edit, import PDFs, and export — install the macOS app:</p>
+<pre><code>brew tap uurtech/jdf
+brew install jdf</code></pre>
+      <p>Then double-click any <code>.jdf</code> in Finder, or drop a PDF onto the welcome screen and it converts to JDF on the fly. <a href="desktop.html">Desktop Reader docs →</a></p>
+
+      <h2>4. Or generate JDF from code</h2>
+      <p>A JDF file is just JSON, so generating one is one line:</p>
+<pre><code><span class="key">const</span> doc <span class="punc">=</span> {
+  $jdf<span class="punc">:</span> <span class="str">"1.0.0"</span><span class="punc">,</span>
+  meta<span class="punc">:</span> { title<span class="punc">:</span> <span class="str">"My Report"</span> }<span class="punc">,</span>
+  pages<span class="punc">:</span> [{
+    elements<span class="punc">:</span> [
+      { type<span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> content<span class="punc">:</span> <span class="str">"Hello"</span><span class="punc">,</span> heading<span class="punc">:</span> <span class="num">1</span> }<span class="punc">,</span>
+      { type<span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> content<span class="punc">:</span> <span class="str">"World"</span> }
+    ]
+  }]
+}<span class="punc">;</span>
+
+<span class="key">await</span> fs.writeFile(<span class="str">"out.jdf"</span><span class="punc">,</span> JSON.stringify(doc<span class="punc">,</span> <span class="key">null</span><span class="punc">,</span> <span class="num">2</span>))<span class="punc">;</span></code></pre>
+      <p>No PDF library, no font dictionaries, no encoding rules. <a href="format/">Format reference →</a></p>
+
+      <h2>5. Validate it in CI</h2>
+<pre><code>npx @jdf/cli validate my-doc.jdf</code></pre>
+      <p>Reports path-level errors against the JSON Schema, with warnings vs hard failures separated. <a href="cli.html">CLI docs →</a></p>
+
+      <h2>What's next</h2>
+      <p>Pick a path:</p>
+      <ul>
+        <li><a href="embed/">Embedding JDF on the web with jdfjs</a> — for putting a document on your site.</li>
+        <li><a href="format/">The format spec</a> — for understanding every element and style property.</li>
+        <li><a href="desktop.html">The desktop Reader</a> — for reading and editing on your Mac.</li>
+      </ul>
+
+      <div class="next-prev">
+        <a href="index.html" class="prev"><span class="label">← Back</span><span class="title">Documentation home</span></a>
+        <a href="embed/" class="next"><span class="label">Next →</span><span class="title">Web embed (jdfjs)</span></a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

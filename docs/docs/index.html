@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JDF Documentation</title>
+  <meta name="description" content="JDF documentation — JSON Document Format spec, jdfjs web embed library, desktop Reader, CLI." />
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+  <link rel="stylesheet" href="../docs.css" />
+  <script defer src="../docs.js"></script>
+</head>
+<body>
+  <header class="docs-nav">
+    <a class="brand" href="../">
+      <svg viewBox="0 0 1024 1024" width="26" height="26" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs>
+        <rect width="1024" height="1024" rx="225" fill="url(#g)"/>
+        <text x="512" y="512" font-family="Inter, sans-serif" font-size="380" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text>
+      </svg>
+      <span>JDF</span>
+      <span style="color:var(--muted);font-weight:500">/ docs</span>
+    </a>
+    <nav class="nav-links">
+      <a href="../">Home</a>
+      <a href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+  </header>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" data-base="./"></aside>
+
+    <main class="docs-content">
+      <h1>JDF Documentation</h1>
+      <p>JDF is a document format built on JSON. This documentation covers the file format, the desktop Reader, the <code>jdfjs</code> web embed library, and the CLI.</p>
+
+      <div class="callout">
+        <strong>New here?</strong> Read <a href="getting-started.html">Getting started</a> for a 5-minute tour, or jump straight to <a href="embed/">embedding JDF on the web</a>.
+      </div>
+
+      <h2>What's where</h2>
+
+      <table>
+        <thead><tr><th>Section</th><th>Read this if you want to…</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><a href="getting-started.html"><strong>Getting started</strong></a></td>
+            <td>Install the desktop Reader, open your first <code>.jdf</code> file, edit it, save it.</td>
+          </tr>
+          <tr>
+            <td><a href="embed/"><strong>Web embed (jdfjs)</strong></a></td>
+            <td>Embed a <code>.jdf</code> document in your website with one tag, like PDF.js.</td>
+          </tr>
+          <tr>
+            <td><a href="format/"><strong>Format spec</strong></a></td>
+            <td>Understand the JSON shape of a <code>.jdf</code> file, every element type, every style property.</td>
+          </tr>
+          <tr>
+            <td><a href="desktop.html"><strong>Desktop Reader</strong></a></td>
+            <td>Use the macOS app — open, edit, import PDFs, export, keyboard shortcuts.</td>
+          </tr>
+          <tr>
+            <td><a href="cli.html"><strong>CLI</strong></a></td>
+            <td>Validate documents in CI, convert Markdown to JDF from the command line.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>The 30-second pitch</h2>
+      <p>JDF (<strong>J</strong>SON <strong>D</strong>ocument <strong>F</strong>ormat) is what you get when you redesign PDF for the era of <code>git</code>, <code>jq</code>, and code review. The file is JSON. Every tool already understands JSON. So:</p>
+      <ul>
+        <li><code>git diff</code> on a <code>.jdf</code> shows the actual change.</li>
+        <li><code>JSON.stringify(doc)</code> is your PDF generator.</li>
+        <li><code>grep</code> finds text. <code>jq</code> queries structure.</li>
+        <li>A JSON Schema validates the file in CI.</li>
+        <li>Embedding a document on the web is one HTML tag.</li>
+        <li>Editing is a text editor — or the rendered viewer, both write the same JSON.</li>
+      </ul>
+
+      <h2>Next steps</h2>
+      <div class="next-prev">
+        <a href="../" class="prev">
+          <span class="label">← Back</span>
+          <span class="title">Home</span>
+        </a>
+        <a href="getting-started.html" class="next">
+          <span class="label">Next →</span>
+          <span class="title">Getting started</span>
+        </a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
