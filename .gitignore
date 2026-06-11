@@ -8,7 +8,8 @@ target/
 *.dmg
 
 # Tauri generated
-apps/viewer/src-tauri/gen/
+apps/reader/src-tauri/gen/
+apps/reader/src-tauri/Cargo.lock
 
 # OS files
 .DS_Store
@@ -20,9 +21,12 @@ Thumbs.db
 *.swp
 *.swo
 
-# Environment
+# Environment — never tracked (includes .env.example, intentionally)
 .env
 .env.*
+
+# npm auth file (written by publish script)
+.npmrc
 
 # Logs
 *.log

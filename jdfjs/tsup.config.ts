@@ -3,13 +3,13 @@ import { copyFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: { jdfjs: "src/index.ts" },
   outDir: "dist",
   format: ["esm", "cjs"],
   dts: true,
   sourcemap: true,
   clean: true,
-  minify: false,
+  minify: true,
   splitting: false,
   treeshake: true,
   noExternal: ["@jdf/core"],

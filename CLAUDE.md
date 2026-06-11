@@ -1,72 +1,124 @@
-# JDF — Claude Notes
+# JDF — Claude maintenance rules
 
-Bu dosya repo'ya özgü kalıcı notları tutar. Konuşmalar arası referans için.
+This file is project-specific guidance for Claude (or any maintainer) when working on this repo. Follow the parity rules below or you will silently break the rest of the ecosystem.
 
-## Proje özeti
+## The repo is a 4-arm thing
 
-**JDF (JSON Document Format)** — PDF alternatifi olarak konumlandırılmış, JSON tabanlı human-readable / git-friendly belge formatı. Manifest: PDF binary ve opaque; JDF düz JSON, `JSON.stringify()` ile üretilir, VS Code'da editlenir, diff'lenir.
+JDF lives in **four runnable surfaces** that all consume the same JSON format. They MUST stay in feature parity.
 
-Yaratıcı/maintainer: **Ugur Kazdal** (`@uurtech`). Solo proje, MIT, GitHub: `https://github.com/uurtech/jdf`. Homebrew tap: `uurtech/jdf` (canlı olduğu doğrulanmadı).
+```
+┌──────────────────────┐    ┌─────────────────────────┐
+│ packages/jdf-core    │    │ spec/jdf-schema.json    │
+│  - TypeScript types  │    │  - JSON Schema spec      │
+│  - mm/in/pt/px utils │    │  - source of truth        │
+│  - page sizes        │    │                          │
+└──────────────────────┘    └─────────────────────────┘
+            │ imported by all four arms below
+            ▼
+┌────────────────┐ ┌──────────────┐ ┌──────────────┐ ┌────────────────┐
+│ apps/reader/   │ │ jdfjs/       │ │ tools/jdf-cli│ │ src-tauri/     │
+│ (desktop app)  │ │ (web embed)  │ │ (validate +  │ │ (Rust backend, │
+│ SolidJS render │ │ vanilla DOM  │ │  import)     │ │  PDF export)   │
+└────────────────┘ └──────────────┘ └──────────────┘ └────────────────┘
+```
 
-## Repo yapısı (pnpm monorepo)
+## Hard parity rules
 
-- `packages/jdf-core` (`@jdf/core`) — sadece TS types + page-size/unit util (defaults.ts). Build adımı yok, `src/index.ts` doğrudan export.
-- `apps/reader` (`@jdf/reader`) — Tauri v2 + SolidJS + Tailwind v4 desktop app.
-  - Frontend: `src/App.tsx`, `components/viewer/*` (element renderer'ları), `components/shared/*` (Toolbar, Sidebar, SearchPanel, WelcomeScreen).
-  - Backend: `src-tauri/src/commands/mod.rs` — Tauri commands: `open_document`, `save_document`, `validate_document`, `search_document`, `import_pdf`, `import_markdown`, `export_pdf`.
-  - Rust deps: `tauri 2`, `tauri-plugin-dialog/fs`, `pdf-extract 0.7`, `printpdf 0.7`, `pulldown-cmark 0.12`, `libc` (stderr suppress).
-- `tools/jdf-cli` (`@jdf/cli`) — `src/index.ts` entry, `validate` (Ajv ile schema kontrolü) + `import` (md→jdf, pdf placeholder).
-- `spec/jdf-schema.json` — JSON Schema (draft-07) tüm element tipleri + style + resources tanımlı.
-- `spec/examples/hello-world.jdf` — heading, richtext, list, table, collapsible, toc, footer template'i içeren demo.
-- `apps/reader/src/components/markdown/MarkdownViewer.tsx` — `marked` ile native MD render (paged JDF view ile toggle).
+### When you ADD a new element type or attribute to the JDF format
 
-## Format konvansiyonları
+Update **all five** locations in the same PR. Skipping any one creates silent divergence:
 
-- Pozisyon birimi **mm**, font boyutu **pt**.
-- A4 content area: 166mm × 247mm (default 22/25mm margin'larla).
-- Element tipleri: `text`, `richtext`, `image`, `table`, `list`, `shape`, `collapsible`, `toc`.
-- Üst düzey alanlar: `$jdf`, `meta`, `styles`, `resources`, `header`, `footer`, `pages`.
-- Viewer state: SolidJS `createSignal` + `localStorage` (recent files, dark mode).
-- File açma: `tauri-plugin-dialog` + `tauri://drag-drop` event + CLI argv (lib.rs:20-32, 500ms gecikmeyle `open-file` event'i).
+| # | File | What to add |
+|---|---|---|
+| 1 | `packages/jdf-core/src/types.ts` | TypeScript interface for the new element / field |
+| 2 | `spec/jdf-schema.json` | JSON Schema definition with required / optional fields |
+| 3 | `apps/reader/src/components/viewer/<Type>Element.tsx` | SolidJS renderer used by the desktop app |
+| 4 | `jdfjs/src/renderers/element.ts` | Vanilla-DOM renderer used by the web embed |
+| 5 | `apps/reader/src-tauri/src/commands/mod.rs` | Two functions: `extract_text` (for search) and `draw_element` (for PDF export) |
 
-## Yeni element eklerken güncellenecek yerler
+If the element appears in PDF imports, also walk:
 
-1. `packages/jdf-core/src/types.ts` — TS interface
-2. `apps/reader/src/components/viewer/ElementRenderer.tsx` — dispatch
-3. `apps/reader/src/components/viewer/XxxElement.tsx` — UI
-4. `apps/reader/src-tauri/src/commands/mod.rs` — `extract_text` (search için) + `export_pdf` (PDF render)
-5. `spec/jdf-schema.json` — schema (henüz yok)
+| # | File | What to add |
+|---|---|---|
+| 6 | `apps/reader/src/import/pdfToJdf.ts` | PDF.js → JDF mapping for the new element |
 
-## Bilinen eksikler / hâlâ todo (2026-06-10 sonrası)
+### When you change a renderer behaviour (style, layout, spacing)
 
-**Hâlâ açık olanlar:**
-- PDF import: image/table çıkarımı yok (pdf-extract crate'i sınırlı; roadmap todo).
-- WYSIWYG editor mode — JSON görünür ama UI'dan düzenleme henüz yok.
-- Windows/Linux build & CI/CD — GitHub Actions yok.
-- Test yok (TS/Rust/e2e).
-- VS Code extension, online viewer — roadmap todo.
-- `packages/jdf-core/package.json` minimal (description/repository/license/author yok).
+The desktop renderer (`apps/reader/src/components/viewer/`) and the web renderer (`jdfjs/src/renderers/element.ts`) **must end up with the same visual output**. They are independent codebases — one is SolidJS, the other vanilla DOM — but the rendered pixels should match within reasonable tolerance.
 
-**Çözülen (önceki turda kapatıldı):**
-- `spec/jdf-schema.json` ve `spec/examples/hello-world.jdf` ✅
-- CLI'ın `package.json`/entry/validate/import komutları ✅
-- Renderer ↔ types uyuşmazlıkları (heading, list ordered, richtext bold/italic/link, table headers/borders/altRow, image src+resource+fit, header/footer template, shape stroke object) ✅
-- `export_pdf` artık list/table/collapsible/shape de basıyor (image/toc placeholder kalıyor) ✅
-- `import_markdown` Rust tarafında: tablo, blockquote, link, image, hr, GFM, strikethrough/tasklist desteği ✅
-- `validate_document` element-level şema kontrolü ve warning ayrımı ✅
+Steps:
 
-**UX düzeltmeleri (önceki turda kapatıldı):**
-- WelcomeScreen: recent files listesi, drag-drop hint, dark/help shortcuts.
-- Sidebar: thumbnail preview (her sayfa içeriğinin renkli mini-haritası), aktif sayfa highlight.
-- SearchPanel: regex'siz multi-match per element, vurgulu before/match/after, keyboard nav.
-- Toolbar: close button (⌘W), modified indicator, file type chip, dark/help butonları, MD↔Paged view toggle.
-- HelpOverlay: `?` ile kısayol panosu (üç sütun: File / View / Navigate).
-- Dark mode: tüm renkler tutarlı (`@custom-variant dark`), markdown body için ayrı kurallar.
-- MarkdownViewer: tek scroll'lu native render, GFM tablo/code/blockquote/task list, dark mode uyumlu.
-- Print CSS: aside ve toolbar gizli, gölgesiz sayfa.
+1. Make the change in one renderer.
+2. **Immediately** mirror it in the other.
+3. Add a sample to `spec/examples/` that exercises the change.
+4. Run both renderers against the sample (desktop: `pnpm tauri dev`, web: open `docs/examples/<name>.jdf` in the live site).
 
-## Çalışma tercihleri
+### When you change the PDF importer
 
-- Konuşma dili **Türkçe**. Kod, commit mesajları, dosya/komut/teknik terimler İngilizce kalır.
-- Solo-maintainer pragmatizmi: enterprise süreçleri yerine "çalışsın, basit kalsın".
-- README'nin parlak vaadi ile gerçek kod arasındaki farkı açık tut — yeni feature isteklerinde önce hangi temel parçanın eksik olduğunu sor.
+The PDF importer lives in `apps/reader/src/import/pdfToJdf.ts` (frontend, browser-only, uses canvas for image extraction). It is the **single source of truth** for PDF→JDF.
+
+If you ever extract this into a shared package (`packages/jdf-pdf-import/`), keep it there and have all consumers (desktop, CLI) import from one place. **Never duplicate the converter logic.**
+
+### When you bump the JDF format version (`$jdf` field)
+
+1. Bump `version` in `packages/jdf-core/package.json`.
+2. Update `$jdf` field in `spec/examples/*.jdf` and `docs/examples/*.jdf`.
+3. Update the example in `README.md`.
+4. Document the breaking change in `CHANGELOG.md`.
+5. Update the schema's `$id` URL.
+
+## CLI commands (`tools/jdf-cli`)
+
+The CLI must accept anything the desktop reader accepts:
+
+| Command | Status | Path |
+|---|---|---|
+| `jdf validate <file.jdf>` | ✓ done | `tools/jdf-cli/src/commands/validate.ts` |
+| `jdf import file.md` | ✓ done | `tools/jdf-cli/src/commands/import-md.ts` |
+| `jdf import file.pdf` | ⏳ planned (currently placeholder) | `tools/jdf-cli/src/commands/import-pdf.ts` |
+
+When implementing PDF import in the CLI:
+- The frontend importer (`apps/reader/src/import/pdfToJdf.ts`) uses the browser DOM canvas. The CLI version needs `node-canvas` or a headless equivalent.
+- Extract the shared logic into `packages/jdf-pdf-import/` with two entry points: `browser.ts` (canvas-based) and `node.ts` (node-canvas-based). Don't fork the algorithm.
+
+## Web embed: `<jdf>` only
+
+The single supported embed form is `<jdf src="..."></jdf>`. The library:
+
+- Auto-init scans the page on `DOMContentLoaded` and on every DOM mutation.
+- Custom element `<jdf>` is registered with reactive `src`, `width`, `height`, `zoom` attributes.
+- Configuration via attributes: `width`, `height`, `zoom`, `sidebar`, `toolbar`, `dark-mode`, `page`, `fit`.
+
+Do not add `<jdf-viewer>` or `data-jdf` variants — kullanıcı kararı, `<jdf>` tek form.
+
+## Build & test before any release
+
+```bash
+pnpm typecheck          # TS across reader, jdfjs, jdf-cli
+cd apps/reader/src-tauri && cargo check
+pnpm --filter jdfjs build
+pnpm --filter @jdf/cli start validate spec/examples/hello-world.jdf
+```
+
+If any of these fail, do not push.
+
+## Release pipeline (`scripts/`)
+
+| Script | What it does |
+|---|---|
+| `scripts/release.sh [patch\|minor\|major]` | Full pipeline: bump versions everywhere, build dmg, build jdfjs, GitHub release with dmg, update Homebrew Cask, npm publish |
+| `scripts/publish-npm.sh [bump]` | Just builds + publishes `jdfjs` to npm (subset of `release.sh`) |
+| `scripts/publish-dmg.sh [bump]` | Builds dmg, creates GitHub release, updates Homebrew Cask (subset of `release.sh`) |
+
+All scripts read tokens from `/.env` (root) — `NPM_TOKEN` and `GITHUB_TOKEN` are required. See `/.env.example`.
+
+## Working language
+
+User talks Turkish. Replies in Turkish. Code comments, file paths, commit messages, technical terms remain in English.
+
+## Memory of past mistakes
+
+- **Don't duplicate the renderer logic between SolidJS (`apps/reader/`) and vanilla DOM (`jdfjs/`).** They are intentionally separate codebases (different runtime constraints) but the JDF spec they implement is one. Diverging silently → render bugs only one platform sees.
+- **Don't put `unpkg.com/jdfjs` URLs in HTML before npm publish succeeded.** The CDN 404s, demos break.
+- **Don't commit `.env`.** It's gitignored along with `.env.example` (intentional — example contains placeholder secrets the user fills in locally).
+- **Don't rename `apps/reader/` lightly.** It will cascade through Cargo.toml, Tauri config, lib name, DMG asset name, and every script path.

@@ -40,10 +40,8 @@
     "demo": "vite serve examples",
     "prepublishOnly": "pnpm build"
   },
-  "dependencies": {
-    "@jdf/core": "workspace:*"
-  },
   "devDependencies": {
+    "@jdf/core": "workspace:*",
     "@types/node": "^22.10.0",
     "tsup": "^8.3.5",
     "typescript": "^5.5.0",
