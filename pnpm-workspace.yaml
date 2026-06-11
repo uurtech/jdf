@@ -2,6 +2,7 @@ packages:
   - "packages/*"
   - "apps/*"
   - "tools/*"
+  - "jdfjs"
 allowBuilds:
   esbuild: true
 onlyBuiltDependencies:
