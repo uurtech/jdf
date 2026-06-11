@@ -2,6 +2,14 @@
 
 A document format that's just JSON. Open `.jdf` in any text editor and you see the source. Open it in JDF Reader and you see a rendered page. Edit either side, the other reflects it.
 
+JDF runs in three places:
+
+| | What it is | Install |
+|---|---|---|
+| 🖥️ **JDF Reader** | Native macOS app — read, edit, import PDF/MD, export PDF | `brew tap uurtech/jdf && brew install jdf` |
+| 🌐 **jdf.js** | 25 kB JavaScript library — embed `.jdf` files on any web page | `npm install jdfjs` or `<script src="https://unpkg.com/jdfjs">` |
+| 🛠 **`@jdf/cli`** | CLI for validating documents and converting from Markdown | `npx @jdf/cli validate file.jdf` |
+
 ## Why JDF
 
 It's JSON. Every consequence below falls out of that:
@@ -15,7 +23,7 @@ It's JSON. Every consequence below falls out of that:
 
 ## Install
 
-macOS:
+### Desktop · macOS
 
 ```bash
 brew tap uurtech/jdf
@@ -32,7 +40,35 @@ brew upgrade --cask jdf
 
 The Cask formula lives in a separate tap repo: [`uurtech/homebrew-jdf/Casks/jdf.rb`](https://github.com/uurtech/homebrew-jdf/blob/main/Casks/jdf.rb). A reference copy is also kept in this repo at [`Casks/jdf.rb`](Casks/jdf.rb).
 
-Build from source:
+Linux and Windows builds (`.deb`, `.AppImage`, `.rpm`, `.msi`, `.exe`) are produced by the GitHub Actions release workflow on every tag — see the [latest release](https://github.com/uurtech/jdf/releases/latest).
+
+### Web · jdf.js
+
+Embed JDF documents on any web page with one tag:
+
+```html
+<link rel="stylesheet" href="https://unpkg.com/jdfjs/dist/jdfjs.css">
+<script type="module" src="https://unpkg.com/jdfjs"></script>
+
+<jdf src="/whitepaper.jdf"></jdf>
+```
+
+Or via npm for full programmatic control:
+
+```bash
+npm install jdfjs
+```
+
+```js
+import { embed } from "jdfjs";
+import "jdfjs/style.css";
+
+await embed("#viewer", "/doc.jdf", { zoom: 1.2, sidebar: true });
+```
+
+See **[the jdf.js README](jdfjs/README.md)** and the **[embed documentation](docs/docs/embed/index.html)** for the full API, attribute reference, and framework integrations (React / Vue / Svelte).
+
+### Build from source
 
 ```bash
 git clone https://github.com/uurtech/jdf.git
@@ -42,8 +78,6 @@ pnpm tauri build      # produces .app + .dmg in apps/reader/src-tauri/target/rel
 ```
 
 Requires Node 20+, pnpm 9+, Rust stable, Xcode CLT (macOS).
-
-Linux and Windows builds (`.deb`, `.AppImage`, `.rpm`, `.msi`, `.exe`) are produced by the GitHub Actions release workflow on every tag — see the [latest release](https://github.com/uurtech/jdf/releases/latest).
 
 ## Open & edit
 
@@ -141,6 +175,68 @@ Full schema: [`spec/jdf-schema.json`](spec/jdf-schema.json). Working example: [`
 
 Internal navigation: `link: "#page-3"` or `link: { type: "internal", target: "#page-3" }` on text/richtext.
 
+## jdf.js — embed on the web
+
+[`jdfjs/`](jdfjs/) is a small JavaScript library that turns any `.jdf` URL into a fully styled, scrollable, searchable embed in a web page. Like PDF.js — but the file you point at is plain JSON.
+
+### Three ways to embed
+
+```html
+<!-- 1. Custom element (recommended) — reactive src attribute -->
+<jdf-viewer src="/doc.jdf"></jdf-viewer>
+
+<!-- 2. Shorthand tag — behaves like <img> / <video> -->
+<jdf src="/doc.jdf"></jdf>
+
+<!-- 3. Data attribute — retrofit into existing layouts -->
+<div data-jdf="/doc.jdf" data-jdf-zoom="1.2" data-jdf-sidebar="true"></div>
+```
+
+All three are auto-detected when the page loads — drop them anywhere in your HTML, jdf.js scans on `DOMContentLoaded` and renders each one in place. New elements added later (SPAs, async content) are picked up by a `MutationObserver`. To opt out: `data-jdf-manual` on the element, or `window.JDFjsAutoInit = false` globally.
+
+### Configuration
+
+| Attribute | JS option | Type | Default |
+|---|---|---|---|
+| `src` | `(url arg)` | string | required |
+| `data-jdf-zoom` | `zoom` | number | `1` |
+| `data-jdf-sidebar` | `sidebar` | boolean | `false` |
+| `data-jdf-toolbar` | `toolbar` | boolean | `true` |
+| `data-jdf-dark-mode` | `darkMode` | `"auto"` · `"light"` · `"dark"` | `"auto"` |
+| `data-jdf-page` | `initialPage` | integer (0-based) | `0` |
+| `width` / `data-jdf-width` | `width` | number (px) or any CSS length | — |
+| `height` / `data-jdf-height` | `height` | number (px) or any CSS length | `600px` |
+| `data-jdf-fit` | `fit` | `"manual"` · `"fit-width"` · `"fit-page"` | `"manual"` |
+
+### Programmatic API
+
+```js
+import { embed, render, JDFViewer } from "jdfjs";
+import "jdfjs/style.css";
+
+// 1. Embed by URL
+const v = await embed("#viewer", "/doc.jdf", {
+  zoom: 1.2,
+  sidebar: true,
+  darkMode: "auto",
+  width: "100%",
+  height: "80vh",
+  fit: "fit-width",
+  onPageChange: (i) => console.log("page", i),
+});
+v.goToPage(2);
+v.setZoom(1.5);
+
+// 2. Render an in-memory document (no fetch)
+import type { JdfDocument } from "jdfjs";
+const doc: JdfDocument = { $jdf: "1.0.0", meta: { title: "Hi" }, pages: [...] };
+render("#out", doc);
+```
+
+The library is `dist/jdfjs.js` (~25 kB minified + gzipped). No framework, no build dependencies. Browser support: Chrome 88+, Firefox 87+, Safari 14+, Edge 88+.
+
+Full reference: [`jdfjs/README.md`](jdfjs/README.md) · [`docs/docs/embed/`](docs/docs/embed/index.html).
+
 ## CLI
 
 ```bash
@@ -176,6 +272,7 @@ pnpm start import README.md -o out.jdf
 ```
 spec/                JSON Schema + examples
 packages/jdf-core/   TypeScript types + utils
+jdfjs/               jdf.js — web embed library (npm: jdfjs)
 apps/reader/         Tauri v2 app
   src/
     components/      element renderers, JSON view, MD view, sidebar, toolbar
@@ -202,12 +299,13 @@ Done:
 - macOS / Linux / Windows builds via GitHub Actions release workflow.
 - JSON Schema, CLI validate, CI on all three OSes.
 - Homebrew tap (`uurtech/jdf`).
+- **jdf.js — web embed library** with auto-init, custom element (`<jdf-viewer>`), shorthand tag (`<jdf>`), data attribute (`data-jdf`), feature parity with the desktop renderer.
 
 Not yet:
+- jdf.js published to npm (sources are in [`jdfjs/`](jdfjs/), build with `pnpm --filter jdfjs build`; a `npm publish` step is on the to-do list).
 - PDF table detection (cells come in as separate text elements at correct coordinates; geometry-based row/column grouping is on the roadmap).
 - Multi-page overflow on PDF export.
 - VS Code extension (preview + schema hint).
-- Web-based viewer.
 - Apple notarization (the cask runs `xattr -cr` to clear quarantine, but a notarized build would silence Gatekeeper entirely).
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the per-release log.
