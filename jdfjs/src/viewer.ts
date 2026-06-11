@@ -15,6 +15,16 @@ export interface JDFViewerOptions {
   darkMode?: "auto" | "light" | "dark";
   /** Initial page index (0-based). Default: 0 */
   initialPage?: number;
+  /** Container width. Number = pixels. String = any CSS length ("100%", "60ch", "640px"). */
+  width?: number | string;
+  /** Container height. Number = pixels. String = any CSS length ("80vh", "600px"). Default: "600px". */
+  height?: number | string;
+  /** Page-fit strategy:
+   *   "manual" — exact zoom from `zoom` option (default)
+   *   "fit-width" — auto-zoom each page to fill container width
+   *   "fit-page"  — auto-zoom so a whole page is visible
+   */
+  fit?: "manual" | "fit-width" | "fit-page";
   /** Called when the user navigates to a different page */
   onPageChange?: (pageIndex: number) => void;
   /** Called once the document finishes rendering */
@@ -85,9 +95,10 @@ export function render(
 export class JDFViewer {
   private container: HTMLElement;
   private doc: JdfDocument;
-  private options: Required<Pick<JDFViewerOptions, "zoom" | "sidebar" | "toolbar" | "darkMode" | "initialPage">> & JDFViewerOptions;
+  private options: Required<Pick<JDFViewerOptions, "zoom" | "sidebar" | "toolbar" | "darkMode" | "initialPage" | "fit">> & JDFViewerOptions;
   private zoom: number;
   private currentPage: number;
+  private resizeObs: ResizeObserver | null = null;
   private pagesEl!: HTMLDivElement;
   private toolbarEl: HTMLDivElement | null = null;
   private sidebarEl: HTMLDivElement | null = null;
@@ -103,12 +114,25 @@ export class JDFViewer {
       toolbar: options.toolbar ?? true,
       darkMode: options.darkMode ?? "auto",
       initialPage: options.initialPage ?? 0,
+      fit: options.fit ?? "manual",
       ...options,
     };
     this.zoom = this.options.zoom;
     this.currentPage = this.options.initialPage;
+    this.applyContainerSize();
     this.mount();
     queueMicrotask(() => this.options.onLoad?.(this.doc));
+  }
+
+  private applyContainerSize() {
+    const w = this.options.width;
+    const h = this.options.height;
+    if (w != null) {
+      this.container.style.width = typeof w === "number" ? `${w}px` : w;
+    }
+    if (h != null) {
+      this.container.style.height = typeof h === "number" ? `${h}px` : h;
+    }
   }
 
   private mount() {
@@ -145,7 +169,36 @@ export class JDFViewer {
     this.container.appendChild(this.root);
     this.renderAllPages();
     this.setupScrollObserver();
+    this.setupResizeObserver();
+    this.applyFit();
     if (this.currentPage > 0) this.scrollToPage(this.currentPage);
+  }
+
+  private setupResizeObserver() {
+    if (typeof ResizeObserver === "undefined") return;
+    this.resizeObs?.disconnect();
+    this.resizeObs = new ResizeObserver(() => this.applyFit());
+    this.resizeObs.observe(this.pagesEl);
+  }
+
+  /** Auto-zoom for fit modes. */
+  private applyFit() {
+    if (this.options.fit === "manual") return;
+    const firstPage = this.pagesEl.querySelector<HTMLElement>(".jdfjs-page");
+    if (!firstPage) return;
+    // Read intrinsic page size from the inline width/min-height in px (set in renderPage)
+    const pageWidth = parseFloat(firstPage.style.width || "0");
+    const pageHeight = parseFloat(firstPage.style.minHeight || "0");
+    if (!pageWidth || !pageHeight) return;
+    const containerWidth = this.pagesEl.clientWidth - 32; // margin
+    const containerHeight = this.pagesEl.clientHeight - 32;
+    if (this.options.fit === "fit-width") {
+      this.zoom = Math.max(0.25, Math.min(3, containerWidth / pageWidth));
+    } else if (this.options.fit === "fit-page") {
+      this.zoom = Math.max(0.25, Math.min(3, Math.min(containerWidth / pageWidth, containerHeight / pageHeight)));
+    }
+    this.applyZoom();
+    this.updateIndicators();
   }
 
   private buildToolbar(): HTMLDivElement {
@@ -372,8 +425,11 @@ export class JDFViewer {
 
   destroy() {
     this.observer?.disconnect();
+    this.resizeObs?.disconnect();
     this.container.innerHTML = "";
     this.container.classList.remove("jdfjs", "jdfjs-dark", "jdfjs-loading", "jdfjs-error");
+    this.container.style.removeProperty("width");
+    this.container.style.removeProperty("height");
   }
 
   getInstance(): JDFViewerInstance {

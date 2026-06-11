@@ -40,6 +40,20 @@ function readOptions(el: Element): JDFViewerOptions {
     const n = Number(page);
     if (!isNaN(n)) opts.initialPage = n;
   }
+
+  const w = get("width") || el.getAttribute("width");
+  if (w != null) {
+    const num = Number(w);
+    opts.width = isNaN(num) ? w : num;
+  }
+  const h = get("height") || el.getAttribute("height");
+  if (h != null) {
+    const num = Number(h);
+    opts.height = isNaN(num) ? h : num;
+  }
+  const fit = get("fit");
+  if (fit === "manual" || fit === "fit-width" || fit === "fit-page") opts.fit = fit;
+
   return opts;
 }
 
@@ -110,13 +124,20 @@ function autoInit() {
 // Define the <jdf-viewer> custom element so its lifecycle slots into the DOM API.
 if (typeof customElements !== "undefined" && !customElements.get("jdf-viewer")) {
   class JdfViewerElement extends HTMLElement {
-    static get observedAttributes() { return ["src"]; }
+    static get observedAttributes() { return ["src", "width", "height"]; }
     connectedCallback() { processElement(this); }
     attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null) {
-      if (name === "src" && oldVal !== newVal && newVal) {
+      if (oldVal === newVal) return;
+      if (name === "src" && newVal) {
         // Re-process: clear processed mark so it re-renders
         PROCESSED.delete(this);
         processElement(this);
+      } else if (name === "width" && newVal) {
+        const n = Number(newVal);
+        this.style.width = isNaN(n) ? newVal : `${n}px`;
+      } else if (name === "height" && newVal) {
+        const n = Number(newVal);
+        this.style.height = isNaN(n) ? newVal : `${n}px`;
       }
     }
   }

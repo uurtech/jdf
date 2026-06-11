@@ -275,6 +275,46 @@ main { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
   margin: 12px 0 0;
 }
 
+.channel-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 880px;
+  margin: 48px auto 0;
+}
+@media (max-width: 720px) { .channel-strip { grid-template-columns: 1fr; } }
+
+.channel {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: left;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.channel:hover { border-color: var(--brand); transform: translateY(-2px); }
+
+.channel-icon {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--brand-soft); color: var(--brand);
+  border-radius: 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.channel-title {
+  font-weight: 700; color: var(--text); font-size: 14px;
+  margin-bottom: 2px;
+}
+.channel-sub { font-size: 12px; color: var(--text-soft); }
+.channel-sub code { font-size: 11px; background: var(--bg-soft-2); color: var(--text); }
+
 .install-alt code {
   font-size: 12px;
   background: var(--code-bg);
