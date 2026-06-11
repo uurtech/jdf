@@ -1,14 +1,14 @@
 /**
- * Auto-initialization: scan the page for <jdf src="..."> tags and render each one.
+ * Auto-init: scan the page for <jdf src="..."> tags and render each one.
  *
- * Drop-in usage:
  *   <link rel="stylesheet" href="https://unpkg.com/jdfjs/dist/jdfjs.css">
  *   <script type="module" src="https://unpkg.com/jdfjs"></script>
  *   <jdf src="/whitepaper.jdf"></jdf>
  *
- * Configuration goes through attributes:
+ * Configuration via attributes on <jdf>:
  *   <jdf src="..." width="800" height="600" zoom="1.2" sidebar="true" dark-mode="auto"></jdf>
  *
+ * For SPAs that mount content async, call `jdf()` after the new DOM lands.
  * To opt out per-element add `manual`. To disable globally:
  *   window.JDFjsAutoInit = false   // before loading the script
  */
@@ -87,7 +87,7 @@ function watchForNewTargets() {
 }
 
 /** Manually trigger a scan — for SPAs that mount content asynchronously. */
-export function scanForJdfElements(root: ParentNode = document) {
+export function jdf(root: ParentNode = document) {
   scan(root);
 }
 

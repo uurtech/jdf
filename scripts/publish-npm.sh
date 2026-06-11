@@ -1,37 +1,36 @@
 #!/usr/bin/env bash
-# Publish jdfjs to npm using the token from .env (no `npm login` needed).
+# Publish jdfjs to npm using NPM_TOKEN from /.env (no `npm login` needed).
 #
-# Usage:
-#   cd jdfjs
-#   bash scripts/publish.sh           # publish current version
-#   bash scripts/publish.sh patch     # bump patch, then publish
-#   bash scripts/publish.sh minor     # bump minor, then publish
-#   bash scripts/publish.sh major     # bump major, then publish
+# Usage (from anywhere):
+#   bash scripts/publish-npm.sh           # publish current version
+#   bash scripts/publish-npm.sh patch     # bump patch then publish
+#   bash scripts/publish-npm.sh minor     # bump minor then publish
+#   bash scripts/publish-npm.sh major     # bump major then publish
 
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
+# Resolve repo root (scripts/.. → /)
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$REPO_ROOT/jdfjs"
 
-# Load .env from jdfjs/.env or repo root .env
-set -a
-# shellcheck disable=SC1091
-[[ -f .env ]] && source .env
-# shellcheck disable=SC1091
-[[ -f ../.env ]] && source ../.env
-set +a
+# Load tokens from repo-root .env
+if [[ -f "$REPO_ROOT/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$REPO_ROOT/.env"
+  set +a
+fi
 
 if [[ -z "${NPM_TOKEN:-}" ]]; then
-  echo "✗ NPM_TOKEN is not set."
-  echo "  Copy .env.example to .env and add your token from https://www.npmjs.com/settings/~/tokens"
+  echo "✗ NPM_TOKEN missing — fill it in /.env (see /.env.example)"
   exit 1
 fi
 
-# Optional version bump
 if [[ "${1:-}" =~ ^(patch|minor|major)$ ]]; then
   npm version "$1" --no-git-tag-version
 fi
 
-# Write a temporary .npmrc that uses the token, then clean up on exit.
+# Temporary .npmrc with the token; cleaned up on exit.
 NPMRC_BACKUP=""
 if [[ -f .npmrc ]]; then
   NPMRC_BACKUP=$(mktemp)
@@ -53,12 +52,16 @@ registry=https://registry.npmjs.org/
 always-auth=true
 EOF
 
-echo "→ Building..."
+PKG_NAME=$(node -p "require('./package.json').name")
+PKG_VER=$(node -p "require('./package.json').version")
+
+echo "→ Building $PKG_NAME@$PKG_VER..."
 pnpm build
 
-echo "→ Publishing $(node -p "require('./package.json').name")@$(node -p "require('./package.json').version")"
+echo "→ Publishing to npm..."
 pnpm publish --access public --no-git-checks
 
 echo ""
-echo "✓ Published. CDN propagation takes ~30s."
-echo "  Check: curl -sI https://unpkg.com/$(node -p "require('./package.json').name")/dist/jdfjs.css"
+echo "✓ Published $PKG_NAME@$PKG_VER"
+echo "  CDN: https://unpkg.com/$PKG_NAME@$PKG_VER/dist/jdfjs.js"
+echo "       (~30s for unpkg propagation)"

@@ -14,6 +14,6 @@
 import "./auto-init";
 
 export { embed, render, JDFViewer } from "./viewer";
-export { scanForJdfElements } from "./auto-init";
+export { jdf } from "./auto-init";
 export type { JDFViewerOptions, JDFViewerInstance } from "./viewer";
 export type { JdfDocument, Element, Page } from "@jdf/core";

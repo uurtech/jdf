@@ -310,9 +310,30 @@ Not yet:
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the per-release log.
 
+## Releasing (maintainer)
+
+One command bumps versions, builds the dmg, creates a GitHub release with the dmg attached, updates the Homebrew Cask in both repos, and `npm publish`-es jdfjs:
+
+```bash
+bash scripts/release.sh patch    # 0.1.0 → 0.1.1 across desktop + jdfjs
+bash scripts/release.sh minor    # bump minor version
+bash scripts/release.sh major    # bump major version
+```
+
+Or each step on its own:
+
+```bash
+bash scripts/publish-dmg.sh patch    # desktop bundle + GitHub release + Cask update
+bash scripts/publish-npm.sh patch    # jdfjs build + npm publish
+```
+
+Requires `NPM_TOKEN` and `GITHUB_TOKEN` in `/.env` (see `.env.example`). The tap repo (`uurtech/homebrew-jdf`) should be cloned next to this repo so its Cask is auto-pushed.
+
 ## Contributing
 
 [`CONTRIBUTING.md`](CONTRIBUTING.md). Short version: `pnpm typecheck` + `cargo check` must pass before opening a PR.
+
+When adding a new JDF element type or attribute, update **all five** locations: `packages/jdf-core/src/types.ts`, `spec/jdf-schema.json`, `apps/reader/src/components/viewer/`, `jdfjs/src/renderers/element.ts`, and `apps/reader/src-tauri/src/commands/mod.rs`. See [`CLAUDE.md`](CLAUDE.md) for the full parity checklist.
 
 ## License
 
