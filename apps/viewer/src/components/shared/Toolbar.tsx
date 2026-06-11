@@ -9,12 +9,18 @@ interface ToolbarProps {
   fileType?: "jdf" | "md" | "pdf";
   isMarkdown?: boolean;
   isEditableFile?: boolean;
+  dirty?: boolean;
   savingState: "idle" | "saving" | "saved" | "error";
   viewMode: ViewMode;
   zoom: number;
   currentPage: number;
   totalPages: number;
   darkMode: boolean;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  onNewWindow?: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onZoomReset: () => void;
@@ -32,6 +38,9 @@ interface ToolbarProps {
 
 export function Toolbar(props: ToolbarProps) {
   const savingLabel = () => {
+    if (props.dirty && props.fileType !== "jdf") {
+      return { text: "● Unsaved (in memory)", color: "text-amber-600 dark:text-amber-400" };
+    }
     switch (props.savingState) {
       case "saving": return { text: "Saving…", color: "text-amber-500" };
       case "saved": return { text: "✓ Saved", color: "text-green-500" };
@@ -49,6 +58,11 @@ export function Toolbar(props: ToolbarProps) {
         <div class="w-7 h-7 rounded-md bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-sm">
           <span class="text-white font-bold text-[10px]">JDF</span>
         </div>
+        <Show when={props.onNewWindow}>
+          <button onClick={props.onNewWindow!} class="px-2.5 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="New window (⌘N)">
+            New
+          </button>
+        </Show>
         <button onClick={props.onOpen} class="px-2.5 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="Open (⌘O)">
           Open
         </button>
@@ -77,6 +91,29 @@ export function Toolbar(props: ToolbarProps) {
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
               <line x1="2" y1="2" x2="10" y2="10" />
               <line x1="10" y1="2" x2="2" y2="10" />
+            </svg>
+          </button>
+
+          <button
+            onClick={props.onUndo}
+            disabled={!props.canUndo}
+            class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+            title="Undo (⌘Z)"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 7h7a3 3 0 0 1 0 6H7" />
+              <path d="M5 5L3 7l2 2" />
+            </svg>
+          </button>
+          <button
+            onClick={props.onRedo}
+            disabled={!props.canRedo}
+            class="w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+            title="Redo (⌘⇧Z)"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M11 7H4a3 3 0 0 0 0 6h3" />
+              <path d="M9 5l2 2-2 2" />
             </svg>
           </button>
         </div>

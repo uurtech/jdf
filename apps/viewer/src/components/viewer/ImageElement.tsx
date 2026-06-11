@@ -49,12 +49,12 @@ export function ImageElementView(props: ImageElementViewProps) {
   };
 
   return (
-    <div>
+    <div style={{ width: "100%", height: "100%" }}>
       <img
         src={src()}
         alt={props.element.alt || ""}
         class={`${fitClass()} block`}
-        style={{ ...css(), "max-width": "100%", width: "100%", height: "auto" }}
+        style={{ ...css(), width: "100%", height: "100%" }}
       />
       <Show when={edit.enabled}>
         <div class="text-[10px] text-gray-400 mt-1">

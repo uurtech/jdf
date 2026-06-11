@@ -138,17 +138,16 @@ Stack: Tauri v2, SolidJS, Tailwind v4, Vite, Rust (`pdf-extract`, `printpdf`, `p
 
 What's there:
 - Full element rendering, edit-in-place + auto-save, JSON view, Markdown viewer.
-- PDF/MD import, PDF export with page size/orientation/colors/TOC.
-- JSON Schema, CLI validate, GitHub Actions CI (typecheck, schema, cargo check).
+- PDF/MD import, PDF export with page size/orientation/colors/TOC and **embedded images**.
+- **Structural editing**: insert / delete / move / duplicate elements via context menu (right-click) and the Insert bar; add / delete pages via the sidebar.
+- **Undo / redo** (`⌘Z` / `⌘⇧Z`) — 100-step history.
+- **Multiple windows** (`⌘N` or "New" button) — open documents side-by-side.
+- **Windows / Linux / macOS** builds via GitHub Actions (`.dmg`, `.deb`, `.AppImage`, `.rpm`, `.msi`, `.exe`).
+- JSON Schema, CLI validate, CI on all three OSes.
 
 What's not (yet):
-- Insert / delete / reorder elements visually.
-- PDF table detection (cells come in as separate text elements).
-- Image embed in PDF export (the importer extracts images; the exporter doesn't yet write them back).
+- PDF table detection (cells come in as separate text elements; geometry-based grouping is on the roadmap).
 - Multi-page overflow on PDF export.
-- Undo/redo.
-- Multiple windows.
-- Windows / Linux build.
 - VS Code extension.
 - Web viewer.
 

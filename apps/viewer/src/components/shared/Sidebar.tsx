@@ -1,10 +1,13 @@
-import { For, createMemo } from "solid-js";
+import { For, Show, createMemo, createSignal } from "solid-js";
 import type { JdfDocument } from "@jdf/core";
+import { ContextMenu, type MenuItem } from "./ContextMenu";
 
 interface SidebarProps {
   document: JdfDocument;
   currentPage: number;
   onPageChange: (page: number) => void;
+  onAddPage?: () => void;
+  onDeletePage?: (idx: number) => void;
 }
 
 interface PreviewElement { type: string; top: number; left: number; width: number; height: number; color?: string }
@@ -36,55 +39,89 @@ function previewForPage(page: JdfDocument["pages"][number], pageW: number, pageH
 }
 
 export function Sidebar(props: SidebarProps) {
+  const [menu, setMenu] = createSignal<{ x: number; y: number; pageIdx: number } | null>(null);
   const previews = createMemo(() => {
     const pageW = 166, pageH = 247;
     return props.document.pages.map((p) => previewForPage(p, pageW, pageH));
   });
 
+  function pageMenuItems(idx: number): MenuItem[] {
+    return [
+      { label: "Insert page below", onClick: () => props.onAddPage?.() },
+      { separator: true, label: "" },
+      {
+        label: "Delete page",
+        danger: true,
+        disabled: props.document.pages.length <= 1,
+        onClick: () => props.onDeletePage?.(idx),
+      },
+    ];
+  }
+
   return (
-    <aside class="w-44 bg-gray-50 dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 overflow-y-auto shrink-0 transition-colors">
-      <div class="px-2 py-2 text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-semibold">
-        Pages · {props.document.pages.length}
-      </div>
-      <div class="p-2 space-y-2">
-        <For each={props.document.pages}>
-          {(page, index) => (
+    <>
+      <aside class="w-44 bg-gray-50 dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 overflow-y-auto shrink-0 transition-colors">
+        <div class="flex items-center justify-between px-2 py-2">
+          <span class="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-semibold">
+            Pages · {props.document.pages.length}
+          </span>
+          <Show when={props.onAddPage}>
             <button
-              class={`w-full rounded-md border-2 transition-all overflow-hidden block ${
-                index() === props.currentPage
-                  ? "border-blue-500 shadow-md ring-2 ring-blue-500/20"
-                  : "border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600"
-              }`}
-              onClick={() => props.onPageChange(index())}
-            >
-              <div
-                class="w-full aspect-[210/297] relative overflow-hidden"
-                style={{ "background-color": page.background || "#ffffff" }}
+              onClick={() => props.onAddPage!()}
+              class="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+              title="Add page"
+            >+</button>
+          </Show>
+        </div>
+        <div class="p-2 space-y-2">
+          <For each={props.document.pages}>
+            {(page, index) => (
+              <button
+                class={`w-full rounded-md border-2 transition-all overflow-hidden block ${
+                  index() === props.currentPage
+                    ? "border-blue-500 shadow-md ring-2 ring-blue-500/20"
+                    : "border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600"
+                }`}
+                onClick={() => props.onPageChange(index())}
+                onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, pageIdx: index() }); }}
               >
-                <For each={previews()[index()]}>
-                  {(el) => (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: `${el.top}%`,
-                        left: `${el.left}%`,
-                        width: `${Math.min(el.width, 100 - el.left)}%`,
-                        height: `${Math.min(el.height, 100 - el.top)}%`,
-                        "background-color": el.color,
-                        "border-radius": "1px",
-                        opacity: "0.6",
-                      }}
-                    />
-                  )}
-                </For>
-              </div>
-              <div class={`text-[10px] py-1 font-mono text-center ${index() === props.currentPage ? "bg-blue-500 text-white" : "bg-white dark:bg-slate-900 text-gray-400 dark:text-gray-500"}`}>
-                {index() + 1}
-              </div>
-            </button>
-          )}
-        </For>
-      </div>
-    </aside>
+                <div
+                  class="w-full aspect-[210/297] relative overflow-hidden"
+                  style={{ "background-color": page.background || "#ffffff" }}
+                >
+                  <For each={previews()[index()]}>
+                    {(el) => (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: `${el.top}%`,
+                          left: `${el.left}%`,
+                          width: `${Math.min(el.width, 100 - el.left)}%`,
+                          height: `${Math.min(el.height, 100 - el.top)}%`,
+                          "background-color": el.color,
+                          "border-radius": "1px",
+                          opacity: "0.6",
+                        }}
+                      />
+                    )}
+                  </For>
+                </div>
+                <div class={`text-[10px] py-1 font-mono text-center ${index() === props.currentPage ? "bg-blue-500 text-white" : "bg-white dark:bg-slate-900 text-gray-400 dark:text-gray-500"}`}>
+                  {index() + 1}
+                </div>
+              </button>
+            )}
+          </For>
+        </div>
+      </aside>
+      <Show when={menu()}>
+        <ContextMenu
+          x={menu()!.x}
+          y={menu()!.y}
+          items={pageMenuItems(menu()!.pageIdx)}
+          onClose={() => setMenu(null)}
+        />
+      </Show>
+    </>
   );
 }

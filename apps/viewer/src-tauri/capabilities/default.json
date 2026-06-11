@@ -1,7 +1,7 @@
 {
   "identifier": "default",
   "description": "Default capabilities",
-  "windows": ["main"],
+  "windows": ["main", "win-*"],
   "permissions": [
     "core:default",
     "core:event:default",
@@ -11,9 +11,43 @@
     "dialog:allow-open",
     "dialog:allow-save",
     "fs:default",
-    "fs:allow-read-text-file",
-    "fs:allow-write-text-file",
-    "fs:allow-read-file",
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$HOME/Downloads/**" },
+        { "path": "$HOME/Documents/**" },
+        { "path": "$HOME/Desktop/**" },
+        { "path": "$HOME/Library/**" },
+        { "path": "/Users/**" },
+        { "path": "/private/var/**" },
+        { "path": "/tmp/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$HOME/Downloads/**" },
+        { "path": "$HOME/Documents/**" },
+        { "path": "$HOME/Desktop/**" },
+        { "path": "/Users/**" },
+        { "path": "/tmp/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$HOME/Downloads/**" },
+        { "path": "$HOME/Documents/**" },
+        { "path": "$HOME/Desktop/**" },
+        { "path": "$HOME/Library/**" },
+        { "path": "/Users/**" },
+        { "path": "/private/var/**" },
+        { "path": "/tmp/**" }
+      ]
+    },
     "fs:allow-exists"
   ]
 }

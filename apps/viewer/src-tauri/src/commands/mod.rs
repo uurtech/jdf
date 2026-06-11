@@ -333,11 +333,117 @@ fn draw_element(
             }
         }
         "image" => {
-            let label = el.get("alt").and_then(|a| a.as_str()).unwrap_or("[image]");
-            layer.use_text(format!("[{}]", label), fs, Mm(margin_left + px), to_pdf_y(py, 0.0), font_italic);
+            let h_mm = el.get("height").and_then(|v| v.as_f64()).unwrap_or(40.0) as f32;
+            let resource_key = el.get("resource").and_then(|s| s.as_str());
+            let src = el.get("src").and_then(|s| s.as_str());
+            let mut embedded = false;
+            if let Some(key) = resource_key {
+                if let Some(b64) = document.get("resources")
+                    .and_then(|r| r.get("images"))
+                    .and_then(|i| i.get(key))
+                    .and_then(|im| im.get("data"))
+                    .and_then(|d| d.as_str())
+                {
+                    if try_embed_image(layer, b64, margin_left + px, page_h - margin_top - py - h_mm, width, h_mm).is_ok() {
+                        embedded = true;
+                    }
+                }
+            }
+            if !embedded {
+                if let Some(s) = src.filter(|s| s.starts_with("data:")) {
+                    let comma = s.find(',').unwrap_or(0);
+                    if comma > 0 {
+                        let b64 = &s[comma + 1..];
+                        if try_embed_image(layer, b64, margin_left + px, page_h - margin_top - py - h_mm, width, h_mm).is_ok() {
+                            embedded = true;
+                        }
+                    }
+                }
+            }
+            if !embedded {
+                let label = el.get("alt").and_then(|a| a.as_str()).unwrap_or("image");
+                layer.use_text(format!("[{}]", label), fs, Mm(margin_left + px), to_pdf_y(py, 0.0), font_italic);
+            }
         }
         _ => {}
     }
+}
+
+fn try_embed_image(
+    layer: &printpdf::PdfLayerReference,
+    b64: &str,
+    x_mm: f32,
+    y_mm_from_bottom: f32,
+    target_w_mm: f32,
+    target_h_mm: f32,
+) -> Result<(), String> {
+    use base64::Engine;
+    use printpdf::*;
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(b64.trim())
+        .map_err(|e| format!("base64 decode: {}", e))?;
+    // Decode using `image` crate, convert to RGBA8
+    let img: image_crate::DynamicImage = if bytes.starts_with(b"\x89PNG") {
+        let dec = image_crate::codecs::png::PngDecoder::new(std::io::Cursor::new(&bytes))
+            .map_err(|e| format!("png: {}", e))?;
+        image_crate::DynamicImage::from_decoder(dec).map_err(|e| format!("png decode: {}", e))?
+    } else if bytes.starts_with(b"\xFF\xD8\xFF") {
+        let dec = image_crate::codecs::jpeg::JpegDecoder::new(std::io::Cursor::new(&bytes))
+            .map_err(|e| format!("jpg: {}", e))?;
+        image_crate::DynamicImage::from_decoder(dec).map_err(|e| format!("jpg decode: {}", e))?
+    } else if bytes.starts_with(b"BM") {
+        let dec = image_crate::codecs::bmp::BmpDecoder::new(std::io::Cursor::new(&bytes))
+            .map_err(|e| format!("bmp: {}", e))?;
+        image_crate::DynamicImage::from_decoder(dec).map_err(|e| format!("bmp decode: {}", e))?
+    } else {
+        return Err("unsupported image format".into());
+    };
+    let rgba = img.to_rgba8();
+    let (w, h) = rgba.dimensions();
+    if w == 0 || h == 0 { return Err("zero-size image".into()); }
+    // Build printpdf ImageXObject manually
+    let raw = rgba.into_raw();
+    // printpdf expects RGB or RGBA depending on color_space; use RGB by stripping alpha against white
+    let mut rgb = Vec::with_capacity((w * h * 3) as usize);
+    for px_row in raw.chunks_exact(4) {
+        let a = px_row[3] as f32 / 255.0;
+        let blend = |c: u8| -> u8 {
+            ((c as f32) * a + 255.0 * (1.0 - a)).round().clamp(0.0, 255.0) as u8
+        };
+        rgb.push(blend(px_row[0]));
+        rgb.push(blend(px_row[1]));
+        rgb.push(blend(px_row[2]));
+    }
+    let xobject = ImageXObject {
+        width: Px(w as usize),
+        height: Px(h as usize),
+        color_space: ColorSpace::Rgb,
+        bits_per_component: ColorBits::Bit8,
+        interpolate: true,
+        image_data: rgb,
+        image_filter: None,
+        smask: None,
+        clipping_bbox: None,
+    };
+    let pdf_image = Image { image: xobject };
+    // Compute scale to fit target_w x target_h in mm.
+    // printpdf's Image renders at 1 px = 1/dpi inch. The default dpi is 300 in printpdf.
+    // We instead use scale_x/scale_y so that w_mm = w_px * 25.4 / 300 * scale_x → scale_x = target_w_mm * 300 / 25.4 / w
+    let dpi = 300.0_f32;
+    let scale_x = target_w_mm * dpi / 25.4 / (w as f32);
+    let scale_y = target_h_mm * dpi / 25.4 / (h as f32);
+    pdf_image.add_to_layer(
+        layer.clone(),
+        ImageTransform {
+            translate_x: Some(Mm(x_mm)),
+            translate_y: Some(Mm(y_mm_from_bottom)),
+            rotate: None,
+            scale_x: Some(scale_x),
+            scale_y: Some(scale_y),
+            dpi: Some(dpi),
+        },
+    );
+    Ok(())
 }
 
 fn parse_color(s: &str) -> Option<printpdf::Rgb> {

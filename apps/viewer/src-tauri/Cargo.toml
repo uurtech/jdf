@@ -22,3 +22,5 @@ pdf-extract = "0.7"
 printpdf = "0.7"
 pulldown-cmark = "0.12"
 libc = "0.2"
+base64 = "0.22"
+image_crate = { package = "image", version = "0.25" }

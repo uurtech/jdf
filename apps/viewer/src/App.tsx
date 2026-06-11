@@ -1,5 +1,5 @@
 import { createSignal, Show, onMount, onCleanup, createMemo } from "solid-js";
-import type { JdfDocument } from "@jdf/core";
+import type { JdfDocument, Element } from "@jdf/core";
 import { DocumentViewer } from "./components/viewer/DocumentViewer";
 import { MarkdownViewer } from "./components/markdown/MarkdownViewer";
 import { JsonViewer } from "./components/json/JsonViewer";
@@ -8,8 +8,19 @@ import { Sidebar } from "./components/shared/Sidebar";
 import { SearchPanel } from "./components/shared/SearchPanel";
 import { WelcomeScreen } from "./components/shared/WelcomeScreen";
 import { HelpOverlay } from "./components/shared/HelpOverlay";
+import { InsertBar } from "./components/shared/InsertBar";
 import { EditContext, type ElementPath } from "./edit/context";
-import { applyFieldUpdate } from "./edit/applyUpdate";
+import {
+  applyFieldUpdate,
+  deleteElement,
+  duplicateElement,
+  moveElement,
+  insertElementAfter,
+  appendElementToPage,
+  insertPageAfter as insertPageAfterMutation,
+  deletePage as deletePageMutation,
+} from "./edit/mutations";
+import { createHistory } from "./edit/history";
 import { importPdfToJdf } from "./import/pdfToJdf";
 
 interface LoadedFile {
@@ -22,11 +33,13 @@ function basename(p: string): string {
   return p.split(/[/\\]/).pop() || p;
 }
 
-const SAVE_DEBOUNCE_MS = 400;
+const SAVE_DEBOUNCE_MS = 150;
 
 export default function App() {
   const [loaded, setLoaded] = createSignal<LoadedFile | null>(null);
-  const [doc, setDoc] = createSignal<JdfDocument | null>(null);
+  const history = createHistory(null);
+  const doc = history.present;
+  const setDoc = history.setPresent;
   const [viewMode, setViewMode] = createSignal<ViewMode>("markdown");
   const [zoom, setZoom] = createSignal(1);
   const [currentPage, setCurrentPage] = createSignal(0);
@@ -39,6 +52,7 @@ export default function App() {
   const [recentFiles, setRecentFiles] = createSignal<string[]>(JSON.parse(localStorage.getItem("jdf-recent") || "[]"));
   const [savingState, setSavingState] = createSignal<"idle" | "saving" | "saved" | "error">("idle");
   const [mdSearchQuery, setMdSearchQuery] = createSignal("");
+  const [dirty, setDirty] = createSignal(false);
 
   let saveTimer: number | undefined;
 
@@ -49,25 +63,15 @@ export default function App() {
     setRecentFiles(files);
     localStorage.setItem("jdf-recent", JSON.stringify(files));
   }
-
   function addToRecent(path: string) {
     const files = recentFiles().filter((f) => f !== path);
     files.unshift(path);
     persistRecent(files.slice(0, 10));
   }
+  function removeFromRecent(path: string) { persistRecent(recentFiles().filter((f) => f !== path)); }
+  function clearRecent() { persistRecent([]); }
 
-  function removeFromRecent(path: string) {
-    persistRecent(recentFiles().filter((f) => f !== path));
-  }
-
-  function clearRecent() {
-    persistRecent([]);
-  }
-
-  function setError5s(msg: string) {
-    setError(msg);
-    setTimeout(() => setError(null), 5000);
-  }
+  function setError5s(msg: string) { setError(msg); setTimeout(() => setError(null), 5000); }
 
   function flashSaved() {
     setSavingState("saved");
@@ -102,17 +106,54 @@ export default function App() {
     saveTimer = window.setTimeout(() => { autoSaveCurrent(); }, SAVE_DEBOUNCE_MS);
   }
 
+  function commit(next: JdfDocument) {
+    history.push(next);
+    if (loaded()?.type === "jdf") scheduleAutoSave();
+    else setDirty(true);
+  }
+
   function updateField(path: ElementPath, field: string, value: unknown) {
     const d = doc();
     if (!d) return;
-    const next = applyFieldUpdate(d, path, field, value);
-    setDoc(next);
-    if (loaded()?.type === "jdf") scheduleAutoSave();
+    commit(applyFieldUpdate(d, path, field, value));
+  }
+  function deleteAt(path: ElementPath) {
+    const d = doc(); if (!d) return; commit(deleteElement(d, path));
+  }
+  function duplicateAt(path: ElementPath) {
+    const d = doc(); if (!d) return; commit(duplicateElement(d, path));
+  }
+  function moveAt(path: ElementPath, direction: -1 | 1) {
+    const d = doc(); if (!d) return; commit(moveElement(d, path, direction));
+  }
+  function insertAfter(path: ElementPath, element: Element) {
+    const d = doc(); if (!d) return; commit(insertElementAfter(d, path, element));
+  }
+  function appendToPage(pageIndex: number, element: Element) {
+    const d = doc(); if (!d) return; commit(appendElementToPage(d, pageIndex, element));
+  }
+  function addPageAfter(pageIndex: number) {
+    const d = doc(); if (!d) return; commit(insertPageAfterMutation(d, pageIndex));
+  }
+  function removePage(pageIndex: number) {
+    const d = doc(); if (!d) return; commit(deletePageMutation(d, pageIndex));
   }
 
-  function commitFullDoc(next: JdfDocument) {
-    setDoc(next);
-    if (loaded()?.type === "jdf") scheduleAutoSave();
+  function commitFullDoc(next: JdfDocument) { commit(next); }
+
+  function performUndo() {
+    const r = history.undo();
+    if (r) {
+      if (loaded()?.type === "jdf") scheduleAutoSave();
+      else setDirty(true);
+    }
+  }
+  function performRedo() {
+    const r = history.redo();
+    if (r) {
+      if (loaded()?.type === "jdf") scheduleAutoSave();
+      else setDirty(true);
+    }
   }
 
   async function loadJdf(path: string) {
@@ -122,10 +163,11 @@ export default function App() {
       const parsed = JSON.parse(content) as JdfDocument;
       if (!parsed.$jdf) throw new Error("Not a JDF document");
       setLoaded({ path, type: "jdf" });
-      setDoc(parsed);
+      history.reset(parsed);
       setViewMode("jdf");
       setCurrentPage(0);
       setSavingState("idle");
+      setDirty(false);
       addToRecent(path);
     } catch (e: any) {
       removeFromRecent(path);
@@ -140,9 +182,10 @@ export default function App() {
       const parsed = await importPdfToJdf(pdfPath, fileName);
       if (parsed?.pages?.length) {
         setLoaded({ path: pdfPath, type: "pdf" });
-        setDoc(parsed);
+        history.reset(parsed);
         setViewMode("jdf");
         setCurrentPage(0);
+        setDirty(false);
         addToRecent(pdfPath);
       } else {
         throw new Error("PDF has no extractable content");
@@ -164,9 +207,10 @@ export default function App() {
       const parsed = await invoke<JdfDocument>("import_markdown", { path });
       if (parsed?.pages) {
         setLoaded({ path, type: "md", rawMarkdown: raw });
-        setDoc(parsed);
+        history.reset(parsed);
         setViewMode("markdown");
         setCurrentPage(0);
+        setDirty(false);
         addToRecent(path);
       }
     } catch (e: any) {
@@ -185,6 +229,15 @@ export default function App() {
     else setError5s(`Unsupported file type: ${filePath}`);
   }
 
+  async function openInNewWindow(filePath?: string) {
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("open_in_new_window", { path: filePath || "" });
+    } catch (e: any) {
+      setError5s(`New window failed: ${e}`);
+    }
+  }
+
   onMount(async () => {
     try {
       const { listen } = await import("@tauri-apps/api/event");
@@ -200,29 +253,50 @@ export default function App() {
       const { getCurrentWindow } = await import("@tauri-apps/api/window");
       const win = getCurrentWindow();
       const unlisten = await win.onCloseRequested(async (e) => {
-        if (saveTimer) {
-          e.preventDefault();
-          await flushPendingSave();
-          await win.destroy();
+        const hasPendingJdfSave = !!saveTimer;
+        const hasUnsavedImport = dirty() && loaded() && loaded()!.type !== "jdf";
+        if (!hasPendingJdfSave && !hasUnsavedImport) return;
+        e.preventDefault();
+        if (hasPendingJdfSave) await flushPendingSave();
+        if (hasUnsavedImport) {
+          const ok = window.confirm(
+            "You have unsaved edits to an imported document.\n\nThe edits live in memory only — closing now will lose them.\n\nClick OK to save them as a .jdf file, Cancel to close without saving."
+          );
+          if (ok) {
+            await saveAsJdf();
+            if (dirty()) return;
+          }
         }
+        await win.destroy();
       });
       onCleanup(() => { unlisten(); });
     } catch {}
   });
 
-  async function closeDocument() {
-    await flushPendingSave();
+  async function closeDocument(): Promise<boolean> {
+    if (loaded()?.type === "jdf") {
+      await flushPendingSave();
+    } else if (dirty() && doc()) {
+      const choice = window.confirm(
+        "You have unsaved edits.\n\nThe document was imported from " +
+        (loaded()?.type?.toUpperCase() || "another format") +
+        ", so changes are not auto-saved.\n\nClick OK to save it as a .jdf file, Cancel to discard your edits."
+      );
+      if (choice) {
+        await saveAsJdf();
+        if (dirty()) return false;
+      }
+    }
     setLoaded(null);
-    setDoc(null);
+    history.reset(null);
     setShowSearch(false);
     setCurrentPage(0);
     setSavingState("idle");
+    setDirty(false);
+    return true;
   }
 
-  function openSearch() {
-    if (!doc()) return;
-    setShowSearch((s) => !s);
-  }
+  function openSearch() { if (!doc()) return; setShowSearch((s) => !s); }
 
   function handleKeyDown(e: KeyboardEvent) {
     const meta = e.metaKey || e.ctrlKey;
@@ -235,7 +309,10 @@ export default function App() {
     }
     if (!inField && !meta && e.key === "?") { e.preventDefault(); setShowHelp((v) => !v); return; }
 
-    if (meta && e.key === "o") { e.preventDefault(); openFile(); }
+    if (meta && e.key === "z" && !e.shiftKey) { e.preventDefault(); performUndo(); }
+    else if (meta && (e.key === "Z" || (e.shiftKey && e.key.toLowerCase() === "z") || e.key === "y")) { e.preventDefault(); performRedo(); }
+    else if (meta && e.key === "n") { e.preventDefault(); openInNewWindow(); }
+    else if (meta && e.key === "o") { e.preventDefault(); openFile(); }
     else if (meta && e.key === "p") { e.preventDefault(); window.print(); }
     else if (meta && e.key === "d") { e.preventDefault(); toggleDark(); }
     else if (meta && e.key.toLowerCase() === "w" && doc()) { e.preventDefault(); closeDocument(); }
@@ -253,11 +330,7 @@ export default function App() {
   }
 
   function toggleDark() {
-    setDarkMode((d) => {
-      const n = !d;
-      localStorage.setItem("jdf-dark", n ? "1" : "0");
-      return n;
-    });
+    setDarkMode((d) => { const n = !d; localStorage.setItem("jdf-dark", n ? "1" : "0"); return n; });
   }
 
   onMount(() => {
@@ -280,9 +353,7 @@ export default function App() {
       if (!result) return;
       const filePath = typeof result === "string" ? result : (result as any).path || String(result);
       openByExtension(filePath);
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
   }
 
   async function saveAsJdf() {
@@ -299,6 +370,8 @@ export default function App() {
         const { invoke } = await import("@tauri-apps/api/core");
         await invoke("save_document", { path: String(path), document: d });
         setLoaded({ ...cur, path: String(path), type: "jdf" });
+        setDirty(false);
+        addToRecent(String(path));
         flashSaved();
       }
     } catch (e: any) {
@@ -326,7 +399,11 @@ export default function App() {
   }
 
   return (
-    <EditContext.Provider value={{ enabled: isEditableFile(), updateField }}>
+    <EditContext.Provider value={{
+      enabled: isEditableFile() || (loaded()?.type !== undefined),
+      updateField, deleteAt, duplicateAt, moveAt, insertAfter, appendToPage,
+      insertPageAfter: addPageAfter, deletePage: removePage,
+    }}>
       <div class={`h-screen flex flex-col relative ${darkMode() ? "dark" : ""} bg-white dark:bg-slate-900`}>
         <Toolbar
           document={doc()}
@@ -334,12 +411,17 @@ export default function App() {
           fileType={loaded()?.type}
           isMarkdown={isMarkdown()}
           isEditableFile={isEditableFile()}
+          dirty={dirty()}
           savingState={savingState()}
           viewMode={viewMode()}
           zoom={zoom()}
           currentPage={currentPage()}
           totalPages={doc()?.pages.length ?? 0}
           darkMode={darkMode()}
+          canUndo={history.canUndo()}
+          canRedo={history.canRedo()}
+          onUndo={performUndo}
+          onRedo={performRedo}
           onZoomIn={() => setZoom((z) => Math.min(z + 0.1, 3))}
           onZoomOut={() => setZoom((z) => Math.max(z - 0.1, 0.25))}
           onZoomReset={() => setZoom(1)}
@@ -353,12 +435,29 @@ export default function App() {
           onToggleDark={toggleDark}
           onToggleHelp={() => setShowHelp((v) => !v)}
           onSetViewMode={setViewMode}
+          onNewWindow={() => openInNewWindow()}
         />
+
+        <Show when={loaded() && doc() && (viewMode() === "jdf")}>
+          <div class="flex justify-center py-2 border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/60">
+            <InsertBar onInsert={(el) => appendToPage(currentPage(), el)} />
+          </div>
+        </Show>
 
         <div class="flex-1 overflow-hidden flex">
           <Show when={loaded() && doc()}>
             <Show when={showSidebar() && viewMode() === "jdf"}>
-              <Sidebar document={doc()!} currentPage={currentPage()} onPageChange={setCurrentPage} />
+              <Sidebar
+                document={doc()!}
+                currentPage={currentPage()}
+                onPageChange={setCurrentPage}
+                onAddPage={() => { addPageAfter(currentPage()); setCurrentPage(currentPage() + 1); }}
+                onDeletePage={(idx) => {
+                  if (doc()!.pages.length <= 1) return;
+                  removePage(idx);
+                  if (currentPage() >= doc()!.pages.length) setCurrentPage(Math.max(0, doc()!.pages.length - 1));
+                }}
+              />
             </Show>
             <div class="flex-1 overflow-hidden">
               <Show when={viewMode() === "json"}>
@@ -368,7 +467,7 @@ export default function App() {
                 <MarkdownViewer content={loaded()!.rawMarkdown!} zoom={zoom()} searchQuery={mdSearchQuery()} />
               </Show>
               <Show when={viewMode() === "jdf" || (viewMode() === "markdown" && loaded()?.rawMarkdown == null)}>
-                <DocumentViewer document={doc()!} zoom={zoom()} currentPage={currentPage()} editable={isEditableFile()} onPageChange={setCurrentPage} />
+                <DocumentViewer document={doc()!} zoom={zoom()} currentPage={currentPage()} editable={true} onPageChange={setCurrentPage} />
               </Show>
             </div>
           </Show>

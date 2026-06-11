@@ -159,19 +159,29 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
         opacity: isFill ? gs.fillAlpha : gs.strokeAlpha,
       });
     } else if (pathSegments.length === 2 && pathSegments[0].type === "M" && pathSegments[1].type === "L") {
+      // Emit lines as paths so direction (e.g. top-right→bottom-left) is preserved.
       const a = pathSegments[0].pts;
       const b = pathSegments[1].pts;
       const va = toViewport(a[0], a[1]);
       const vb = toViewport(b[0], b[1]);
+      const minX = Math.min(va.x, vb.x);
+      const minY = Math.min(va.y, vb.y);
+      const maxX = Math.max(va.x, vb.x);
+      const maxY = Math.max(va.y, vb.y);
+      const x1Local = (va.x - minX) * PT_TO_MM;
+      const y1Local = (va.y - minY) * PT_TO_MM;
+      const x2Local = (vb.x - minX) * PT_TO_MM;
+      const y2Local = (vb.y - minY) * PT_TO_MM;
       shapes.push({
-        kind: "line",
-        x: Math.min(va.x, vb.x) * PT_TO_MM,
-        y: Math.min(va.y, vb.y) * PT_TO_MM,
-        width: Math.abs(vb.x - va.x) * PT_TO_MM,
-        height: Math.abs(vb.y - va.y) * PT_TO_MM,
+        kind: "path",
+        x: minX * PT_TO_MM,
+        y: minY * PT_TO_MM,
+        width: Math.max(0.05, (maxX - minX) * PT_TO_MM),
+        height: Math.max(0.05, (maxY - minY) * PT_TO_MM),
         stroke: isStroke ? gs.stroke : undefined,
         strokeWidth: isStroke ? gs.lineWidth * PT_TO_MM : undefined,
         opacity: gs.strokeAlpha,
+        path: `M ${x1Local.toFixed(2)} ${y1Local.toFixed(2)} L ${x2Local.toFixed(2)} ${y2Local.toFixed(2)}`,
       });
     } else if (pathSegments.length > 0) {
       // Convert all path points to viewport space first
@@ -566,22 +576,36 @@ export async function importPdfToJdf(source: Uint8Array | ArrayBuffer | string, 
       });
     });
 
+    // Sort by line (y-bucket), then x. Use a small tolerance bucket so near-equal baselines line up.
     runs.sort((a, b) => (a.y - b.y) || (a.x - b.x));
+
+    // Merge adjacent runs on the same line only when they share font + color AND the gap between
+    // them is small enough that they form a single visual word/phrase. Otherwise keep them separate.
+    // This preserves *whitespace* inside the PDF: a wide gap between columns or words stays as
+    // two distinct text elements at their real x positions.
     const lines: TextRun[] = [];
-    const Y_TOL = 1.0;
+    const Y_TOL = 0.6;
     for (const r of runs) {
+      if (!r.text.length) continue;
       const last = lines[lines.length - 1];
-      if (
-        last &&
-        Math.abs(last.y - r.y) <= Y_TOL &&
-        Math.abs(last.fontSize - r.fontSize) < 0.6 &&
+      if (!last) { lines.push({ ...r }); continue; }
+      const sameLine = Math.abs(last.y - r.y) <= Y_TOL;
+      const sameStyle =
+        Math.abs(last.fontSize - r.fontSize) < 0.4 &&
         last.fontName === r.fontName &&
         last.color === r.color &&
-        Math.abs(last.opacity - r.opacity) < 0.05 &&
-        r.x - (last.x + last.width) < r.fontSize * PT_TO_MM * 1.5
-      ) {
-        const gapPt = (r.x - (last.x + last.width)) / PT_TO_MM;
-        const sep = gapPt > 1.0 || !last.text.endsWith(" ") ? " " : "";
+        Math.abs(last.opacity - r.opacity) < 0.05;
+      const gapMm = r.x - (last.x + last.width);
+      // Allowed merge gap: ~0.4 of an em (in mm). Beyond that, treat as separate text element.
+      const emMm = r.fontSize * PT_TO_MM;
+      const mergeOk = sameLine && sameStyle && gapMm >= -0.2 && gapMm <= emMm * 0.45;
+
+      if (mergeOk) {
+        // Determine separator: if last already ends with a space, or current starts with one,
+        // don't add another. Otherwise, if there's a real gap, add a single space.
+        const lastEndsSpace = /\s$/.test(last.text);
+        const currStartsSpace = /^\s/.test(r.text);
+        const sep = (gapMm > emMm * 0.08 && !lastEndsSpace && !currStartsSpace) ? " " : "";
         last.text = last.text + sep + r.text;
         last.width = (r.x - last.x) + r.width;
       } else {
@@ -661,11 +685,15 @@ export async function importPdfToJdf(source: Uint8Array | ArrayBuffer | string, 
 
       const link = findLinkForRun(l);
 
+      // Use the run's measured width plus a small padding for layout robustness; clamp to page.
+      const pageWmm = pageW * PT_TO_MM;
+      const measured = Math.max(l.width + l.fontSize * PT_TO_MM * 0.4, l.fontSize * PT_TO_MM);
+      const elWidth = Math.min(measured, pageWmm - l.x);
       const text: TextElement = {
         type: "text",
-        content: l.text.trim(),
+        content: l.text,
         position: { x: Math.max(0, Math.round(l.x * 100) / 100), y: Math.max(0, Math.round(l.y * 100) / 100) },
-        width: Math.max(20, Math.round((pageW * PT_TO_MM - l.x) * 100) / 100),
+        width: Math.max(2, Math.round(elWidth * 100) / 100),
         style,
       };
       if (l.fontSize >= 22) text.heading = 1;

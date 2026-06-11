@@ -1,7 +1,7 @@
 mod commands;
 
 use std::sync::Mutex;
-use tauri::{Emitter, Manager, RunEvent};
+use tauri::{Emitter, Manager, RunEvent, WebviewUrl, WebviewWindowBuilder};
 
 #[derive(Default)]
 struct PendingFile(Mutex<Option<String>>);
@@ -13,6 +13,40 @@ fn try_emit_open(handle: &tauri::AppHandle, path: &str) -> bool {
     } else {
         false
     }
+}
+
+#[tauri::command]
+fn open_in_new_window(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    // Generate a unique label
+    let label = format!("win-{}", std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0));
+
+    let window = WebviewWindowBuilder::new(
+        &app,
+        &label,
+        WebviewUrl::App("index.html".into()),
+    )
+    .title("JDF Viewer")
+    .inner_size(1200.0, 800.0)
+    .min_inner_size(800.0, 600.0)
+    .build()
+    .map_err(|e| format!("{}", e))?;
+
+    if !path.is_empty() {
+        let path_clone = path.clone();
+        let win = window.clone();
+        tauri::async_runtime::spawn(async move {
+            for _ in 0..40 {
+                tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+                if win.emit("open-file", path_clone.clone()).is_ok() {
+                    break;
+                }
+            }
+        });
+    }
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -29,9 +63,9 @@ pub fn run() {
             commands::import_pdf,
             commands::import_markdown,
             commands::export_pdf,
+            open_in_new_window,
         ])
         .setup(|app| {
-            // Handle file path passed as the first CLI arg (Finder "Open With…", `open file.jdf`)
             let args: Vec<String> = std::env::args().collect();
             if let Some(file_path) = args.get(1) {
                 let lower = file_path.to_lowercase();
@@ -41,7 +75,6 @@ pub fn run() {
                     *pending.0.lock().unwrap() = Some(path.clone());
                     let handle = app.handle().clone();
                     tauri::async_runtime::spawn(async move {
-                        // Wait until the webview is ready, then emit
                         for _ in 0..40 {
                             tokio::time::sleep(std::time::Duration::from_millis(150)).await;
                             if try_emit_open(&handle, &path) {
@@ -60,7 +93,6 @@ pub fn run() {
         .expect("error while building tauri application");
 
     app.run(|app_handle, event| {
-        // macOS only: double-clicking a file in Finder fires Opened with the path
         #[cfg(target_os = "macos")]
         if let RunEvent::Opened { urls } = &event {
             for url in urls {
