@@ -1,6 +1,5 @@
 import { For, Show, createMemo, createSignal } from "solid-js";
 import type { JdfDocument } from "@jdf/core";
-import { ContextMenu, type MenuItem } from "./ContextMenu";
 
 interface SidebarProps {
   document: JdfDocument;
@@ -39,43 +38,35 @@ function previewForPage(page: JdfDocument["pages"][number], pageW: number, pageH
 }
 
 export function Sidebar(props: SidebarProps) {
-  const [menu, setMenu] = createSignal<{ x: number; y: number; pageIdx: number } | null>(null);
+  const [hoverIdx, setHoverIdx] = createSignal<number | null>(null);
   const previews = createMemo(() => {
     const pageW = 166, pageH = 247;
     return props.document.pages.map((p) => previewForPage(p, pageW, pageH));
   });
-
-  function pageMenuItems(idx: number): MenuItem[] {
-    return [
-      { label: "Insert page below", onClick: () => props.onAddPage?.() },
-      { separator: true, label: "" },
-      {
-        label: "Delete page",
-        danger: true,
-        disabled: props.document.pages.length <= 1,
-        onClick: () => props.onDeletePage?.(idx),
-      },
-    ];
-  }
+  const canDelete = () => props.document.pages.length > 1 && !!props.onDeletePage;
 
   return (
-    <>
-      <aside class="w-44 bg-gray-50 dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 overflow-y-auto shrink-0 transition-colors">
-        <div class="flex items-center justify-between px-2 py-2">
-          <span class="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-semibold">
-            Pages · {props.document.pages.length}
-          </span>
-          <Show when={props.onAddPage}>
-            <button
-              onClick={() => props.onAddPage!()}
-              class="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-              title="Add page"
-            >+</button>
-          </Show>
-        </div>
-        <div class="p-2 space-y-2">
-          <For each={props.document.pages}>
-            {(page, index) => (
+    <aside class="w-44 bg-gray-50 dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 overflow-y-auto shrink-0 transition-colors">
+      <div class="flex items-center justify-between px-2 py-2">
+        <span class="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-semibold">
+          Pages · {props.document.pages.length}
+        </span>
+        <Show when={props.onAddPage}>
+          <button
+            onClick={() => props.onAddPage!()}
+            class="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+            title="Add page"
+          >+</button>
+        </Show>
+      </div>
+      <div class="p-2 space-y-2">
+        <For each={props.document.pages}>
+          {(page, index) => (
+            <div
+              class="relative group"
+              onMouseEnter={() => setHoverIdx(index())}
+              onMouseLeave={() => setHoverIdx((v) => (v === index() ? null : v))}
+            >
               <button
                 class={`w-full rounded-md border-2 transition-all overflow-hidden block ${
                   index() === props.currentPage
@@ -83,7 +74,6 @@ export function Sidebar(props: SidebarProps) {
                     : "border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600"
                 }`}
                 onClick={() => props.onPageChange(index())}
-                onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, pageIdx: index() }); }}
               >
                 <div
                   class="w-full aspect-[210/297] relative overflow-hidden"
@@ -110,18 +100,19 @@ export function Sidebar(props: SidebarProps) {
                   {index() + 1}
                 </div>
               </button>
-            )}
-          </For>
-        </div>
-      </aside>
-      <Show when={menu()}>
-        <ContextMenu
-          x={menu()!.x}
-          y={menu()!.y}
-          items={pageMenuItems(menu()!.pageIdx)}
-          onClose={() => setMenu(null)}
-        />
-      </Show>
-    </>
+              <Show when={hoverIdx() === index() && canDelete()}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); props.onDeletePage!(index()); }}
+                  class="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-[10px] shadow-md"
+                  title="Delete page"
+                >
+                  ×
+                </button>
+              </Show>
+            </div>
+          )}
+        </For>
+      </div>
+    </aside>
   );
 }
