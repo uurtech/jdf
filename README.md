@@ -15,12 +15,15 @@ It's JSON. Every consequence below falls out of that:
 
 ## Install
 
-macOS:
+macOS, no extra repo needed:
 
 ```bash
-brew tap uurtech/jdf
-brew install --cask jdf-viewer
+brew install --cask https://raw.githubusercontent.com/uurtech/jdf/master/Casks/jdf-viewer.rb
 ```
+
+That's it — `brew` reads the Cask straight from this repo, downloads the `.dmg` from the GitHub release, and installs `JDF Viewer.app` into `/Applications`.
+
+To upgrade later, run the same command again.
 
 Or build from source:
 
@@ -50,7 +53,7 @@ Or flip to **JSON view** in the toolbar and edit the JSON directly. Both paths l
 **Import**
 
 - `.md` — opens with native Markdown render (continuous scroll), or toggle to paged JDF view. Full GFM.
-- `.pdf` — text extraction via `pdf-extract`. Best-effort heading/list detection. Image and table extraction not yet supported.
+- `.pdf` — full-fidelity import via PDF.js. Every text run keeps its **position** (mm), **font family**, **size**, **weight**, **style**, **color**. Embedded raster images are extracted, base64'd into `resources.images`, and placed at their original position/size. Background rectangles, lines, and stroked paths land as `shape` elements with their fill/stroke colors. Heading levels are inferred from font size. The result opens identical to the PDF and is fully editable.
 
 **Export**
 
@@ -140,8 +143,8 @@ What's there:
 
 What's not (yet):
 - Insert / delete / reorder elements visually.
-- Image and table extraction from PDF.
-- Image embed in PDF export.
+- PDF table detection (cells come in as separate text elements).
+- Image embed in PDF export (the importer extracts images; the exporter doesn't yet write them back).
 - Multi-page overflow on PDF export.
 - Undo/redo.
 - Multiple windows.

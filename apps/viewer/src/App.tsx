@@ -10,6 +10,7 @@ import { WelcomeScreen } from "./components/shared/WelcomeScreen";
 import { HelpOverlay } from "./components/shared/HelpOverlay";
 import { EditContext, type ElementPath } from "./edit/context";
 import { applyFieldUpdate } from "./edit/applyUpdate";
+import { importPdfToJdf } from "./import/pdfToJdf";
 
 interface LoadedFile {
   path: string;
@@ -135,14 +136,16 @@ export default function App() {
   async function importPdfFile(pdfPath: string) {
     setImporting(true);
     try {
-      const { invoke } = await import("@tauri-apps/api/core");
-      const parsed = await invoke<JdfDocument>("import_pdf", { path: pdfPath });
-      if (parsed?.pages) {
+      const fileName = basename(pdfPath).replace(/\.pdf$/i, "");
+      const parsed = await importPdfToJdf(pdfPath, fileName);
+      if (parsed?.pages?.length) {
         setLoaded({ path: pdfPath, type: "pdf" });
         setDoc(parsed);
         setViewMode("jdf");
         setCurrentPage(0);
         addToRecent(pdfPath);
+      } else {
+        throw new Error("PDF has no extractable content");
       }
     } catch (e: any) {
       removeFromRecent(pdfPath);
