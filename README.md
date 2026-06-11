@@ -6,20 +6,19 @@ JDF is a modern document format based on JSON. It renders like PDF but you can r
 
 ---
 
-## Why does JDF matter?
+## Why JDF
 
-Every PDF you've ever touched has the same problems. Adobe knew this in 1993, and the format hasn't moved on. Meanwhile every other format we use daily — code, configs, prose — has gone the opposite direction: text-based, diffable, scriptable, free to edit.
+JDF is just JSON. That's the whole point — every concrete benefit below falls out of that one fact.
 
-JDF is what happens when documents finally catch up:
-
-- **Documents are not artifacts. They are state.** A contract, an invoice, a whitepaper — these change. PDF treats every change as a re-print job. JDF treats them like code: a `git diff` shows you exactly which clause moved, which figure got a typo fix, which row changed. Reviewing a 30-page proposal becomes reviewing 12 lines of JSON.
-- **Authoring should be free.** Adobe Acrobat costs $240/year. The smallest "fix this typo" task currently requires either that subscription, a roundtrip through a Word file, or some janky online converter you don't trust with your data. JDF opens in any text editor on the planet. The viewer is open source and 10 MB.
-- **Generating documents should be one line of code.** PDF generation involves byte streams, fonts encoded as Type 1 dictionaries, cross-reference tables, and at least one library that hasn't been updated since 2017. JDF is `JSON.stringify(doc)`. Your invoice service can be a 30-line script.
-- **Reading should not require a runtime.** A binary PDF tells you nothing without a parser. A JDF tells you everything: open it, read it, grep it, search it with `jq`. Documents become first-class data again.
-- **Trust comes from transparency.** When you sign a PDF, you're trusting the renderer. Tampering, hidden layers, fonts that don't exist on your machine — all invisible. With JDF the *entire* document is human-auditable. There's no "extra layer".
-- **Documents should outlive their software.** A `.jdf` from today will still open in 50 years, the same way a `.txt` from 1975 still opens. JSON has no proprietary owner. PDF technically doesn't either, but in practice "renders correctly" depends on Adobe's evolving Reader.
-
-That's the bet: documents should be code-shaped — readable, editable, diffable, scriptable, and yours.
+- **It's JSON, so every tool already works.** `cat`, `grep`, `jq`, `ripgrep`, VS Code, every IDE plugin, every linter, every diff tool. No new ecosystem, no new file format learning curve. You already know how to work with a JDF file before you've ever opened one.
+- **It's JSON, so `git diff` is real.** Change one heading, the diff is one line. Renumber a table, the diff is the cells you actually changed. Code review on documents finally works the same way as code review on code.
+- **It's JSON, so generating one is `JSON.stringify(doc)`.** Build a doc from a database query, a template, a script, a CI job — whatever produces an object produces a JDF. No PDF library, no encoding rules, no font dictionaries.
+- **It's JSON, so it has a JSON Schema.** Autocomplete in your editor. CLI validation in CI. Type-safe generation. The format polices itself.
+- **It's JSON, so search is text search.** `grep "TODO" *.jdf`, `jq '.pages[].elements[] | select(.type == "table")'`. Documents become queryable like any other data.
+- **Open it anywhere.** A `.jdf` opens in VS Code (you see clean, syntax-highlighted JSON), in JDF Viewer (you see a rendered page), in `cat` (you see the source), in `python -m json.tool` (you see it pretty-printed). Same file, every tool, no plugins.
+- **Edit it anywhere.** Open `.jdf` in JDF Viewer and double-click — it edits and auto-saves. Open it in VS Code and change a value — same document, same result. Both paths land at the same JSON on disk.
+- **Round-trip is lossless.** What you save is exactly what you wrote. No re-encoding, no font subsetting, no compression streams. The JSON you commit is the JSON you read back.
+- **Future-proof by default.** JSON has no vendor. The format has no proprietary parser to outlive. The `.jdf` you write today opens the same way in any year, in any tool that can read JSON — which is all of them.
 
 ---
 
