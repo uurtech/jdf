@@ -15,20 +15,14 @@ It's JSON. Every consequence below falls out of that:
 
 ## Install
 
-macOS — one command:
-
-```bash
-brew install uurtech/jdf/jdf
-```
-
-Or two commands if you'd rather tap first:
+macOS:
 
 ```bash
 brew tap uurtech/jdf
 brew install jdf
 ```
 
-Either way, `brew` clones the tap, downloads the latest `.dmg` from the GitHub release, and installs `JDF Reader.app` into `/Applications`.
+`brew` clones the tap, downloads the latest `.dmg` from the GitHub release, and installs `JDF Reader.app` into `/Applications`.
 
 Upgrade later:
 
@@ -36,7 +30,7 @@ Upgrade later:
 brew upgrade --cask jdf
 ```
 
-The Cask formula lives in a tiny separate tap repo: [`uurtech/homebrew-jdf/Casks/jdf.rb`](https://github.com/uurtech/homebrew-jdf/blob/main/Casks/jdf.rb). A copy is also kept in this repo at [`Casks/jdf-reader.rb`](Casks/jdf-reader.rb) for reference.
+The Cask formula lives in a separate tap repo: [`uurtech/homebrew-jdf/Casks/jdf.rb`](https://github.com/uurtech/homebrew-jdf/blob/main/Casks/jdf.rb). A reference copy is also kept in this repo at [`Casks/jdf.rb`](Casks/jdf.rb).
 
 Build from source:
 
