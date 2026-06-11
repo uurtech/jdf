@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JDF — JSON Document Format</title>
-  <meta name="description" content="A document format that's just JSON. Renders like PDF, edits like code, diffs like text. Open source, MIT, made by Ugur Kazdal." />
+  <title>JDF — Documents that read like PDFs, edit like code</title>
+  <meta name="description" content="JDF is a JSON-based document format. Renders like PDF, diffs in git, edits in any text editor. Desktop Reader, web embed (jdfjs), CLI. MIT. By Ugur Kazdal." />
   <meta name="theme-color" content="#1d4ed8" />
 
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="JDF — JSON Document Format" />
-  <meta property="og:description" content="A document format that's just JSON. Renders like PDF, edits like code, diffs like text." />
+  <meta property="og:title" content="JDF — Documents that read like PDFs, edit like code" />
+  <meta property="og:description" content="JDF is a JSON-based document format. Renders like PDF, diffs in git, embeds anywhere with <jdf src=...>." />
   <meta property="og:url" content="https://uurtech.github.io/jdf/" />
   <meta property="og:image" content="https://uurtech.github.io/jdf/og.png" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -20,6 +20,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/jdfjs/dist/jdfjs.css" />
+  <script type="module" src="https://unpkg.com/jdfjs"></script>
 </head>
 <body>
   <header class="nav">
@@ -39,6 +41,7 @@
     <nav class="nav-links">
       <a href="#why">Why</a>
       <a href="#features">Features</a>
+      <a href="#embed">Embed</a>
       <a href="#format">Format</a>
       <a href="#install">Install</a>
       <a href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">GitHub →</a>
@@ -59,9 +62,9 @@
           <text x="512" y="512" font-family="Inter, sans-serif" font-size="380" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text>
         </svg>
       </div>
-      <h1>A document format that's just JSON.</h1>
+      <h1>Documents that <span class="grad">read like PDFs</span>,<br>edit like code.</h1>
       <p class="lead">
-        Renders like PDF. Edits like code. Diffs like text. Open <code>.jdf</code> in any editor — clean, syntax-highlighted source. Open it in JDF Reader — a beautifully rendered, fully editable page. Edit either side, the other follows.
+        JDF is a document format built on JSON. Renders like PDF. Diffs in <code>git</code>. Edits in any text editor. Embeds anywhere with <code>&lt;jdf src="..."&gt;</code>. The desktop reader reads it. <code>jdfjs</code> shows it on the web. One file, every tool already knows it.
       </p>
 
       <div class="cta">
@@ -237,6 +240,34 @@ brew install jdf">
       </div>
     </section>
 
+    <section id="embed" class="embed">
+      <h2>Embed on the web — <code class="kbd-tag">jdfjs</code></h2>
+      <p class="section-lead">A small JavaScript library that turns any <code>.jdf</code> URL into a fully styled, scrollable, searchable embed. Like PDF.js, but the file is JSON.</p>
+
+      <div class="embed-demo-grid">
+        <div class="embed-snippet">
+          <div class="embed-snippet-tab">3-line drop-in</div>
+<pre class="embed-pre"><code><span class="punc">&lt;</span><span class="key">link</span> <span class="key">rel</span><span class="punc">=</span><span class="str">"stylesheet"</span>
+      <span class="key">href</span><span class="punc">=</span><span class="str">"https://unpkg.com/jdfjs/dist/jdfjs.css"</span><span class="punc">&gt;</span>
+<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span>
+        <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/jdfjs"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
+
+<span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"/whitepaper.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+        </div>
+
+        <div class="embed-live">
+          <div class="embed-live-label">Live demo ↓ (this is a real <code>&lt;jdf&gt;</code> tag)</div>
+          <jdf src="examples/hello-world.jdf" data-jdf-zoom="0.7"></jdf>
+        </div>
+      </div>
+
+      <p class="embed-foot">
+        <a class="btn-secondary" href="docs/embed/">
+          Read the full embed documentation →
+        </a>
+      </p>
+    </section>
+
     <section id="format" class="format">
       <h2>Format</h2>
       <p class="section-lead">Every JDF document has these top-level fields:</p>
@@ -262,10 +293,15 @@ brew install jdf">
       <h2>Install</h2>
       <div class="install-grid">
         <div class="install-card">
-          <h3>macOS</h3>
+          <h3>Desktop · macOS</h3>
           <pre><code>brew tap uurtech/jdf
 brew install jdf</code></pre>
           <p class="install-note">Upgrade later with <code>brew upgrade --cask jdf</code>.</p>
+        </div>
+        <div class="install-card">
+          <h3>Web embed · npm</h3>
+          <pre><code>npm install jdfjs</code></pre>
+          <p class="install-note">Or via CDN: <code>&lt;script type="module" src="https://unpkg.com/jdfjs"&gt;&lt;/script&gt;</code> — see <a href="#embed">Embed</a> above.</p>
         </div>
         <div class="install-card">
           <h3>Linux / Windows</h3>

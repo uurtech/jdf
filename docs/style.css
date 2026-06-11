@@ -157,12 +157,20 @@ main { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
 }
 
 .hero h1 {
-  font-size: clamp(36px, 6vw, 64px);
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.025em;
+  font-size: clamp(36px, 6vw, 68px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
   margin: 0 auto 24px;
-  max-width: 18ch;
+  max-width: 22ch;
+}
+
+.hero h1 .grad {
+  background: linear-gradient(120deg, #3b82f6 10%, #1d4ed8 50%, #6366f1 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  white-space: nowrap;
 }
 
 .lead {

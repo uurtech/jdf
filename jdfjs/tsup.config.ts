@@ -1,4 +1,6 @@
 import { defineConfig } from "tsup";
+import { copyFileSync, mkdirSync } from "node:fs";
+import { resolve } from "node:path";
 
 export default defineConfig({
   entry: ["src/index.ts"],
@@ -10,15 +12,11 @@ export default defineConfig({
   minify: false,
   splitting: false,
   treeshake: true,
-  outExtension: ({ format }) => ({ js: format === "cjs" ? ".cjs" : ".js" }),
-  // Bundle workspace `@jdf/core` types/source so consumers don't need it
   noExternal: ["@jdf/core"],
-  // Inject the CSS as a separate file alongside the JS
-  injectStyle: false,
-  loader: { ".css": "copy" },
   globalName: "JDFjs",
-  outExtension: ({ format }) => {
-    if (format === "cjs") return { js: ".cjs" };
-    return { js: ".js" };
+  outExtension: ({ format }) => (format === "cjs" ? { js: ".cjs" } : { js: ".js" }),
+  onSuccess: async () => {
+    mkdirSync(resolve("dist"), { recursive: true });
+    copyFileSync(resolve("src/jdfjs.css"), resolve("dist/jdfjs.css"));
   },
 });

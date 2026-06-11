@@ -1,0 +1,57 @@
+{
+  "$jdf": "1.0.0",
+  "meta": {
+    "title": "Invoice INV-2026-014",
+    "author": "Acme Inc.",
+    "pageSize": "A4",
+    "unit": "mm"
+  },
+  "styles": {
+    "h1": { "fontFamily": "Inter", "fontSize": 28, "fontWeight": "bold", "color": "#0f172a" },
+    "label": { "fontFamily": "Inter", "fontSize": 9, "fontWeight": "bold", "color": "#94a3b8", "letterSpacing": 1 },
+    "body": { "fontFamily": "Inter", "fontSize": 10, "lineHeight": 1.6, "color": "#334155" },
+    "money": { "fontFamily": "JetBrains Mono", "fontSize": 11, "color": "#0f172a" }
+  },
+  "pages": [
+    {
+      "id": "page-1",
+      "elements": [
+        { "type": "text", "content": "INVOICE", "heading": 1, "style": "h1", "position": { "x": 0, "y": 5 }, "width": 166 },
+        { "type": "text", "content": "INV-2026-014   ·   2026-06-11", "style": "body", "position": { "x": 0, "y": 22 }, "width": 166 },
+        { "type": "shape", "shape": "rect", "fill": "#2563eb", "position": { "x": 0, "y": 32 }, "width": 30, "height": 0.6 },
+
+        { "type": "text", "content": "BILL FROM", "style": "label", "position": { "x": 0, "y": 42 }, "width": 80 },
+        { "type": "text", "content": "Acme Inc.\n123 Industrial Blvd\nIstanbul, 34000\nturkiye", "style": "body", "position": { "x": 0, "y": 48 }, "width": 80 },
+
+        { "type": "text", "content": "BILL TO", "style": "label", "position": { "x": 90, "y": 42 }, "width": 80 },
+        { "type": "text", "content": "Globex Corp.\n456 Tech Park\nBerlin, 10115\nGermany", "style": "body", "position": { "x": 90, "y": 48 }, "width": 80 },
+
+        { "type": "table", "position": { "x": 0, "y": 90 }, "width": 166,
+          "headers": ["Description", "Qty", "Unit", "Total"],
+          "borders": { "outer": true, "inner": true, "color": "#e2e8f0", "width": 0.3 },
+          "alternatingRowColor": "#f8fafc",
+          "headerStyle": { "backgroundColor": "#f1f5f9", "fontWeight": "bold", "fontSize": 10, "color": "#0f172a" },
+          "columns": [
+            { "align": "left" }, { "align": "right" }, { "align": "right" }, { "align": "right" }
+          ],
+          "rows": [
+            ["Engineering consulting (Q2)", "40", "$120.00", "$4,800.00"],
+            ["Design system audit", "1", "$1,500.00", "$1,500.00"],
+            ["Quarterly retainer (June)", "1", "$2,000.00", "$2,000.00"],
+            ["Travel & expenses", "1", "$340.50", "$340.50"]
+          ]
+        },
+
+        { "type": "shape", "shape": "rect", "fill": "#f1f5f9", "position": { "x": 96, "y": 145 }, "width": 70, "height": 28, "borderRadius": 4 },
+        { "type": "text", "content": "Subtotal", "style": "body", "position": { "x": 100, "y": 149 }, "width": 35 },
+        { "type": "text", "content": "$8,640.50", "style": "money", "position": { "x": 138, "y": 149 }, "width": 28, "align": "right" },
+        { "type": "text", "content": "Tax (18%)", "style": "body", "position": { "x": 100, "y": 156 }, "width": 35 },
+        { "type": "text", "content": "$1,555.29", "style": "money", "position": { "x": 138, "y": 156 }, "width": 28, "align": "right" },
+        { "type": "text", "content": "Total", "style": { "fontFamily": "Inter", "fontSize": 12, "fontWeight": "bold", "color": "#0f172a" }, "position": { "x": 100, "y": 165 }, "width": 35 },
+        { "type": "text", "content": "$10,195.79", "style": { "fontFamily": "JetBrains Mono", "fontSize": 13, "fontWeight": "bold", "color": "#2563eb" }, "position": { "x": 132, "y": 165 }, "width": 34, "align": "right" },
+
+        { "type": "text", "content": "Payment due in 30 days. Wire transfer to IBAN TR00 0000 0000 0000 0000 0000 00.", "style": { "fontFamily": "Inter", "fontSize": 9, "color": "#64748b", "fontStyle": "italic" }, "position": { "x": 0, "y": 200 }, "width": 166 }
+      ]
+    }
+  ]
+}

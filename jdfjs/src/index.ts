@@ -1,19 +1,19 @@
 /**
  * jdfjs — render JDF (JSON Document Format) documents in the browser.
  *
- * Quick start:
+ * Drop-in usage (auto-init):
  *   <link rel="stylesheet" href="https://unpkg.com/jdfjs/dist/jdfjs.css">
- *   <script type="module">
- *     import { embed } from "https://unpkg.com/jdfjs";
- *     embed("#viewer", "https://example.com/whitepaper.jdf");
- *   </script>
+ *   <script type="module" src="https://unpkg.com/jdfjs"></script>
+ *   <jdf src="/whitepaper.jdf"></jdf>
  *
  * Programmatic:
- *   import { render } from "jdfjs";
- *   const doc = await fetch("doc.jdf").then(r => r.json());
- *   render(document.querySelector("#viewer"), doc, { zoom: 1.2 });
+ *   import { embed, render } from "jdfjs";
+ *   await embed("#viewer", "/doc.jdf", { zoom: 1.2 });
  */
 
+import "./auto-init";
+
 export { embed, render, JDFViewer } from "./viewer";
+export { scanForJdfElements } from "./auto-init";
 export type { JDFViewerOptions, JDFViewerInstance } from "./viewer";
 export type { JdfDocument, Element, Page } from "@jdf/core";
