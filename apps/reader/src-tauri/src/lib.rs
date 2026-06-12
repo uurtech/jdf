@@ -15,6 +15,14 @@ fn try_emit_open(handle: &tauri::AppHandle, path: &str) -> bool {
     }
 }
 
+/// Frontend calls this on mount; we hand back any path that was queued
+/// (e.g. from `open file.jdf` on the CLI or a Finder double-click) and clear
+/// the slot so it isn't replayed on a future mount.
+#[tauri::command]
+fn consume_pending_file(state: tauri::State<'_, PendingFile>) -> Option<String> {
+    state.0.lock().ok().and_then(|mut g| g.take())
+}
+
 #[tauri::command]
 fn open_in_new_window(app: tauri::AppHandle, path: String) -> Result<(), String> {
     // Generate a unique label
@@ -64,6 +72,7 @@ pub fn run() {
             commands::import_markdown,
             commands::export_pdf,
             open_in_new_window,
+            consume_pending_file,
         ])
         .setup(|app| {
             let args: Vec<String> = std::env::args().collect();

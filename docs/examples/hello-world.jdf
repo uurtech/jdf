@@ -1,81 +1,231 @@
 {
   "$jdf": "1.0.0",
+  "footer": {
+    "content": "{{title}}  ·  page {{pageNumber}} of {{totalPages}}",
+    "style": "muted"
+  },
   "meta": {
-    "title": "Hello, JDF",
     "author": "Ugur Kazdal",
     "language": "en",
+    "margins": {
+      "bottom": 25,
+      "left": 22,
+      "right": 22,
+      "top": 25
+    },
     "pageSize": "A4",
-    "unit": "mm",
-    "margins": { "top": 25, "right": 22, "bottom": 25, "left": 22 }
-  },
-  "styles": {
-    "h1": { "fontFamily": "Inter", "fontSize": 26, "fontWeight": "bold", "color": "#0f172a" },
-    "h2": { "fontFamily": "Inter", "fontSize": 16, "fontWeight": "bold", "color": "#1e293b" },
-    "body": { "fontFamily": "Inter", "fontSize": 11, "lineHeight": 1.6, "color": "#334155" },
-    "muted": { "fontFamily": "Inter", "fontSize": 10, "color": "#64748b" },
-    "code": { "fontFamily": "JetBrains Mono", "fontSize": 9, "color": "#1e293b", "backgroundColor": "#f1f5f9", "padding": 8, "borderRadius": 4 }
-  },
-  "footer": {
-    "content": "{{title}} — page {{pageNumber}} of {{totalPages}}",
-    "style": "muted"
+    "title": "Hello, JDF",
+    "unit": "mm"
   },
   "pages": [
     {
-      "id": "page-1",
       "elements": [
-        { "type": "text", "content": "Hello, JDF", "heading": 1, "tocEntry": "Hello, JDF", "tocLevel": 1, "style": "h1", "position": { "x": 0, "y": 4 }, "width": 166 },
-        { "type": "text", "content": "A modern alternative to PDF — built on plain JSON.", "style": "muted", "position": { "x": 0, "y": 22 }, "width": 166 },
-        { "type": "shape", "shape": "rect", "fill": "#2563eb", "position": { "x": 0, "y": 32 }, "width": 30, "height": 0.6 },
-
-        { "type": "text", "content": "Why JDF?", "heading": 2, "tocEntry": "Why JDF?", "tocLevel": 2, "style": "h2", "position": { "x": 0, "y": 42 }, "width": 166 },
-        { "type": "richtext", "position": { "x": 0, "y": 56 }, "width": 166, "style": "body", "runs": [
-          { "text": "JDF files are " },
-          { "text": "human-readable", "bold": true },
-          { "text": ", " },
-          { "text": "git-friendly", "bold": true },
-          { "text": ", and produced with a single " },
-          { "text": "JSON.stringify()", "fontFamily": "JetBrains Mono", "color": "#be185d" },
-          { "text": " call. No proprietary tools, no binary blobs." }
-        ]},
-
-        { "type": "list", "listType": "unordered", "position": { "x": 0, "y": 78 }, "width": 166, "style": "body", "items": [
-          { "content": "Open in any text editor — diff, edit, commit." },
-          { "content": "Render in JDF Viewer — beautiful pages, search, TOC." },
-          { "content": "Export to PDF when you need to share." }
-        ]},
-
-        { "type": "text", "content": "Features", "heading": 2, "tocEntry": "Features", "tocLevel": 2, "style": "h2", "position": { "x": 0, "y": 110 }, "width": 166 },
-
-        { "type": "table", "position": { "x": 0, "y": 124 }, "width": 166, "headers": ["Capability", "PDF", "JDF"],
-          "borders": { "outer": true, "inner": true, "color": "#e2e8f0", "width": 1 },
-          "alternatingRowColor": "#f8fafc",
-          "headerStyle": { "fontWeight": "bold", "backgroundColor": "#f1f5f9", "color": "#0f172a" },
-          "rows": [
-            ["Diffable", "❌", "✅"],
-            ["Editable in VS Code", "❌", "✅"],
-            ["Generated programmatically", "complex", "trivial"],
-            ["Viewer size", "~250MB", "~10MB"]
-          ]
+        {
+          "content": "DOCUMENT FORMAT",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "style": "label",
+          "type": "text",
+          "width": 166
         },
-
-        { "type": "text", "content": "Try interactive elements", "heading": 2, "tocEntry": "Interactive", "tocLevel": 2, "style": "h2", "position": { "x": 0, "y": 168 }, "width": 166 },
-
-        { "type": "collapsible", "title": "Click to expand a hidden section", "expanded": false, "position": { "x": 0, "y": 182 }, "width": 166,
-          "elements": [
-            { "type": "text", "content": "PDF can't do this. Collapsible sections are part of JDF.", "style": "body" }
-          ]
+        {
+          "content": "Hello, JDF",
+          "heading": 1,
+          "position": {
+            "x": 0,
+            "y": 8
+          },
+          "style": "h1",
+          "tocEntry": "Hello, JDF",
+          "tocLevel": 1,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "A document format that's just JSON. Renders like PDF. Diffs in git. Edits in any text editor. This file you're reading is a real .jdf — view source to see the JSON.",
+          "position": {
+            "x": 0,
+            "y": 30
+          },
+          "style": "lead",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "fill": "#2563eb",
+          "height": 0.6,
+          "position": {
+            "x": 0,
+            "y": 56
+          },
+          "shape": "rect",
+          "type": "shape",
+          "width": 18
+        },
+        {
+          "content": "What it does",
+          "heading": 2,
+          "position": {
+            "x": 0,
+            "y": 64
+          },
+          "style": "h2",
+          "tocEntry": "What it does",
+          "tocLevel": 2,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "Open .jdf in any text editor and you see clean JSON. Open it in JDF Reader and you see a beautifully rendered page. Edit either side, the other reflects it.",
+          "position": {
+            "x": 0,
+            "y": 76
+          },
+          "style": "body",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "items": [
+            {
+              "content": "Human-readable JSON — open with cat, grep, jq, VS Code."
+            },
+            {
+              "content": "git diff is real — change a heading, see one line change."
+            },
+            {
+              "content": "Generate from code — JSON.stringify(doc) is your PDF library."
+            },
+            {
+              "content": "JSON Schema validation — autocomplete in your editor, errors in CI."
+            },
+            {
+              "content": "AI-friendly — LLMs read JSON natively, no parser, no broken tables."
+            }
+          ],
+          "listType": "unordered",
+          "position": {
+            "x": 0,
+            "y": 100
+          },
+          "style": "body",
+          "type": "list",
+          "width": 166
+        },
+        {
+          "content": "Three surfaces",
+          "heading": 2,
+          "position": {
+            "x": 0,
+            "y": 152
+          },
+          "style": "h2",
+          "tocEntry": "Three surfaces",
+          "tocLevel": 2,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "alternatingRowColor": "#f8fafc",
+          "borders": {
+            "color": "#e2e8f0",
+            "inner": true,
+            "outer": true,
+            "width": 0.3
+          },
+          "headerStyle": {
+            "backgroundColor": "#f1f5f9",
+            "color": "#0f172a",
+            "fontSize": 10,
+            "fontWeight": "bold"
+          },
+          "headers": [
+            "Surface",
+            "What",
+            "Install"
+          ],
+          "position": {
+            "x": 0,
+            "y": 164
+          },
+          "rowStyle": {
+            "color": "#334155",
+            "fontSize": 10
+          },
+          "rows": [
+            [
+              "JDF Reader",
+              "Native macOS app",
+              "brew install jdf"
+            ],
+            [
+              "jdf.js",
+              "JavaScript embed library",
+              "npm install @uurtech/jdf"
+            ],
+            [
+              "@jdf/cli",
+              "CLI for validate / import",
+              "npx @jdf/cli validate"
+            ]
+          ],
+          "type": "table",
+          "width": 166
+        },
+        {
+          "align": "right",
+          "content": "Continued on the next page →",
+          "position": {
+            "x": 0,
+            "y": 235
+          },
+          "style": "muted",
+          "type": "text",
+          "width": 166
         }
-      ]
-    },
-    {
-      "id": "page-2",
-      "elements": [
-        { "type": "text", "content": "Table of Contents", "heading": 1, "style": "h1", "position": { "x": 0, "y": 4 }, "width": 166 },
-        { "type": "toc", "depth": 3, "position": { "x": 0, "y": 26 }, "width": 166, "style": "body" },
-
-        { "type": "text", "content": "Code blocks too", "heading": 2, "tocEntry": "Code", "tocLevel": 2, "style": "h2", "position": { "x": 0, "y": 120 }, "width": 166 },
-        { "type": "text", "content": "{\n  \"$jdf\": \"1.0.0\",\n  \"meta\": { \"title\": \"My Doc\" },\n  \"pages\": [\n    { \"elements\": [\n      { \"type\": \"text\", \"content\": \"Hello\" }\n    ]}\n  ]\n}", "style": "code", "position": { "x": 0, "y": 134 }, "width": 166 }
-      ]
+      ],
+      "id": "page-1"
     }
-  ]
+  ],
+  "styles": {
+    "body": {
+      "color": "#334155",
+      "fontFamily": "Inter",
+      "fontSize": 11,
+      "lineHeight": 1.65
+    },
+    "h1": {
+      "color": "#0f172a",
+      "fontFamily": "Inter",
+      "fontSize": 32,
+      "fontWeight": "bold",
+      "lineHeight": 1.1
+    },
+    "h2": {
+      "color": "#1e293b",
+      "fontFamily": "Inter",
+      "fontSize": 16,
+      "fontWeight": "bold",
+      "lineHeight": 1.3
+    },
+    "label": {
+      "color": "#94a3b8",
+      "fontFamily": "Inter",
+      "fontSize": 9,
+      "fontWeight": "bold"
+    },
+    "lead": {
+      "color": "#475569",
+      "fontFamily": "Inter",
+      "fontSize": 13,
+      "lineHeight": 1.55
+    },
+    "muted": {
+      "color": "#94a3b8",
+      "fontFamily": "Inter",
+      "fontSize": 9
+    }
+  }
 }

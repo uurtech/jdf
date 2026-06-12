@@ -249,6 +249,14 @@ export default function App() {
       onCleanup(() => { off1(); off2(); });
     } catch {}
 
+    // If the app was launched with a file (Finder double-click, `open file.jdf`),
+    // Rust queues the path in PendingFile state. Drain it now that the webview is ready.
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      const pending = await invoke<string | null>("consume_pending_file");
+      if (pending) openByExtension(pending);
+    } catch {}
+
     try {
       const { getCurrentWindow } = await import("@tauri-apps/api/window");
       const win = getCurrentWindow();
@@ -273,7 +281,30 @@ export default function App() {
     } catch {}
   });
 
+  async function closeWindow(): Promise<void> {
+    // Toolbar close button + Cmd+W: close the whole window (macOS standard).
+    // If there are unsaved edits to an imported PDF/MD, prompt first.
+    try {
+      if (dirty() && loaded() && loaded()!.type !== "jdf") {
+        const ok = window.confirm(
+          "You have unsaved edits to an imported document.\n\nThe edits live in memory only — closing now will lose them.\n\nClick OK to save them as a .jdf file, Cancel to close without saving."
+        );
+        if (ok) {
+          await saveAsJdf();
+          if (dirty()) return; // user cancelled the save dialog
+        }
+      }
+      await flushPendingSave();
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      await getCurrentWindow().close();
+    } catch (e) {
+      console.error("close window failed", e);
+    }
+  }
+
   async function closeDocument(): Promise<boolean> {
+    // Internal helper — clear the loaded doc and return to welcome screen.
+    // Not wired to any visible button anymore, kept for future use.
     if (loaded()?.type === "jdf") {
       await flushPendingSave();
     } else if (dirty() && doc()) {
@@ -315,7 +346,7 @@ export default function App() {
     else if (meta && e.key === "o") { e.preventDefault(); openFile(); }
     else if (meta && e.key === "p") { e.preventDefault(); window.print(); }
     else if (meta && e.key === "d") { e.preventDefault(); toggleDark(); }
-    else if (meta && e.key.toLowerCase() === "w" && doc()) { e.preventDefault(); closeDocument(); }
+    else if (meta && e.key.toLowerCase() === "w") { e.preventDefault(); closeWindow(); }
     else if (meta && e.key === "s" && !e.shiftKey) { e.preventDefault(); saveAsJdf(); }
     else if (meta && e.shiftKey && e.key.toLowerCase() === "e") { e.preventDefault(); exportPdf(); }
     else if (meta && e.key === "f") { e.preventDefault(); openSearch(); }
@@ -426,7 +457,7 @@ export default function App() {
           onZoomOut={() => setZoom((z) => Math.max(z - 0.1, 0.25))}
           onZoomReset={() => setZoom(1)}
           onOpen={openFile}
-          onClose={closeDocument}
+          onClose={closeWindow}
           onPageChange={setCurrentPage}
           onToggleSidebar={() => setShowSidebar((s) => !s)}
           onToggleSearch={openSearch}

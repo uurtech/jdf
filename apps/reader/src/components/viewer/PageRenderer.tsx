@@ -121,13 +121,21 @@ export function PageRenderer(props: PageRendererProps) {
         </div>
       </Show>
 
+      {/*
+        Inner content area positioned at margin offsets. Absolute-positioned
+        children resolve `left/top` against this box (CSS containing block),
+        which is what makes margins actually work — padding on a `position:
+        relative` parent is ignored by absolute descendants, so we use
+        explicit position+inset instead.
+      */}
       <div
-        class="relative"
+        class="absolute"
         style={{
-          "padding-top": `${unitToPx(margins().top! + headerHeight())}px`,
-          "padding-right": `${unitToPx(margins().right!)}px`,
-          "padding-bottom": `${unitToPx(margins().bottom! + footerHeight())}px`,
-          "padding-left": `${unitToPx(margins().left!)}px`,
+          top: `${unitToPx(margins().top! + headerHeight())}px`,
+          left: `${unitToPx(margins().left!)}px`,
+          right: `${unitToPx(margins().right!)}px`,
+          bottom: `${unitToPx(margins().bottom! + footerHeight())}px`,
+          position: "absolute",
         }}
       >
         <For each={props.page.elements}>

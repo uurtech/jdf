@@ -299,13 +299,18 @@ export class JDFViewer {
       pageEl.appendChild(h);
     }
 
+    // Inner content box at margin offsets. We use absolute positioning + `inset`
+    // (top/right/bottom/left) instead of padding because element children render
+    // with `position: absolute` — and absolute children resolve `left/top` from
+    // the *border edge* of their containing block, not the padding edge, so
+    // padding on a `position: relative` parent is silently ignored by them.
     const content = document.createElement("div");
     content.className = "jdfjs-page-content";
-    content.style.position = "relative";
-    content.style.paddingTop = `${unitToPx((margins.top || 0) + headerH)}px`;
-    content.style.paddingRight = `${unitToPx(margins.right || 0)}px`;
-    content.style.paddingBottom = `${unitToPx((margins.bottom || 0) + footerH)}px`;
-    content.style.paddingLeft = `${unitToPx(margins.left || 0)}px`;
+    content.style.position = "absolute";
+    content.style.top = `${unitToPx((margins.top || 0) + headerH)}px`;
+    content.style.right = `${unitToPx(margins.right || 0)}px`;
+    content.style.bottom = `${unitToPx((margins.bottom || 0) + footerH)}px`;
+    content.style.left = `${unitToPx(margins.left || 0)}px`;
 
     page.elements.forEach((el, elIdx) => {
       const node = renderElement(el, {
