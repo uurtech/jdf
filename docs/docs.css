@@ -209,3 +209,38 @@ code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.92em
 
 ::selection { background: rgba(37, 99, 235, 0.25); }
 @media (prefers-color-scheme: dark) { ::selection { background: rgba(96, 165, 250, 0.4); } }
+
+/* AI-focused callout — distinct from the default brand callout */
+.callout.callout-ai {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(37, 99, 235, 0.05));
+  border-left-color: #6366f1;
+}
+.callout.callout-ai strong { color: #4338ca; }
+@media (prefers-color-scheme: dark) {
+  .callout.callout-ai strong { color: #a5b4fc; }
+}
+
+/* Comparison table on why-ai page */
+.why-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0 2rem;
+  font-size: 0.9375rem;
+}
+.why-table th,
+.why-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.why-table th {
+  font-weight: 600;
+  background: var(--bg-soft);
+  color: var(--text);
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.why-table tbody tr:hover { background: var(--bg-soft); }
+.why-table td:first-child { font-weight: 600; color: var(--text); white-space: nowrap; }

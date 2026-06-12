@@ -20,6 +20,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+
+  <!-- jdf.js — powers the live <jdf> embed lower on this page -->
+  <link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf@0.1.6/dist/jdfjs.css" />
+  <script type="module" src="https://unpkg.com/@uurtech/jdf@0.1.6"></script>
 </head>
 <body>
   <header class="nav">
@@ -114,10 +118,6 @@ brew install jdf">
       <figure class="shot">
         <img src="screenshot1.png" alt="JDF Reader — rendered document view" loading="lazy">
         <figcaption>Rendered view — page-perfect layout, edit in place.</figcaption>
-      </figure>
-      <figure class="shot">
-        <img src="screenshot2.png" alt="JDF Reader — JSON source view" loading="lazy">
-        <figcaption>Source view — same document, the JSON behind it.</figcaption>
       </figure>
     </section>
 
@@ -280,6 +280,21 @@ brew install jdf">
     <section id="embed" class="embed-teaser">
       <h2>Also runs on the web — <code class="kbd-tag">jdf.js</code></h2>
       <p class="section-lead">A small JavaScript library that turns any <code>.jdf</code> URL into a fully styled, embedded viewer in your web page. Drop in one tag and you're done.</p>
+
+      <div class="embed-demo">
+        <div class="embed-demo-code">
+<pre><code><span class="punc">&lt;</span><span class="key">link</span> <span class="key">rel</span><span class="punc">=</span><span class="str">"stylesheet"</span> <span class="key">href</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf/dist/jdfjs.css"</span><span class="punc">&gt;</span>
+<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
+
+<span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"examples/article.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+        </div>
+
+        <div class="embed-demo-render">
+          <div class="embed-demo-label">↓ The tag above, live on this page</div>
+          <jdf src="examples/article.jdf" height="520" fit="fit-width"></jdf>
+        </div>
+      </div>
+
       <p class="embed-foot">
         <a class="btn-secondary" href="docs/embed/">Embed docs →</a>
         <a class="btn-secondary" href="docs/">Full documentation →</a>

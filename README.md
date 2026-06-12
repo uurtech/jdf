@@ -106,6 +106,91 @@ Requires Node 20+, pnpm 9+, Rust stable, Xcode CLT (macOS).
 - A `.pdf` or `.md` is converted to JDF in memory only — the original file is never touched. The toolbar shows `● Unsaved (in memory)` while you edit. If you close the window with unsaved changes, you get a prompt to save it as `.jdf` or discard.
 - The JSON view is a live two-way bind. Edit JSON, blur or `Cmd+S`, and the rendered view follows. Edit visually, the JSON updates as you go.
 
+## Feature matrix — what runs where
+
+JDF lives in three runnable surfaces. They all consume the same `.jdf` file but expose different feature sets — the desktop Reader is the only place you edit, jdf.js is a renderer, the CLI is for validation and conversion.
+
+Legend: ✓ supported · ◐ partial / planned · — not applicable
+
+### Document rendering (the bits that turn JSON into pixels)
+
+All three renderers walk the same JSON. The desktop Reader and jdf.js are kept at strict feature parity for everything below.
+
+| Capability | JDF Reader | jdf.js | CLI |
+|---|:---:|:---:|:---:|
+| `text` element (heading 1-6, align, link, tocEntry, style) | ✓ | ✓ | — |
+| `richtext` element (per-run bold/italic/underline/strikethrough/color/font/link) | ✓ | ✓ | — |
+| `image` element (base64 resource OR src URL/path; `fit` modes) | ✓ | ✓ | — |
+| `table` element (headers, colspan/rowspan, alternating rows, borders, column align) | ✓ | ✓ | — |
+| `list` element (ordered/unordered, nested with per-item type override) | ✓ | ✓ | — |
+| `shape` element (rect, circle, ellipse, line, SVG path; fill/stroke/opacity) | ✓ | ✓ | — |
+| `collapsible` element (expandable section with nested elements) | ✓ | ✓ | — |
+| `toc` element (auto-generated, hierarchical, click-to-navigate) | ✓ | ✓ | — |
+| Page sizes A4/A3/A5/Letter/Legal/Tabloid + custom `{width,height}` | ✓ | ✓ | — |
+| Portrait / landscape (doc-level + per-page override) | ✓ | ✓ | — |
+| Margins (doc-level merged with per-page) | ✓ | ✓ | — |
+| Headers / footers (template strings AND full element trees) | ✓ | ✓ | — |
+| Internal links (`#page-N` navigation) | ✓ | ✓ | — |
+| External links (open in new tab) | ✓ | ✓ | — |
+| Named styles (`styles.foo` referenced as string / array / inline) | ✓ | ✓ | — |
+| Dark mode | ✓ | ✓ | — |
+| Multi-page scroll + page indicator | ✓ | ✓ | — |
+| Sidebar with page thumbnails | ✓ | ✓ (opt-in via `sidebar`) | — |
+| Toolbar (zoom, page nav, search) | ✓ | ✓ (opt-in via `toolbar`) | — |
+| Fit modes (`fit-width`, `fit-page`, manual zoom) | ✓ | ✓ | — |
+| Reactive attributes — change `src`/`width`/`zoom` and the viewer updates | — | ✓ | — |
+
+### Editing (read/write workflow)
+
+Editing lives in the desktop Reader only — jdf.js is a viewer, the CLI is non-interactive.
+
+| Capability | JDF Reader | jdf.js | CLI |
+|---|:---:|:---:|:---:|
+| Double-click any element to edit in place | ✓ | — | — |
+| Inline editor for headings, paragraphs, list items, table cells, collapsible titles, image src/alt | ✓ | — | — |
+| Auto-save to disk (~150 ms after edit) | ✓ | — | — |
+| Hover toolbar — Move up / Move down / Duplicate / Delete (no right-click) | ✓ | — | — |
+| Insert bar — Text / Rich text / List / Table / Shape / Image / Section / TOC | ✓ | — | — |
+| Page management (add page, delete page, drag thumbnails) | ✓ | — | — |
+| Undo / redo (`⌘Z` / `⌘⇧Z`, 100-step history) | ✓ | — | — |
+| Live JSON view with two-way bind | ✓ | — | — |
+| Multiple windows (`⌘N`) | ✓ | — | — |
+| File associations (double-click `.jdf` in Finder) | ✓ | — | — |
+
+### Import & convert
+
+| Capability | JDF Reader | jdf.js | CLI |
+|---|:---:|:---:|:---:|
+| Open `.jdf` from disk | ✓ | ✓ (via `<jdf src>` / `embed()`) | ✓ (`validate`) |
+| Import `.md` → `.jdf` | ✓ | — | ✓ (`jdf import file.md`) |
+| Import `.pdf` → `.jdf` (full fidelity: positions, fonts, colors, shapes, embedded images) | ✓ | — | ◐ (planned — currently delegates to the desktop importer) |
+| JSON Schema validation | ✓ (live, in-app) | — | ✓ (`jdf validate file.jdf`) |
+| Markdown viewer (native render, no conversion) | ✓ | — | — |
+
+### Export
+
+| Capability | JDF Reader | jdf.js | CLI |
+|---|:---:|:---:|:---:|
+| Export to PDF (`Cmd+Shift+E`) — preserves text, images, vector shapes, fonts, colors | ✓ | — | ◐ (planned) |
+| Save edits back to source `.jdf` | ✓ (auto) | — | — |
+| Save imported PDF/MD as `.jdf` | ✓ | — | — |
+
+### Distribution / install
+
+| Surface | How to get it |
+|---|---|
+| **JDF Reader** (macOS) | `brew tap uurtech/jdf && brew install jdf` — DMG / `.app`, signed via GitHub release |
+| **JDF Reader** (Linux / Windows) | `.deb` / `.AppImage` / `.rpm` / `.msi` / `.exe` from the [latest release](https://github.com/uurtech/jdf/releases/latest) |
+| **jdf.js** | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf">` |
+| **`@jdf/cli`** | `npx @jdf/cli validate file.jdf` (no install) |
+
+### Not yet (planned)
+
+- PDF import in CLI (the importer currently lives in the Reader frontend; extracting it to a shared `@jdf/pdf-import` package is on the roadmap).
+- PDF export in CLI.
+- Editing in jdf.js (today it's a strict renderer).
+- Linux/Windows code signing (builds work, signing is per-platform follow-up).
+
 ## What it renders
 
 | Element | Capabilities |
@@ -318,30 +403,18 @@ Not yet:
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the per-release log.
 
-## Releasing (maintainer)
-
-One command bumps versions, builds the dmg, creates a GitHub release with the dmg attached, updates the Homebrew Cask in both repos, and publishes `@uurtech/jdf` to npm:
-
-```bash
-bash scripts/release.sh patch    # 0.1.0 → 0.1.1 across desktop + @uurtech/jdf
-bash scripts/release.sh minor    # bump minor version
-bash scripts/release.sh major    # bump major version
-```
-
-Or each step on its own:
-
-```bash
-bash scripts/publish-dmg.sh patch    # desktop bundle + GitHub release + Cask update
-bash scripts/publish-npm.sh patch    # @uurtech/jdf build + npm publish
-```
-
-Requires `NPM_TOKEN` and `GITHUB_TOKEN` in `/.env` (see `.env.example`). The tap repo (`uurtech/homebrew-jdf`) should be cloned next to this repo so its Cask is auto-pushed.
-
 ## Contributing
 
-[`CONTRIBUTING.md`](CONTRIBUTING.md). Short version: `pnpm typecheck` + `cargo check` must pass before opening a PR.
+JDF is open source — fork the repo, hack on it, open a pull request. `CONTRIBUTING.md` has the full guide; the short version:
+
+1. Fork → branch → make your change.
+2. `pnpm typecheck` and `cargo check` (in `apps/reader/src-tauri/`) must pass.
+3. Add a sample to `spec/examples/` if your change affects rendering.
+4. Open a PR against `master`. CI runs the same checks on every PR.
 
 When adding a new JDF element type or attribute, update **all five** locations: `packages/jdf-core/src/types.ts`, `spec/jdf-schema.json`, `apps/reader/src/components/viewer/`, `jdfjs/src/renderers/element.ts`, and `apps/reader/src-tauri/src/commands/mod.rs`. See [`CLAUDE.md`](CLAUDE.md) for the full parity checklist.
+
+Bug reports, feature requests, and design discussions all welcome in [GitHub Issues](https://github.com/uurtech/jdf/issues).
 
 ## License
 

@@ -19,7 +19,22 @@
 
     <main class="docs-content">
       <h1>Why JDF is AI-friendly</h1>
-      <p>Large language models read text. PDFs are binary. This is the entire reason JDF exists in the AI era — and why every AI-shaped workflow built on top of PDF is a hack.</p>
+      <p><strong>This format was designed in the AI era, on purpose, for AI consumption.</strong> Large language models read text. PDFs are binary. JDF is the document format that closes the gap — and every AI-shaped workflow built on top of PDF, DOCX, or HTML scrapes is a hack around that gap.</p>
+
+      <div class="callout callout-ai">
+        <strong>Why AI engines prefer JDF in one sentence:</strong> JSON <em>is</em> the language LLMs are trained to read, write, and reason about — handing them a <code>.jdf</code> is like handing a programmer source code instead of a screenshot of source code.
+      </div>
+
+      <h2>Why every modern AI engine reads JDF more easily</h2>
+      <p>Every major LLM — GPT-4, Claude, Gemini, Llama, Mistral — was trained on enormous corpora of JSON. Tool calls return JSON. Function arguments are JSON. Structured output modes (OpenAI's <code>response_format</code>, Anthropic's <code>tools</code>, Google's <code>responseSchema</code>) all use JSON Schema. The model spends literally billions of tokens of pretraining looking at JSON. So when you hand it a <code>.jdf</code>:</p>
+      <ul>
+        <li><strong>No format tax.</strong> The model doesn't burn context on "what does this byte sequence mean" — it walks the tree the way it walks any function call argument.</li>
+        <li><strong>Structure is explicit.</strong> A heading is <code>"heading": 1</code>, not "this line happens to be 24pt bold". The model never has to <em>infer</em> structure that the format already encodes.</li>
+        <li><strong>Schemas are first-class.</strong> Point any LLM at <code>spec/jdf-schema.json</code> and it can validate, generate, and edit JDF documents with structured-output guarantees. Try that with PDF.</li>
+        <li><strong>Token-efficient.</strong> JSON keys compress under BPE tokenisation. <code>"heading": 2</code> is two tokens. The equivalent visual cue in a PDF text dump is the entire surrounding line context the model has to read to guess the level.</li>
+        <li><strong>No OCR layer.</strong> PDFs frequently embed text as glyph paths or invisible OCR overlays. JDF is plain UTF-8 strings — there is nothing to OCR, nothing to misread, no Unicode normalisation surprises.</li>
+        <li><strong>Round-trip safe.</strong> If a model writes a JDF, it can be opened, rendered, edited by a human, and fed back into another model — all without lossy parsing in between. You cannot say this about any binary format.</li>
+      </ul>
 
       <h2>The PDF problem for LLMs</h2>
       <p>When you hand a PDF to an LLM, you can't actually hand it the file. You hand it the output of a parser:</p>
@@ -88,10 +103,64 @@ jq <span class="str">'.. | objects | select(.type == "external") | .target'</spa
 }</code></pre>
       <p>Each chunk carries semantic metadata — type, heading level, page number — that the model uses at retrieval time. No more "this chunk is half a paragraph and half a table cell".</p>
 
+      <h2>Side-by-side: same document, two formats</h2>
+      <p>Imagine asking a model "what was Q2 revenue?" — given the same source document.</p>
+
+      <table class="why-table">
+        <thead><tr><th>What the LLM sees</th><th>PDF (after <code>pdftotext</code>)</th><th>JDF</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Headings</td>
+            <td>Mixed in with body text — model guesses from line length and surrounding whitespace.</td>
+            <td><code>"heading": 1</code> — explicit, queryable, no inference.</td>
+          </tr>
+          <tr>
+            <td>Tables</td>
+            <td>Cells smear across columns. Multi-row headers collapse. Model invents rows.</td>
+            <td><code>{"headers": [...], "rows": [...]}</code> — every cell at its real coordinate.</td>
+          </tr>
+          <tr>
+            <td>Footnotes</td>
+            <td>Inserted into the body line. Hallucinated as part of the paragraph.</td>
+            <td>Distinct elements with their own type. Trivial to filter out or surface.</td>
+          </tr>
+          <tr>
+            <td>Page numbers / running headers</td>
+            <td>Appear every N lines, fragment paragraphs.</td>
+            <td>Live in <code>header</code> / <code>footer</code> blocks, never in the content tree.</td>
+          </tr>
+          <tr>
+            <td>Images / charts</td>
+            <td>Replaced with <code>[image]</code> or dropped silently.</td>
+            <td>Stored in <code>resources.images</code> with alt text — a vision model can read them at the right anchor in the doc.</td>
+          </tr>
+          <tr>
+            <td>Links</td>
+            <td>Often lost — text shows but the underlying URL is gone.</td>
+            <td>First-class <code>link</code> field on text and runs.</td>
+          </tr>
+          <tr>
+            <td>Validation</td>
+            <td>None — anything goes, model has to trust the parser.</td>
+            <td>JSON Schema, validates in any IDE, fails fast in CI.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Why this matters for your AI stack</h2>
+      <ul>
+        <li><strong>Cheaper inference.</strong> A clean structured doc costs fewer tokens than a noisy parsed PDF. Every prompt is shorter and more focused.</li>
+        <li><strong>Higher accuracy.</strong> Models hallucinate less when the context is structured. "Find the Q2 revenue" reduces to a JSON path, not a free-text scan.</li>
+        <li><strong>Reliable structured output.</strong> Ask the LLM to <em>produce</em> a JDF document and it actually can — because the target schema is the same JSON it was trained to emit. Try asking it for a bit-perfect PDF.</li>
+        <li><strong>Tool-friendly.</strong> Agents can call <code>jq</code>, <code>JSONPath</code>, or any JSON manipulation library on a <code>.jdf</code>. There is no equivalent for PDF.</li>
+        <li><strong>Diffable history.</strong> Every revision is a real diff, so an LLM reviewing a doc revision sees exactly what changed — not a 200-page re-export.</li>
+        <li><strong>Trainable on its own.</strong> If you fine-tune a model, JDF training pairs are tiny, structured, and lossless. PDF pairs need a parser, a normaliser, and a prayer.</li>
+      </ul>
+
       <h2>The bigger picture</h2>
       <p>The web invented Markdown so humans and machines could share the same source for short text. JDF does the same thing for the next layer up — long-form documents with structure, layout, and embedded media. PDF was designed in 1993 for laser printers; it predates almost every concern AI workflows now have.</p>
 
-      <p>If your stack involves an LLM touching documents, the format ought to be one the LLM can read without a translator.</p>
+      <p>If your stack involves an LLM touching documents, the format ought to be one the LLM can read without a translator. JDF is that format.</p>
 
       <div class="next-prev">
         <a href="getting-started.html" class="prev"><span class="label">← Previous</span><span class="title">Getting started</span></a>
