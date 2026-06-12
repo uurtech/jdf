@@ -699,3 +699,44 @@ footer ul li a:hover { color: var(--brand); }
 @media (prefers-color-scheme: dark) {
   ::selection { background: rgba(96, 165, 250, 0.4); }
 }
+
+/* Hero screenshots */
+.screenshots {
+  max-width: 1200px;
+  margin: 4rem auto 0;
+  padding: 0 1.5rem;
+}
+.shots-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+.shot {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.shot img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px -12px rgba(15, 23, 42, 0.25), 0 2px 6px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+.shot figcaption {
+  font-size: 0.8125rem;
+  color: #64748b;
+  text-align: center;
+}
+@media (prefers-color-scheme: dark) {
+  .shot img {
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+  .shot figcaption { color: #94a3b8; }
+}
+@media (max-width: 720px) {
+  .shots-grid { grid-template-columns: 1fr; gap: 1rem; }
+}

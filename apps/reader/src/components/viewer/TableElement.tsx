@@ -91,7 +91,7 @@ export function TableElementView(props: TableElementViewProps) {
                       ...(borders().inner ? { border: `${borders().width || 1}px solid ${borders().color || "#e2e8f0"}` } : {}),
                     }}
                   >
-                    {edit.enabled ? (
+                    {edit.enabled() ? (
                       <Editable
                         value={h}
                         onCommit={(v) => edit.updateField(props.path, `headers.${i()}`, v)}
@@ -119,7 +119,7 @@ export function TableElementView(props: TableElementViewProps) {
                       }}
                       {...cellAttrs(cell)}
                     >
-                      {edit.enabled ? (
+                      {edit.enabled() ? (
                         <Editable
                           value={cellText(cell)}
                           onCommit={(v) => commitCell(rowIdx(), colIdx(), v)}

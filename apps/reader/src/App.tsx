@@ -283,7 +283,10 @@ export default function App() {
 
   async function closeWindow(): Promise<void> {
     // Toolbar close button + Cmd+W: close the whole window (macOS standard).
-    // If there are unsaved edits to an imported PDF/MD, prompt first.
+    // We've already handled unsaved-import prompts and pending saves below,
+    // so we call `destroy()` directly to bypass the onCloseRequested
+    // interceptor — calling `close()` from inside the same JS context can
+    // race with our own interceptor and silently no-op.
     try {
       if (dirty() && loaded() && loaded()!.type !== "jdf") {
         const ok = window.confirm(
@@ -296,7 +299,13 @@ export default function App() {
       }
       await flushPendingSave();
       const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      await getCurrentWindow().close();
+      const win = getCurrentWindow();
+      // Try destroy first (works inside Tauri); fall back to close().
+      try {
+        await win.destroy();
+      } catch {
+        await win.close();
+      }
     } catch (e) {
       console.error("close window failed", e);
     }
@@ -431,7 +440,7 @@ export default function App() {
 
   return (
     <EditContext.Provider value={{
-      enabled: isEditableFile() || (loaded()?.type !== undefined),
+      enabled: () => loaded() != null,
       updateField, deleteAt, duplicateAt, moveAt, insertAfter, appendToPage,
       insertPageAfter: addPageAfter, deletePage: removePage,
     }}>

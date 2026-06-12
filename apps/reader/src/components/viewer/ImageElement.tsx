@@ -56,7 +56,7 @@ export function ImageElementView(props: ImageElementViewProps) {
         class={`${fitClass()} block`}
         style={{ ...css(), width: "100%", height: "100%" }}
       />
-      <Show when={edit.enabled}>
+      <Show when={edit.enabled()}>
         <div class="text-[10px] text-gray-400 mt-1">
           src: <Editable value={props.element.src || ""} onCommit={(v) => edit.updateField(props.path, "src", v)} placeholder="(empty)" />
           {" · alt: "}

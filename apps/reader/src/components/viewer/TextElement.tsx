@@ -1,3 +1,4 @@
+import { Show } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import type { TextElement, Style, Link } from "@jdf/core";
 import { resolveStyle } from "./PageRenderer";
@@ -34,29 +35,16 @@ export function TextElementView(props: TextElementViewProps) {
 
   const text = () => props.element.content || "";
   const link = () => linkInfo(props.element.link);
+  const isLong = () => text().length > 60 || text().includes("\n");
 
   function handleInternalClick(e: MouseEvent) {
-    if (edit.enabled) return;
+    if (edit.enabled()) return;
     const l = link();
     if (l?.internal && props.onNavigatePage) {
       e.preventDefault();
       const m = l.href.replace(/^#/, "").match(/^page-(\d+)$/i);
       if (m) props.onNavigatePage(Number(m[1]) - 1);
     }
-  }
-
-  if (edit.enabled) {
-    const isLong = () => text().length > 60 || text().includes("\n");
-    return (
-      <Editable
-        as={tag()}
-        value={text()}
-        multiline={isLong()}
-        onCommit={(v) => edit.updateField(props.path, "content", v)}
-        class="m-0 whitespace-pre-wrap"
-        style={css() as any}
-      />
-    );
   }
 
   const renderInner = () => {
@@ -66,9 +54,27 @@ export function TextElementView(props: TextElementViewProps) {
     return <a href={l.href} target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">{text()}</a>;
   };
 
+  // <Show> keeps the conditional reactive — toggling edit mode (or
+  // loading/closing a document) flips the renderer without remounting
+  // the parent. A plain `if (edit.enabled()) return …` would freeze on
+  // first render, which is the bug that broke double-click in view mode.
   return (
-    <Dynamic component={tag()} class="m-0 whitespace-pre-wrap" style={css()}>
-      {renderInner()}
-    </Dynamic>
+    <Show
+      when={edit.enabled()}
+      fallback={
+        <Dynamic component={tag()} class="m-0 whitespace-pre-wrap" style={css()}>
+          {renderInner()}
+        </Dynamic>
+      }
+    >
+      <Editable
+        as={tag()}
+        value={text()}
+        multiline={isLong()}
+        onCommit={(v) => edit.updateField(props.path, "content", v)}
+        class="m-0 whitespace-pre-wrap"
+        style={css() as any}
+      />
+    </Show>
   );
 }

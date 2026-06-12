@@ -40,8 +40,8 @@ export function ElementRenderer(props: ElementRendererProps) {
   return (
     <div
       style={positionStyle()}
-      class={edit.enabled ? "jdf-element-target" : ""}
-      onMouseEnter={() => edit.enabled && setHover(true)}
+      class={edit.enabled() ? "jdf-element-target" : ""}
+      onMouseEnter={() => edit.enabled() && setHover(true)}
       onMouseLeave={() => setHover(false)}
       data-element-path={JSON.stringify(props.path)}
     >
@@ -72,7 +72,7 @@ export function ElementRenderer(props: ElementRendererProps) {
         </Match>
       </Switch>
 
-      <Show when={edit.enabled && hover()}>
+      <Show when={edit.enabled() && hover()}>
         <div
           class="jdf-action-bar"
           onMouseDown={(e) => e.stopPropagation()}

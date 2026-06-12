@@ -20,7 +20,7 @@ function ItemTree(props: { items: ListItem[]; defaultType: ListType; basePath: E
         const itemPath = [...props.basePath, index()];
         return (
           <li class="text-[14px] leading-relaxed">
-            {edit.enabled ? (
+            {edit.enabled() ? (
               <Editable
                 value={item.content}
                 onCommit={(v) => edit.updateField(itemPath, "content", v)}

@@ -1,90 +1,363 @@
 {
   "$jdf": "1.0.0",
-  "meta": {
-    "title": "Hello, JDF",
-    "author": "Ugur Kazdal",
-    "language": "en",
-    "pageSize": "A4",
-    "unit": "mm",
-    "margins": { "top": 25, "right": 22, "bottom": 25, "left": 22 }
-  },
-  "styles": {
-    "h1":     { "fontFamily": "Inter", "fontSize": 32, "fontWeight": "bold", "color": "#0f172a", "lineHeight": 1.1 },
-    "h2":     { "fontFamily": "Inter", "fontSize": 16, "fontWeight": "bold", "color": "#1e293b", "lineHeight": 1.3 },
-    "lead":   { "fontFamily": "Inter", "fontSize": 13, "color": "#475569", "lineHeight": 1.55 },
-    "body":   { "fontFamily": "Inter", "fontSize": 11, "color": "#334155", "lineHeight": 1.65 },
-    "label":  { "fontFamily": "Inter", "fontSize": 9, "color": "#94a3b8", "fontWeight": "bold" },
-    "muted":  { "fontFamily": "Inter", "fontSize": 9, "color": "#94a3b8" }
-  },
   "footer": {
     "content": "{{title}}  ·  page {{pageNumber}} of {{totalPages}}",
     "style": "muted"
   },
+  "meta": {
+    "author": "Ugur Kazdal",
+    "language": "en",
+    "margins": {
+      "bottom": 25,
+      "left": 22,
+      "right": 22,
+      "top": 25
+    },
+    "pageSize": "A4",
+    "title": "Hello, JDF",
+    "unit": "mm"
+  },
   "pages": [
     {
-      "id": "page-1",
       "elements": [
-        { "type": "text", "content": "DOCUMENT FORMAT", "style": "label", "position": { "x": 0, "y": 0 }, "width": 166 },
-
-        { "type": "text", "content": "Hello, JDF", "heading": 1, "tocEntry": "Hello, JDF", "tocLevel": 1, "style": "h1", "position": { "x": 0, "y": 8 }, "width": 166 },
-
-        { "type": "text", "content": "A document format that's just JSON. Renders like PDF. Diffs in git. Edits in any text editor. This file you're reading is a real .jdf — view source to see the JSON.", "style": "lead", "position": { "x": 0, "y": 30 }, "width": 166 },
-
-        { "type": "shape", "shape": "rect", "fill": "#2563eb", "position": { "x": 0, "y": 56 }, "width": 18, "height": 0.6 },
-
-        { "type": "text", "content": "What it does", "heading": 2, "tocEntry": "What it does", "tocLevel": 2, "style": "h2", "position": { "x": 0, "y": 64 }, "width": 166 },
-
-        { "type": "text", "content": "Open .jdf in any text editor and you see clean JSON. Open it in JDF Reader and you see a beautifully rendered page. Edit either side, the other reflects it.", "style": "body", "position": { "x": 0, "y": 76 }, "width": 166 },
-
-        { "type": "list", "listType": "unordered", "position": { "x": 0, "y": 100 }, "width": 166, "style": "body", "items": [
-          { "content": "Human-readable JSON — open with cat, grep, jq, VS Code." },
-          { "content": "git diff is real — change a heading, see one line change." },
-          { "content": "Generate from code — JSON.stringify(doc) is your PDF library." },
-          { "content": "JSON Schema validation — autocomplete in your editor, errors in CI." },
-          { "content": "AI-friendly — LLMs read JSON natively, no parser, no broken tables." }
-        ]},
-
-        { "type": "text", "content": "Three surfaces", "heading": 2, "tocEntry": "Three surfaces", "tocLevel": 2, "style": "h2", "position": { "x": 0, "y": 152 }, "width": 166 },
-
-        { "type": "table", "position": { "x": 0, "y": 164 }, "width": 166,
-          "headers": ["Surface", "What", "Install"],
-          "borders": { "outer": true, "inner": true, "color": "#e2e8f0", "width": 0.3 },
-          "alternatingRowColor": "#f8fafc",
-          "headerStyle": { "backgroundColor": "#f1f5f9", "fontWeight": "bold", "fontSize": 10, "color": "#0f172a" },
-          "rowStyle": { "fontSize": 10, "color": "#334155" },
-          "rows": [
-            ["JDF Reader", "Native macOS app",                "brew install jdf"],
-            ["jdf.js",     "JavaScript embed library",        "npm install @uurtech/jdf"],
-            ["@jdf/cli",   "CLI for validate / import",       "npx @jdf/cli validate"]
-          ]
+        {
+          "content": "DOCUMENT FORMAT",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "style": "label",
+          "type": "text",
+          "width": 166
         },
-
-        { "type": "text", "content": "Continued on the next page →", "style": "muted", "position": { "x": 0, "y": 235 }, "width": 166, "align": "right" }
-      ]
+        {
+          "content": "Hello, JDF",
+          "heading": 1,
+          "position": {
+            "x": 0,
+            "y": 8
+          },
+          "style": "h1",
+          "tocEntry": "Hello, JDF",
+          "tocLevel": 1,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "A document format that's just JSON. Renders like PDF. Diffs in git. Edits in any text editor. This file you're reading is a real .jdf — view source to see the JSON.",
+          "position": {
+            "x": 0,
+            "y": 30
+          },
+          "style": "lead",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "fill": "#2563eb",
+          "height": 0.6,
+          "position": {
+            "x": 0,
+            "y": 56
+          },
+          "shape": "rect",
+          "type": "shape",
+          "width": 18
+        },
+        {
+          "content": "What it does",
+          "heading": 2,
+          "position": {
+            "x": 0,
+            "y": 64
+          },
+          "style": "h2",
+          "tocEntry": "What it does",
+          "tocLevel": 2,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "Open .jdf in any text editor and you see clean JSON. Open it in JDF Reader and you see a beautifully rendered page. Edit either side, the other reflects it.",
+          "position": {
+            "x": 0,
+            "y": 76
+          },
+          "style": "body",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "items": [
+            {
+              "content": "Human-readable JSON — open with cat, grep, jq, VS Code."
+            },
+            {
+              "content": "git diff is real — change a heading, see one line change."
+            },
+            {
+              "content": "Generate from code — JSON.stringify(doc) is your PDF library."
+            },
+            {
+              "content": "JSON Schema validation — autocomplete in your editor, errors in CI."
+            },
+            {
+              "content": "AI-friendly — LLMs read JSON natively, no parser, no broken tables."
+            }
+          ],
+          "listType": "unordered",
+          "position": {
+            "x": 0,
+            "y": 100
+          },
+          "style": "body",
+          "type": "list",
+          "width": 166
+        },
+        {
+          "content": "Three surfaces",
+          "heading": 2,
+          "position": {
+            "x": 0,
+            "y": 152
+          },
+          "style": "h2",
+          "tocEntry": "Three surfaces",
+          "tocLevel": 2,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "alternatingRowColor": "#f8fafc",
+          "borders": {
+            "color": "#e2e8f0",
+            "inner": true,
+            "outer": true,
+            "width": 0.3
+          },
+          "headerStyle": {
+            "backgroundColor": "#f1f5f9",
+            "color": "#0f172a",
+            "fontSize": 10,
+            "fontWeight": "bold"
+          },
+          "headers": [
+            "Surface",
+            "What",
+            "Install"
+          ],
+          "position": {
+            "x": 0,
+            "y": 164
+          },
+          "rowStyle": {
+            "color": "#334155",
+            "fontSize": 10
+          },
+          "rows": [
+            [
+              "JDF Reader",
+              "Native macOS app",
+              "brew install jdf"
+            ],
+            [
+              "jdf.js",
+              "JavaScript embed library",
+              "npm install @uurtech/jdf"
+            ],
+            [
+              "@jdf/cli",
+              "CLI for validate / import",
+              "npx @jdf/cli validate"
+            ]
+          ],
+          "type": "table",
+          "width": 166
+        },
+        {
+          "align": "right",
+          "content": "Continued on the next page →",
+          "position": {
+            "x": 0,
+            "y": 235
+          },
+          "style": "muted",
+          "type": "text",
+          "width": 166
+        }
+      ],
+      "id": "page-1"
     },
     {
-      "id": "page-2",
       "elements": [
-        { "type": "text", "content": "DOCUMENT FORMAT", "style": "label", "position": { "x": 0, "y": 0 }, "width": 166 },
-
-        { "type": "text", "content": "Table of Contents", "heading": 1, "style": "h1", "position": { "x": 0, "y": 8 }, "width": 166 },
-
-        { "type": "shape", "shape": "rect", "fill": "#2563eb", "position": { "x": 0, "y": 32 }, "width": 18, "height": 0.6 },
-
-        { "type": "toc", "depth": 3, "position": { "x": 0, "y": 42 }, "width": 166, "style": "body" },
-
-        { "type": "text", "content": "Embedding on the web", "heading": 2, "tocEntry": "Embedding", "tocLevel": 2, "style": "h2", "position": { "x": 0, "y": 110 }, "width": 166 },
-
-        { "type": "text", "content": "Three lines of HTML and your document appears, fully styled, on any web page:", "style": "body", "position": { "x": 0, "y": 122 }, "width": 166 },
-
-        { "type": "text", "content": "<link rel=\"stylesheet\" href=\"https://unpkg.com/@uurtech/jdf/dist/jdfjs.css\">\n<script type=\"module\" src=\"https://unpkg.com/@uurtech/jdf\"></script>\n<jdf src=\"/whitepaper.jdf\"></jdf>", "style": { "fontFamily": "JetBrains Mono", "fontSize": 9, "color": "#1e293b", "backgroundColor": "#f1f5f9", "padding": 10, "borderRadius": 4, "lineHeight": 1.5 }, "position": { "x": 0, "y": 138 }, "width": 166 },
-
-        { "type": "text", "content": "Try it yourself", "heading": 2, "tocEntry": "Try it", "tocLevel": 2, "style": "h2", "position": { "x": 0, "y": 178 }, "width": 166 },
-
-        { "type": "collapsible", "title": "What does PDF do that JDF can't?", "expanded": false, "position": { "x": 0, "y": 190 }, "width": 166, "elements": [
-          { "type": "text", "content": "Today: nothing meaningful. Tomorrow: anything we want to add. The format is open, the schema is JSON, the renderers are MIT.", "style": "body" }
-        ]}
-      ]
+        {
+          "content": "DOCUMENT FORMAT",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "style": "label",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "Table of Contents",
+          "heading": 1,
+          "position": {
+            "x": 0,
+            "y": 8
+          },
+          "style": "h1",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "fill": "#2563eb",
+          "height": 0.6,
+          "position": {
+            "x": 0,
+            "y": 32
+          },
+          "shape": "rect",
+          "type": "shape",
+          "width": 18
+        },
+        {
+          "depth": 3,
+          "position": {
+            "x": 0,
+            "y": 42
+          },
+          "style": "body",
+          "type": "toc",
+          "width": 166
+        },
+        {
+          "content": "Embedding on the web",
+          "heading": 2,
+          "position": {
+            "x": 0,
+            "y": 110
+          },
+          "style": "h2",
+          "tocEntry": "Embedding",
+          "tocLevel": 2,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "Three lines of HTML and your document appears, fully styled, on any web page:",
+          "position": {
+            "x": 0,
+            "y": 122
+          },
+          "style": "body",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "<link rel=\"stylesheet\" href=\"https://unpkg.com/@uurtech/jdf/dist/jdfjs.css\">\n<script type=\"module\" src=\"https://unpkg.com/@uurtech/jdf\"></script>\n<jdf src=\"/whitepaper.jdf\"></jdf>",
+          "position": {
+            "x": 0,
+            "y": 138
+          },
+          "style": {
+            "backgroundColor": "#f1f5f9",
+            "borderRadius": 4,
+            "color": "#1e293b",
+            "fontFamily": "JetBrains Mono",
+            "fontSize": 9,
+            "lineHeight": 1.5,
+            "padding": 10
+          },
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "Try it yourself",
+          "heading": 2,
+          "position": {
+            "x": 0,
+            "y": 178
+          },
+          "style": "h2",
+          "tocEntry": "Try it",
+          "tocLevel": 2,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "elements": [
+            {
+              "content": "Today: nothing meaningful. Tomorrow: anything we want to add. The format is open, the schema is JSON, the renderers are MIT.",
+              "style": "body",
+              "type": "text"
+            }
+          ],
+          "expanded": false,
+          "position": {
+            "x": 0,
+            "y": 190
+          },
+          "title": "What does PDF do that JDF can't?",
+          "type": "collapsible",
+          "width": 166
+        },
+        {
+          "content": "New text",
+          "position": {
+            "x": 0,
+            "y": 5
+          },
+          "style": {
+            "color": "#0f172a",
+            "fontFamily": "Inter",
+            "fontSize": 11
+          },
+          "type": "text",
+          "width": 166
+        }
+      ],
+      "id": "page-2"
     }
-  ]
+  ],
+  "styles": {
+    "body": {
+      "color": "#334155",
+      "fontFamily": "Inter",
+      "fontSize": 11,
+      "lineHeight": 1.65
+    },
+    "h1": {
+      "color": "#0f172a",
+      "fontFamily": "Inter",
+      "fontSize": 32,
+      "fontWeight": "bold",
+      "lineHeight": 1.1
+    },
+    "h2": {
+      "color": "#1e293b",
+      "fontFamily": "Inter",
+      "fontSize": 16,
+      "fontWeight": "bold",
+      "lineHeight": 1.3
+    },
+    "label": {
+      "color": "#94a3b8",
+      "fontFamily": "Inter",
+      "fontSize": 9,
+      "fontWeight": "bold"
+    },
+    "lead": {
+      "color": "#475569",
+      "fontFamily": "Inter",
+      "fontSize": 13,
+      "lineHeight": 1.55
+    },
+    "muted": {
+      "color": "#94a3b8",
+      "fontFamily": "Inter",
+      "fontSize": 9
+    }
+  }
 }

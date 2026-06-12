@@ -31,7 +31,7 @@ export function CollapsibleElementView(props: CollapsibleElementViewProps) {
           ▶
         </button>
         <span class="flex-1">
-          {edit.enabled ? (
+          {edit.enabled() ? (
             <Editable
               value={props.element.title || ""}
               onCommit={(v) => edit.updateField(props.path, "title", v)}

@@ -1,4 +1,4 @@
-import { For } from "solid-js";
+import { For, Show } from "solid-js";
 import type { RichTextElement, Style, RichTextRun, Link } from "@jdf/core";
 import { resolveStyle, styleToCss } from "./PageRenderer";
 import { Editable } from "../shared/Editable";
@@ -40,6 +40,7 @@ export function RichTextElementView(props: RichTextElementViewProps) {
   const edit = useEdit();
   const containerCss = () => resolveStyle(props.element.style, props.styles);
   const fullText = () => (props.element.runs || []).map((r) => r.text).join("");
+  const isLong = () => fullText().length > 60 || fullText().includes("\n");
 
   function commitWholeParagraph(next: string) {
     const runs = props.element.runs || [];
@@ -50,9 +51,41 @@ export function RichTextElementView(props: RichTextElementViewProps) {
     edit.updateField(props.path, "runs", [{ text: next }]);
   }
 
-  if (edit.enabled) {
-    const isLong = () => fullText().length > 60 || fullText().includes("\n");
-    return (
+  return (
+    <Show
+      when={edit.enabled()}
+      fallback={
+        <p class="m-0" style={containerCss()}>
+          <For each={props.element.runs || []}>
+            {(run) => {
+              const css = runCss(run, props.styles);
+              const link = linkInfo(run.link);
+              if (link) {
+                return (
+                  <a
+                    href={link.href}
+                    class="text-blue-600 hover:text-blue-800 underline"
+                    target={link.internal ? undefined : "_blank"}
+                    rel={link.internal ? undefined : "noopener noreferrer"}
+                    onClick={(e) => {
+                      if (link.internal && props.onNavigatePage) {
+                        e.preventDefault();
+                        const m = link.href.replace(/^#/, "").match(/^page-(\d+)$/i);
+                        if (m) props.onNavigatePage(Number(m[1]) - 1);
+                      }
+                    }}
+                    style={css}
+                  >
+                    {run.text}
+                  </a>
+                );
+              }
+              return <span style={css}>{run.text}</span>;
+            }}
+          </For>
+        </p>
+      }
+    >
       <Editable
         as="p"
         value={fullText()}
@@ -61,39 +94,6 @@ export function RichTextElementView(props: RichTextElementViewProps) {
         class="m-0 whitespace-pre-wrap"
         style={containerCss() as any}
       />
-    );
-  }
-
-  return (
-    <p class="m-0" style={containerCss()}>
-      <For each={props.element.runs || []}>
-        {(run) => {
-          const css = runCss(run, props.styles);
-          const link = linkInfo(run.link);
-
-          if (link) {
-            return (
-              <a
-                href={link.href}
-                class="text-blue-600 hover:text-blue-800 underline"
-                target={link.internal ? undefined : "_blank"}
-                rel={link.internal ? undefined : "noopener noreferrer"}
-                onClick={(e) => {
-                  if (link.internal && props.onNavigatePage) {
-                    e.preventDefault();
-                    const m = link.href.replace(/^#/, "").match(/^page-(\d+)$/i);
-                    if (m) props.onNavigatePage(Number(m[1]) - 1);
-                  }
-                }}
-                style={css}
-              >
-                {run.text}
-              </a>
-            );
-          }
-          return <span style={css}>{run.text}</span>;
-        }}
-      </For>
-    </p>
+    </Show>
   );
 }
