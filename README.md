@@ -4,8 +4,10 @@ A document format that's just JSON. Open `.jdf` in any text editor and you see t
 
 <p align="center">
   <img src="docs/screenshot1.png" alt="JDF Reader rendered view" width="48%">
+<br>
   <img src="docs/screenshot2.png" alt="JDF Reader source view" width="48%">
-  <img src="docs/screenshot3.png" alt="JDF Reader web element view" width="48%">
+<br>  
+<img src="docs/screenshot3.png" alt="JDF Reader web element view" width="48%">
 </p>
 
 JDF runs in three places:
