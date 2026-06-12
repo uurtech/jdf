@@ -35,8 +35,8 @@ Thumbs.db
 *.tmp
 .cache/
 
-# PDF files in examples (too large for git)
-spec/examples/*.pdf
+# Build artifacts only — sample inputs (.jdf, .pdf, .md) under spec/examples
+# and docs/examples are intentionally tracked.
 
 # Claude
 .claude/

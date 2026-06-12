@@ -87,6 +87,26 @@
         <jdf src="../../examples/article.jdf" page="1" height="600"></jdf>
       </div>
 
+      <h2>Cross-origin example (CDN-style)</h2>
+      <p>Point at a JDF file hosted anywhere — the browser fetches it as long as CORS allows. The same files embedded above are also served from this site at:</p>
+      <ul>
+        <li><a href="../../examples/hello-world.jdf"><code>/examples/hello-world.jdf</code></a></li>
+        <li><a href="../../examples/invoice.jdf"><code>/examples/invoice.jdf</code></a></li>
+        <li><a href="../../examples/article.jdf"><code>/examples/article.jdf</code></a></li>
+      </ul>
+      <p>Try them in your own page:</p>
+<pre><code><span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://uurtech.github.io/jdf/examples/invoice.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+
+      <h2>What about PDFs?</h2>
+      <p>jdf.js is a <strong>JDF</strong> renderer — it doesn't parse PDF in the browser. The desktop reader does PDF→JDF conversion (PDF.js + canvas + image extraction); pulling that into the web library would push the bundle past 300 kB.</p>
+      <p>The recommended flow:</p>
+      <ol>
+        <li>Open the PDF in <a href="../desktop.html">JDF Reader (desktop)</a> — drag &amp; drop, double-click in Finder, or <kbd>Cmd+O</kbd>.</li>
+        <li>Edit if you want, then <kbd>Cmd+S</kbd> → save as <code>.jdf</code>.</li>
+        <li>Host that <code>.jdf</code> next to your site assets and embed with <code>&lt;jdf src="..."&gt;</code>.</li>
+      </ol>
+      <p>A real test PDF is included in this repo so you can try the round-trip yourself: <a href="../../examples/sample.pdf"><code>examples/sample.pdf</code></a> (85 KB, public LinkedIn profile). Download → drop on the desktop reader → save as JDF → embed.</p>
+
       <div class="next-prev">
         <a href="index.html" class="prev"><span class="label">← Previous</span><span class="title">&lt;jdf&gt; tag</span></a>
         <a href="api.html" class="next"><span class="label">Next →</span><span class="title">API reference</span></a>
