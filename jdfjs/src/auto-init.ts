@@ -60,11 +60,51 @@ function processElement(el: Element) {
   if (!src) return;
   PROCESSED.add(el);
   const container = el as HTMLElement;
+  applySizeAttrs(container);
   const opts = readOptions(el);
   embed(container, src, opts).catch((err) => {
     console.error("[jdf.js] failed to embed", src, err);
     container.dispatchEvent(new CustomEvent("jdf-error", { detail: err, bubbles: true }));
   });
+  // Watch for attribute changes — re-render when src changes,
+  // resize when width/height changes. Replaces the custom element
+  // attributeChangedCallback (which we can't use because <jdf> isn't
+  // a valid custom element name per the Web Components spec).
+  observeAttributes(container);
+}
+
+function applySizeAttrs(el: HTMLElement) {
+  const w = el.getAttribute("width");
+  if (w != null) {
+    const n = Number(w);
+    el.style.width = isNaN(n) ? w : `${n}px`;
+  }
+  const h = el.getAttribute("height");
+  if (h != null) {
+    const n = Number(h);
+    el.style.height = isNaN(n) ? h : `${n}px`;
+  }
+}
+
+const ATTR_OBSERVED = new WeakSet<Element>();
+function observeAttributes(el: Element) {
+  if (ATTR_OBSERVED.has(el)) return;
+  if (typeof MutationObserver === "undefined") return;
+  ATTR_OBSERVED.add(el);
+  const obs = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      if (m.type !== "attributes" || !m.attributeName) continue;
+      const name = m.attributeName;
+      if (name === "src") {
+        // Re-render with the new src
+        PROCESSED.delete(el);
+        processElement(el);
+      } else if (name === "width" || name === "height") {
+        applySizeAttrs(el as HTMLElement);
+      }
+    }
+  });
+  obs.observe(el, { attributes: true, attributeFilter: ["src", "width", "height"] });
 }
 
 function scan(root: ParentNode = document) {
@@ -102,27 +142,9 @@ function autoInit() {
   }
 }
 
-// Define the <jdf> element as a custom element so its src attribute is reactive.
-// Browsers treat it as HTMLElement, but registering it gives us attribute-change hooks.
-if (typeof customElements !== "undefined" && !customElements.get("jdf")) {
-  class JdfElement extends HTMLElement {
-    static get observedAttributes() { return ["src", "width", "height", "zoom"]; }
-    connectedCallback() { processElement(this); }
-    attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null) {
-      if (oldVal === newVal) return;
-      if (name === "src" && newVal) {
-        PROCESSED.delete(this);
-        processElement(this);
-      } else if (name === "width" && newVal) {
-        const n = Number(newVal);
-        this.style.width = isNaN(n) ? newVal : `${n}px`;
-      } else if (name === "height" && newVal) {
-        const n = Number(newVal);
-        this.style.height = isNaN(n) ? newVal : `${n}px`;
-      }
-    }
-  }
-  customElements.define("jdf", JdfElement);
-}
+// We can't use `customElements.define("jdf", ...)` because the Web Components
+// spec requires custom element names to contain a hyphen. Instead, we treat
+// <jdf> as a plain HTMLUnknownElement and wire up reactive src/width/height
+// attributes via a per-element MutationObserver inside processElement.
 
 autoInit();
