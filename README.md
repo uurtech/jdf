@@ -393,9 +393,9 @@ Done:
 - JSON Schema, CLI validate, CI on all three OSes.
 - Homebrew tap (`uurtech/jdf`).
 - **jdf.js — web embed library** with auto-init, single `<jdf src="...">` form, feature parity with the desktop renderer.
+- Published to npm as [`@uurtech/jdf`](https://www.npmjs.com/package/@uurtech/jdf) — install via `npm install @uurtech/jdf` or load from CDN at `https://unpkg.com/@uurtech/jdf`.
 
 Not yet:
-- jdf.js is published to npm as [`@uurtech/jdf`](https://www.npmjs.com/package/@uurtech/jdf) (sources in [`jdfjs/`](jdfjs/), build with `pnpm --filter jdfjs build`; ship with `bash scripts/publish-npm.sh`).
 - PDF table detection (cells come in as separate text elements at correct coordinates; geometry-based row/column grouping is on the roadmap).
 - Multi-page overflow on PDF export.
 - VS Code extension (preview + schema hint).
