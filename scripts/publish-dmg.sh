@@ -103,22 +103,29 @@ GH_API="https://api.github.com/repos/$GH_OWNER/$GH_REPO"
 GH_UPLOADS="https://uploads.github.com/repos/$GH_OWNER/$GH_REPO"
 
 # Delete existing release for this tag if present (for re-runs)
-EXISTING=$(curl -sL -H "Authorization: Bearer $GITHUB_TOKEN" "$GH_API/releases/tags/$TAG" | node -p "
-  let j;
-  try { j = JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')); }
-  catch { j = {}; }
-  j.id || ''
-" 2>/dev/null || true)
+EXISTING_JSON=$(curl -sL -H "Authorization: Bearer $GITHUB_TOKEN" \
+  -H "Accept: application/vnd.github+json" \
+  "$GH_API/releases/tags/$TAG")
+EXISTING=$(echo "$EXISTING_JSON" | node -e "
+  let j; try { j = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); } catch { j = {}; }
+  process.stdout.write(j && typeof j.id === 'number' ? String(j.id) : '');
+")
 
-if [[ -n "${EXISTING:-}" && "$EXISTING" != "''" ]]; then
+if [[ -n "$EXISTING" ]]; then
   echo "→ Deleting existing release $TAG (id=$EXISTING) to recreate"
-  curl -sL -X DELETE -H "Authorization: Bearer $GITHUB_TOKEN" "$GH_API/releases/$EXISTING" >/dev/null || true
-  curl -sL -X DELETE -H "Authorization: Bearer $GITHUB_TOKEN" "$GH_API/git/refs/tags/$TAG" >/dev/null || true
+  curl -sL -X DELETE -H "Authorization: Bearer $GITHUB_TOKEN" \
+    -H "Accept: application/vnd.github+json" \
+    "$GH_API/releases/$EXISTING" >/dev/null || true
 fi
+# Always try to delete the tag too — orphaned tags break tag re-creation
+curl -sL -X DELETE -H "Authorization: Bearer $GITHUB_TOKEN" \
+  -H "Accept: application/vnd.github+json" \
+  "$GH_API/git/refs/tags/$TAG" >/dev/null 2>&1 || true
 
 echo "→ Creating GitHub release $TAG"
 RELEASE_JSON=$(curl -sL -X POST -H "Authorization: Bearer $GITHUB_TOKEN" \
   -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
   "$GH_API/releases" \
   -d "{
     \"tag_name\": \"$TAG\",
@@ -128,11 +135,20 @@ RELEASE_JSON=$(curl -sL -X POST -H "Authorization: Bearer $GITHUB_TOKEN" \
     \"prerelease\": false,
     \"target_commitish\": \"master\"
   }")
-RELEASE_ID=$(echo "$RELEASE_JSON" | node -p "
-  const j = JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8'));
-  if (!j.id) { process.stderr.write(JSON.stringify(j) + '\n'); process.exit(1); }
-  j.id
+
+RELEASE_ID=$(echo "$RELEASE_JSON" | node -e "
+  let j; try { j = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); } catch { process.exit(1); }
+  if (!j.id) {
+    process.stderr.write('GitHub release create failed:\n');
+    process.stderr.write(JSON.stringify(j, null, 2) + '\n');
+    process.exit(1);
+  }
+  process.stdout.write(String(j.id));
 ")
+if [[ -z "$RELEASE_ID" ]]; then
+  echo "✗ release create failed (see stderr above)"
+  exit 1
+fi
 
 echo "→ Uploading dmg → release $RELEASE_ID"
 curl -sL -X POST \
@@ -164,14 +180,27 @@ else
   echo "  Manual: clone uurtech/homebrew-jdf next to this repo and re-run"
 fi
 
-# ── Step 6: install locally for sanity ─────────────────────────────────────
-echo "→ Installing /Applications/JDF Reader.app (local sanity check)"
+# ── Step 6: install locally for sanity (extract .app from the dmg) ─────────
+echo "→ Installing /Applications/JDF Reader.app (extracting from dmg)"
 killall "JDF Reader" 2>/dev/null || true
 rm -rf "/Applications/JDF Reader.app"
-cp -R "$REPO_ROOT/apps/reader/src-tauri/target/release/bundle/macos/JDF Reader.app" /Applications/
-xattr -cr "/Applications/JDF Reader.app" 2>/dev/null || true
-LSBIN="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
-[[ -x "$LSBIN" ]] && "$LSBIN" -f "/Applications/JDF Reader.app" >/dev/null 2>&1 || true
+
+# `tauri build --bundles dmg` cleans the .app during dmg packaging, so we
+# extract the .app back out of the dmg.
+MOUNT_POINT=$(mktemp -d)
+hdiutil attach "$DMG" -nobrowse -mountpoint "$MOUNT_POINT" -quiet
+APP_IN_DMG="$MOUNT_POINT/JDF Reader.app"
+if [[ -d "$APP_IN_DMG" ]]; then
+  cp -R "$APP_IN_DMG" /Applications/
+  xattr -cr "/Applications/JDF Reader.app" 2>/dev/null || true
+  LSBIN="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
+  [[ -x "$LSBIN" ]] && "$LSBIN" -f "/Applications/JDF Reader.app" >/dev/null 2>&1 || true
+  echo "  ✓ /Applications/JDF Reader.app installed"
+else
+  echo "  (could not find JDF Reader.app inside dmg, skipping install)"
+fi
+hdiutil detach "$MOUNT_POINT" -quiet -force 2>/dev/null || true
+rmdir "$MOUNT_POINT" 2>/dev/null || true
 
 echo ""
 echo "✓ Desktop release done."

@@ -39,51 +39,50 @@
 
       <div class="example-frame">
         <div class="example-frame-label">Live: &lt;jdf src="../../examples/hello-world.jdf"&gt;</div>
-        <jdf src="../../examples/hello-world.jdf" data-jdf-zoom="0.8"></jdf>
+        <jdf src="../../examples/hello-world.jdf" zoom="0.8"></jdf>
       </div>
 
-      <h2>Three ways to embed</h2>
+      <h2>The only embed form: <code>&lt;jdf&gt;</code></h2>
+      <p>One tag. The library registers <code>&lt;jdf&gt;</code> as a custom element with reactive attributes — change <code>src</code> via JS and the embed re-renders.</p>
 
-      <h3>1. Custom element <code>&lt;jdf-viewer&gt;</code> — recommended</h3>
-      <p>A standards-compliant Web Component. The <code>src</code> attribute is reactive — change it via JS and the embed re-renders.</p>
-<pre><code><span class="punc">&lt;</span><span class="key">jdf-viewer</span> <span class="key">src</span><span class="punc">=</span><span class="str">"/doc.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf-viewer</span><span class="punc">&gt;</span>
+<pre><code><span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"/doc.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span>
+
+<span class="com">&lt;!-- configure with attributes --&gt;</span>
+<span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"/doc.jdf"</span>
+     <span class="key">width</span><span class="punc">=</span><span class="str">"800"</span>
+     <span class="key">height</span><span class="punc">=</span><span class="str">"600"</span>
+     <span class="key">zoom</span><span class="punc">=</span><span class="str">"1.2"</span>
+     <span class="key">sidebar</span><span class="punc">=</span><span class="str">"true"</span>
+     <span class="key">dark-mode</span><span class="punc">=</span><span class="str">"auto"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span>
 
 <span class="com">&lt;!-- update programmatically --&gt;</span>
 <span class="punc">&lt;</span><span class="key">script</span><span class="punc">&gt;</span>
-  document.querySelector(<span class="str">"jdf-viewer"</span>).<span class="key">setAttribute</span>(<span class="str">"src"</span><span class="punc">,</span> <span class="str">"/other.jdf"</span>)<span class="punc">;</span>
+  document.querySelector(<span class="str">"jdf"</span>).<span class="key">setAttribute</span>(<span class="str">"src"</span><span class="punc">,</span> <span class="str">"/other.jdf"</span>)<span class="punc">;</span>
 <span class="punc">&lt;/</span><span class="key">script</span><span class="punc">&gt;</span></code></pre>
 
-      <h3>2. Shorthand tag <code>&lt;jdf&gt;</code></h3>
-      <p>The most concise. Behaves like <code>&lt;img&gt;</code> or <code>&lt;video&gt;</code>:</p>
-<pre><code><span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"/doc.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
-      <p>Note: <code>&lt;jdf&gt;</code> is not a registered HTML element, so the browser treats it as a generic inline-block container. Most browsers handle this fine; for stricter validation use <code>&lt;jdf-viewer&gt;</code>.</p>
-
-      <h3>3. Data attribute <code>data-jdf</code> — retrofit into existing layouts</h3>
-      <p>Add <code>data-jdf</code> to any element you already have. Useful for CMS templates or component frameworks where you can't add new tag names.</p>
-<pre><code><span class="punc">&lt;</span><span class="key">div</span> <span class="key">data-jdf</span><span class="punc">=</span><span class="str">"/doc.jdf"</span>
-     <span class="key">data-jdf-zoom</span><span class="punc">=</span><span class="str">"1.2"</span>
-     <span class="key">data-jdf-sidebar</span><span class="punc">=</span><span class="str">"true"</span>
-     <span class="key">style</span><span class="punc">=</span><span class="str">"height: 800px"</span><span class="punc">&gt;&lt;/</span><span class="key">div</span><span class="punc">&gt;</span></code></pre>
-
       <h2>Configuration</h2>
-      <p>All three forms accept the same options. As HTML attributes, prefix with <code>data-jdf-</code>:</p>
 
       <table>
-        <thead><tr><th>Attribute</th><th>JS option</th><th>Type</th><th>Default</th></tr></thead>
+        <thead><tr><th>Attribute</th><th>Type</th><th>Default</th></tr></thead>
         <tbody>
-          <tr><td><code>src</code></td><td><code>(url arg)</code></td><td>string</td><td>required</td></tr>
-          <tr><td><code>data-jdf-zoom</code></td><td><code>zoom</code></td><td>number</td><td><code>1</code></td></tr>
-          <tr><td><code>data-jdf-sidebar</code></td><td><code>sidebar</code></td><td>boolean</td><td><code>false</code></td></tr>
-          <tr><td><code>data-jdf-toolbar</code></td><td><code>toolbar</code></td><td>boolean</td><td><code>true</code></td></tr>
-          <tr><td><code>data-jdf-dark-mode</code></td><td><code>darkMode</code></td><td>"auto" · "light" · "dark"</td><td><code>"auto"</code></td></tr>
-          <tr><td><code>data-jdf-page</code></td><td><code>initialPage</code></td><td>integer (0-based)</td><td><code>0</code></td></tr>
+          <tr><td><code>src</code></td><td>string</td><td>required</td></tr>
+          <tr><td><code>width</code></td><td>number (px) or any CSS length</td><td>—</td></tr>
+          <tr><td><code>height</code></td><td>number (px) or any CSS length</td><td><code>600px</code></td></tr>
+          <tr><td><code>zoom</code></td><td>number</td><td><code>1</code></td></tr>
+          <tr><td><code>fit</code></td><td>"manual" · "fit-width" · "fit-page"</td><td><code>"manual"</code></td></tr>
+          <tr><td><code>sidebar</code></td><td>boolean</td><td><code>false</code></td></tr>
+          <tr><td><code>toolbar</code></td><td>boolean</td><td><code>true</code></td></tr>
+          <tr><td><code>dark-mode</code></td><td>"auto" · "light" · "dark"</td><td><code>"auto"</code></td></tr>
+          <tr><td><code>page</code></td><td>integer (0-based)</td><td><code>0</code></td></tr>
+          <tr><td><code>manual</code></td><td>boolean</td><td>—</td></tr>
         </tbody>
       </table>
 
-      <p>To opt out of auto-init for a specific element, add <code>data-jdf-manual</code>. For SPA pages where you mount content async, call <code>scanForJdfElements()</code> manually:</p>
-<pre><code><span class="key">import</span> { scanForJdfElements } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
+      <p>To opt out of auto-init for a specific tag, add <code>manual</code>. For SPA pages where you mount content async, call <code>jdf()</code> manually:</p>
+<pre><code><span class="key">import</span> { jdf } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
 <span class="com">// after your async content lands</span>
-scanForJdfElements()<span class="punc">;</span></code></pre>
+jdf()<span class="punc">;</span>           <span class="com">// scan the whole document</span>
+jdf(myContainer)<span class="punc">;</span> <span class="com">// scan inside one container</span></code></pre>
 
       <h2>Programmatic API</h2>
       <p>For full control, install via npm and use the JS API directly:</p>

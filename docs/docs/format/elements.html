@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Element reference — JDF</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg" />
+  <link rel="stylesheet" href="../../docs.css" />
+  <script defer src="../../docs.js"></script>
+</head>
+<body>
+  <header class="docs-nav">
+    <a class="brand" href="../../"><svg viewBox="0 0 1024 1024" width="26" height="26"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs><rect width="1024" height="1024" rx="225" fill="url(#g)"/><text x="512" y="512" font-family="Inter,sans-serif" font-size="380" font-weight="900" fill="#fff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text></svg><span>JDF</span><span style="color:var(--muted);font-weight:500">/ docs</span></a>
+    <nav class="nav-links"><a href="../../">Home</a><a href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">GitHub ↗</a></nav>
+  </header>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" data-base="../"></aside>
+
+    <main class="docs-content">
+      <h1>Element reference</h1>
+      <p>Every element on a page has a <code>type</code> field. Below is every type, every property, and a minimal example.</p>
+
+      <p>Every element accepts these common positioning fields:</p>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Default</th></tr></thead>
+        <tbody>
+          <tr><td><code>position</code></td><td><code>{x, y}</code> in mm (or doc unit)</td><td>flow with previous</td></tr>
+          <tr><td><code>width</code></td><td>number</td><td>content area width</td></tr>
+          <tr><td><code>height</code></td><td>number</td><td>auto-size</td></tr>
+          <tr><td><code>style</code></td><td>StyleRef</td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <h2><code>text</code></h2>
+      <p>A paragraph or heading with single styling.</p>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th></tr></thead>
+        <tbody>
+          <tr><td><code>type</code></td><td><code>"text"</code></td><td>yes</td></tr>
+          <tr><td><code>content</code></td><td>string</td><td>yes</td></tr>
+          <tr><td><code>heading</code></td><td><code>true</code> or <code>1..6</code></td><td>no — turns the element into <code>&lt;h1&gt;</code> … <code>&lt;h6&gt;</code></td></tr>
+          <tr><td><code>align</code></td><td><code>"left"</code> · <code>"center"</code> · <code>"right"</code> · <code>"justify"</code></td><td>no</td></tr>
+          <tr><td><code>tocEntry</code></td><td>string</td><td>no — text used in TOC instead of <code>content</code></td></tr>
+          <tr><td><code>tocLevel</code></td><td><code>1..6</code></td><td>no — TOC nesting depth</td></tr>
+          <tr><td><code>link</code></td><td>string or <code>{type, target}</code></td><td>no</td></tr>
+        </tbody>
+      </table>
+<pre><code><span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Section 1"</span><span class="punc">,</span> <span class="key">"heading"</span><span class="punc">:</span> <span class="num">2</span><span class="punc">,</span> <span class="key">"style"</span><span class="punc">:</span> <span class="str">"h2"</span> <span class="punc">}</span></code></pre>
+
+      <h2><code>richtext</code></h2>
+      <p>Inline-formatted text. A list of <code>runs</code>, each with its own styling.</p>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td><code>type</code></td><td><code>"richtext"</code></td></tr>
+          <tr><td><code>runs</code></td><td>array of <code>RichTextRun</code></td></tr>
+        </tbody>
+      </table>
+      <p>Each run accepts: <code>text</code>, <code>bold</code>, <code>italic</code>, <code>underline</code>, <code>strikethrough</code>, <code>color</code>, <code>fontSize</code>, <code>fontFamily</code>, <code>style</code>, <code>link</code>.</p>
+<pre><code><span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"richtext"</span><span class="punc">,</span> <span class="key">"runs"</span><span class="punc">:</span> <span class="punc">[</span>
+  <span class="punc">{</span> <span class="key">"text"</span><span class="punc">:</span> <span class="str">"This is "</span> <span class="punc">},</span>
+  <span class="punc">{</span> <span class="key">"text"</span><span class="punc">:</span> <span class="str">"bold"</span><span class="punc">,</span> <span class="key">"bold"</span><span class="punc">:</span> <span class="key">true</span> <span class="punc">},</span>
+  <span class="punc">{</span> <span class="key">"text"</span><span class="punc">:</span> <span class="str">" and "</span> <span class="punc">},</span>
+  <span class="punc">{</span> <span class="key">"text"</span><span class="punc">:</span> <span class="str">"colored"</span><span class="punc">,</span> <span class="key">"color"</span><span class="punc">:</span> <span class="str">"#dc2626"</span> <span class="punc">},</span>
+  <span class="punc">{</span> <span class="key">"text"</span><span class="punc">:</span> <span class="str">" and "</span> <span class="punc">},</span>
+  <span class="punc">{</span> <span class="key">"text"</span><span class="punc">:</span> <span class="str">"linked"</span><span class="punc">,</span> <span class="key">"link"</span><span class="punc">:</span> <span class="str">"https://example.com"</span> <span class="punc">}</span>
+<span class="punc">]</span> <span class="punc">}</span></code></pre>
+
+      <h2><code>image</code></h2>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td><code>type</code></td><td><code>"image"</code></td></tr>
+          <tr><td><code>resource</code></td><td>string — key into <code>resources.images</code></td></tr>
+          <tr><td><code>src</code></td><td>string — URL, file path, or <code>data:</code> URI</td></tr>
+          <tr><td><code>alt</code></td><td>string</td></tr>
+          <tr><td><code>fit</code></td><td><code>"contain"</code> · <code>"cover"</code> · <code>"fill"</code> · <code>"none"</code></td></tr>
+          <tr><td><code>link</code></td><td>same as text</td></tr>
+        </tbody>
+      </table>
+<pre><code><span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"image"</span><span class="punc">,</span> <span class="key">"resource"</span><span class="punc">:</span> <span class="str">"hero"</span><span class="punc">,</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">120</span><span class="punc">,</span> <span class="key">"height"</span><span class="punc">:</span> <span class="num">80</span><span class="punc">,</span> <span class="key">"fit"</span><span class="punc">:</span> <span class="str">"cover"</span> <span class="punc">}</span>
+<span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"image"</span><span class="punc">,</span> <span class="key">"src"</span><span class="punc">:</span> <span class="str">"https://cdn.example.com/logo.png"</span> <span class="punc">}</span></code></pre>
+
+      <h2><code>table</code></h2>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td><code>type</code></td><td><code>"table"</code></td></tr>
+          <tr><td><code>headers</code></td><td>array of strings</td></tr>
+          <tr><td><code>columns</code></td><td>array of <code>{header, width, align}</code></td></tr>
+          <tr><td><code>rows</code></td><td>2D array — each cell is a string or <code>{content, colspan, rowspan, style}</code></td></tr>
+          <tr><td><code>borders</code></td><td>boolean or <code>{outer, inner, color, width}</code></td></tr>
+          <tr><td><code>alternatingRowColor</code></td><td>color string</td></tr>
+          <tr><td><code>alternateRowStyle</code></td><td>StyleRef</td></tr>
+          <tr><td><code>headerStyle</code> / <code>rowStyle</code></td><td>StyleRef</td></tr>
+        </tbody>
+      </table>
+<pre><code><span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"table"</span><span class="punc">,</span>
+  <span class="key">"headers"</span><span class="punc">:</span> <span class="punc">[</span><span class="str">"Quarter"</span><span class="punc">,</span> <span class="str">"Revenue"</span><span class="punc">,</span> <span class="str">"YoY"</span><span class="punc">],</span>
+  <span class="key">"borders"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"outer"</span><span class="punc">:</span> <span class="key">true</span><span class="punc">,</span> <span class="key">"inner"</span><span class="punc">:</span> <span class="key">true</span><span class="punc">,</span> <span class="key">"color"</span><span class="punc">:</span> <span class="str">"#e2e8f0"</span> <span class="punc">},</span>
+  <span class="key">"alternatingRowColor"</span><span class="punc">:</span> <span class="str">"#f8fafc"</span><span class="punc">,</span>
+  <span class="key">"columns"</span><span class="punc">:</span> <span class="punc">[{</span> <span class="key">"align"</span><span class="punc">:</span> <span class="str">"left"</span> <span class="punc">},</span> <span class="punc">{</span> <span class="key">"align"</span><span class="punc">:</span> <span class="str">"right"</span> <span class="punc">},</span> <span class="punc">{</span> <span class="key">"align"</span><span class="punc">:</span> <span class="str">"right"</span> <span class="punc">}],</span>
+  <span class="key">"rows"</span><span class="punc">:</span> <span class="punc">[</span>
+    <span class="punc">[</span><span class="str">"Q1"</span><span class="punc">,</span> <span class="str">"$2.3M"</span><span class="punc">,</span> <span class="str">"+12%"</span><span class="punc">],</span>
+    <span class="punc">[</span><span class="str">"Q2"</span><span class="punc">,</span> <span class="str">"$2.7M"</span><span class="punc">,</span> <span class="str">"+15%"</span><span class="punc">]</span>
+  <span class="punc">]</span> <span class="punc">}</span></code></pre>
+
+      <h2><code>list</code></h2>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td><code>type</code></td><td><code>"list"</code></td></tr>
+          <tr><td><code>listType</code></td><td><code>"ordered"</code> · <code>"unordered"</code> (default <code>"unordered"</code>)</td></tr>
+          <tr><td><code>items</code></td><td>array of <code>{content, listType?, children?}</code></td></tr>
+        </tbody>
+      </table>
+      <p>Items can have nested <code>children</code> (recursive). A child item with its own <code>listType</code> overrides the parent's type for that subtree.</p>
+<pre><code><span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"list"</span><span class="punc">,</span> <span class="key">"listType"</span><span class="punc">:</span> <span class="str">"unordered"</span><span class="punc">,</span> <span class="key">"items"</span><span class="punc">:</span> <span class="punc">[</span>
+  <span class="punc">{</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"First"</span> <span class="punc">},</span>
+  <span class="punc">{</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Second"</span><span class="punc">,</span> <span class="key">"children"</span><span class="punc">:</span> <span class="punc">[</span>
+    <span class="punc">{</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Nested A"</span> <span class="punc">},</span>
+    <span class="punc">{</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Nested B"</span> <span class="punc">}</span>
+  <span class="punc">]</span> <span class="punc">},</span>
+  <span class="punc">{</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Third"</span> <span class="punc">}</span>
+<span class="punc">]</span> <span class="punc">}</span></code></pre>
+
+      <h2><code>shape</code></h2>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td><code>type</code></td><td><code>"shape"</code></td></tr>
+          <tr><td><code>shape</code></td><td><code>"rect"</code> · <code>"circle"</code> · <code>"ellipse"</code> · <code>"line"</code> · <code>"path"</code></td></tr>
+          <tr><td><code>fill</code></td><td>color string</td></tr>
+          <tr><td><code>stroke</code></td><td>color string or <code>{color, width}</code></td></tr>
+          <tr><td><code>strokeWidth</code></td><td>number</td></tr>
+          <tr><td><code>borderRadius</code></td><td>number (rect only)</td></tr>
+          <tr><td><code>path</code></td><td>SVG <code>d</code> string (path only)</td></tr>
+        </tbody>
+      </table>
+<pre><code><span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"shape"</span><span class="punc">,</span> <span class="key">"shape"</span><span class="punc">:</span> <span class="str">"rect"</span><span class="punc">,</span> <span class="key">"fill"</span><span class="punc">:</span> <span class="str">"#3b82f6"</span><span class="punc">,</span>
+  <span class="key">"width"</span><span class="punc">:</span> <span class="num">60</span><span class="punc">,</span> <span class="key">"height"</span><span class="punc">:</span> <span class="num">40</span><span class="punc">,</span> <span class="key">"borderRadius"</span><span class="punc">:</span> <span class="num">8</span> <span class="punc">}</span></code></pre>
+
+      <h2><code>collapsible</code></h2>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td><code>type</code></td><td><code>"collapsible"</code></td></tr>
+          <tr><td><code>title</code></td><td>string</td></tr>
+          <tr><td><code>elements</code></td><td>array of any element</td></tr>
+          <tr><td><code>expanded</code></td><td>boolean — initial state (default <code>false</code>)</td></tr>
+        </tbody>
+      </table>
+<pre><code><span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"collapsible"</span><span class="punc">,</span> <span class="key">"title"</span><span class="punc">:</span> <span class="str">"Click to expand"</span><span class="punc">,</span>
+  <span class="key">"expanded"</span><span class="punc">:</span> <span class="key">false</span><span class="punc">,</span>
+  <span class="key">"elements"</span><span class="punc">:</span> <span class="punc">[</span>
+    <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Hidden content here"</span> <span class="punc">}</span>
+  <span class="punc">]</span> <span class="punc">}</span></code></pre>
+
+      <h2><code>toc</code></h2>
+      <p>Auto-generated from headings on every page. Click an entry to navigate to that page.</p>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td><code>type</code></td><td><code>"toc"</code></td></tr>
+          <tr><td><code>depth</code></td><td>integer 1-6 — max heading level to include (default 6)</td></tr>
+        </tbody>
+      </table>
+<pre><code><span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"toc"</span><span class="punc">,</span> <span class="key">"depth"</span><span class="punc">:</span> <span class="num">3</span><span class="punc">,</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">166</span> <span class="punc">}</span></code></pre>
+
+      <h2>Style properties</h2>
+      <p>Both inline element <code>style</code> and named <code>styles</code> entries accept these CSS-like properties:</p>
+      <table>
+        <thead><tr><th>Property</th><th>Type / values</th></tr></thead>
+        <tbody>
+          <tr><td><code>fontFamily</code></td><td>string</td></tr>
+          <tr><td><code>fontSize</code></td><td>number (points)</td></tr>
+          <tr><td><code>fontWeight</code></td><td><code>"normal"</code> · <code>"bold"</code> · <code>"100"…"900"</code></td></tr>
+          <tr><td><code>fontStyle</code></td><td><code>"normal"</code> · <code>"italic"</code></td></tr>
+          <tr><td><code>color</code></td><td>color string (hex)</td></tr>
+          <tr><td><code>backgroundColor</code></td><td>color string</td></tr>
+          <tr><td><code>textAlign</code></td><td><code>"left"</code> · <code>"center"</code> · <code>"right"</code> · <code>"justify"</code></td></tr>
+          <tr><td><code>textDecoration</code></td><td><code>"none"</code> · <code>"underline"</code> · <code>"line-through"</code> · <code>"strikethrough"</code></td></tr>
+          <tr><td><code>lineHeight</code></td><td>number</td></tr>
+          <tr><td><code>letterSpacing</code></td><td>number (px) or string</td></tr>
+          <tr><td><code>padding</code> / <code>margin</code></td><td>number, string, or <code>{top, right, bottom, left}</code></td></tr>
+          <tr><td><code>marginTop</code> / <code>marginBottom</code></td><td>number</td></tr>
+          <tr><td><code>border</code></td><td>string (CSS-like)</td></tr>
+          <tr><td><code>borderRadius</code></td><td>number or string</td></tr>
+          <tr><td><code>opacity</code></td><td>number 0..1</td></tr>
+        </tbody>
+      </table>
+
+      <div class="next-prev">
+        <a href="index.html" class="prev"><span class="label">← Previous</span><span class="title">Format overview</span></a>
+        <a href="../desktop.html" class="next"><span class="label">Next →</span><span class="title">Desktop Reader</span></a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

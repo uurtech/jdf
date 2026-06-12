@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CLI — JDF</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+  <link rel="stylesheet" href="../docs.css" />
+  <script defer src="../docs.js"></script>
+</head>
+<body>
+  <header class="docs-nav">
+    <a class="brand" href="../"><svg viewBox="0 0 1024 1024" width="26" height="26"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs><rect width="1024" height="1024" rx="225" fill="url(#g)"/><text x="512" y="512" font-family="Inter,sans-serif" font-size="380" font-weight="900" fill="#fff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text></svg><span>JDF</span><span style="color:var(--muted);font-weight:500">/ docs</span></a>
+    <nav class="nav-links"><a href="../">Home</a><a href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">GitHub ↗</a></nav>
+  </header>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" data-base="./"></aside>
+
+    <main class="docs-content">
+      <h1>CLI — <code>@jdf/cli</code></h1>
+      <p>Command-line tool for validating <code>.jdf</code> documents against the JSON Schema and converting source formats into JDF. Designed to be safe to drop into CI.</p>
+
+      <h2>Install</h2>
+<pre><code><span class="com"># run on demand (no install)</span>
+npx @jdf/cli validate doc.jdf
+
+<span class="com"># or install globally</span>
+npm install -g @jdf/cli
+jdf --help</code></pre>
+
+      <h2>Commands</h2>
+
+      <h3><code>jdf validate &lt;file.jdf&gt;</code></h3>
+      <p>Runs Ajv against <code>spec/jdf-schema.json</code> and reports path-level errors with warnings vs hard failures separated.</p>
+<pre><code>$ jdf validate spec/examples/hello-world.jdf
+
+✓ Valid: hello-world.jdf
+  Format:    1.0.0
+  Title:     Hello, JDF
+  Pages:     2
+  Elements:  14</code></pre>
+
+      <p>Failures look like:</p>
+<pre><code>$ jdf validate broken.jdf
+
+✗ Invalid: broken.jdf
+  /pages/0/elements/3/heading — must be one of [true, 1, 2, 3, 4, 5, 6]
+  /pages/0/elements/5 — required property "type" missing</code></pre>
+
+      <p>Exit code: <code>0</code> if valid, <code>1</code> if not. Drop into a CI step:</p>
+<pre><code><span class="com"># .github/workflows/ci.yml</span>
+- run<span class="punc">:</span> npx @jdf/cli validate docs/whitepaper.jdf</code></pre>
+
+      <h3><code>jdf import &lt;file.{md,pdf}&gt; [-o output.jdf]</code></h3>
+      <p>Convert a Markdown or PDF file to a <code>.jdf</code>:</p>
+<pre><code>jdf import README.md                    <span class="com"># → README.jdf</span>
+jdf import README.md -o readme.jdf      <span class="com"># custom output</span>
+jdf import paper.pdf -o paper.jdf       <span class="com"># PDF</span></code></pre>
+
+      <p>Markdown import uses <code>pulldown-cmark</code> with full GFM (tables, blockquotes, fenced code, links, images, task lists, hr, strikethrough). Bold/italic emit as <code>richtext</code> runs.</p>
+
+      <p>PDF import (planned) uses the same PDF.js-based extractor as the desktop reader: positions, fonts, colors, vector shapes, embedded images.</p>
+
+      <h2>Schema validation in CI</h2>
+      <p>If your project generates <code>.jdf</code> files programmatically, validate them on every PR. Example workflow:</p>
+
+<pre><code><span class="key">name</span><span class="punc">:</span> Validate JDF docs
+
+<span class="key">on</span><span class="punc">:</span> [pull_request]
+
+<span class="key">jobs</span><span class="punc">:</span>
+  validate<span class="punc">:</span>
+    runs-on<span class="punc">:</span> ubuntu-latest
+    steps<span class="punc">:</span>
+      <span class="punc">-</span> uses<span class="punc">:</span> actions/checkout@v4
+      <span class="punc">-</span> uses<span class="punc">:</span> actions/setup-node@v4
+        <span class="key">with</span><span class="punc">:</span>
+          node-version<span class="punc">:</span> 20
+      <span class="punc">-</span> run<span class="punc">:</span> npx @jdf/cli validate docs/*.jdf</code></pre>
+
+      <h2>Programmatic use</h2>
+      <p>The CLI is also a library — import it in scripts:</p>
+<pre><code><span class="key">import</span> { validate } <span class="key">from</span> <span class="str">"@jdf/cli/validate"</span><span class="punc">;</span>
+
+<span class="key">const</span> ok <span class="punc">=</span> <span class="key">await</span> validate(<span class="str">"./doc.jdf"</span>)<span class="punc">;</span>
+<span class="key">if</span> (<span class="punc">!</span>ok) process.exit(<span class="num">1</span>)<span class="punc">;</span></code></pre>
+
+      <div class="next-prev">
+        <a href="desktop.html" class="prev"><span class="label">← Previous</span><span class="title">Desktop Reader</span></a>
+        <a href="format/" class="next"><span class="label">Next →</span><span class="title">Format overview</span></a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

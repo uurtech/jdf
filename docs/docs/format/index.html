@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Format overview — JDF</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg" />
+  <link rel="stylesheet" href="../../docs.css" />
+  <script defer src="../../docs.js"></script>
+</head>
+<body>
+  <header class="docs-nav">
+    <a class="brand" href="../../"><svg viewBox="0 0 1024 1024" width="26" height="26"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs><rect width="1024" height="1024" rx="225" fill="url(#g)"/><text x="512" y="512" font-family="Inter,sans-serif" font-size="380" font-weight="900" fill="#fff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text></svg><span>JDF</span><span style="color:var(--muted);font-weight:500">/ docs</span></a>
+    <nav class="nav-links"><a href="../../">Home</a><a href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">GitHub ↗</a></nav>
+  </header>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" data-base="../"></aside>
+
+    <main class="docs-content">
+      <h1>Format overview</h1>
+      <p>A <code>.jdf</code> file is a single JSON document with six top-level fields. The full JSON Schema is at <a href="https://github.com/uurtech/jdf/blob/master/spec/jdf-schema.json" target="_blank" rel="noopener">spec/jdf-schema.json ↗</a>.</p>
+
+      <h2>Top-level shape</h2>
+
+      <table>
+        <thead><tr><th>Field</th><th>Required</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>$jdf</code></td><td>yes</td><td>Format version (semver, e.g. <code>"1.0.0"</code>)</td></tr>
+          <tr><td><code>meta</code></td><td>yes</td><td>Title, author, page size, margins, language, keywords</td></tr>
+          <tr><td><code>styles</code></td><td>no</td><td>Reusable named style definitions (referenced by name from elements)</td></tr>
+          <tr><td><code>resources</code></td><td>no</td><td>Embedded fonts and base64 images</td></tr>
+          <tr><td><code>header</code></td><td>no</td><td>Repeating header (template string with vars or full element tree)</td></tr>
+          <tr><td><code>footer</code></td><td>no</td><td>Repeating footer (same shape)</td></tr>
+          <tr><td><code>pages</code></td><td>yes</td><td>Array of pages, each with its own <code>elements[]</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2>Minimal valid document</h2>
+
+<pre><code><span class="punc">{</span>
+  <span class="key">"$jdf"</span><span class="punc">:</span> <span class="str">"1.0.0"</span><span class="punc">,</span>
+  <span class="key">"meta"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"title"</span><span class="punc">:</span> <span class="str">"Hello"</span> <span class="punc">},</span>
+  <span class="key">"pages"</span><span class="punc">:</span> <span class="punc">[{</span>
+    <span class="key">"elements"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Hi there"</span> <span class="punc">}</span>
+    <span class="punc">]</span>
+  <span class="punc">}]</span>
+<span class="punc">}</span></code></pre>
+
+      <h2>Page layout</h2>
+
+      <h3>Page sizes</h3>
+      <p>Named (<code>A4</code>, <code>A3</code>, <code>A5</code>, <code>Letter</code>, <code>Legal</code>, <code>Tabloid</code>) or custom <code>{width, height}</code> in millimeters:</p>
+<pre><code><span class="key">"meta"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"pageSize"</span><span class="punc">:</span> <span class="str">"A4"</span> <span class="punc">}</span>
+<span class="key">"meta"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"pageSize"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">250</span><span class="punc">,</span> <span class="key">"height"</span><span class="punc">:</span> <span class="num">200</span> <span class="punc">}</span> <span class="punc">}</span></code></pre>
+
+      <h3>Orientation</h3>
+      <p><code>"portrait"</code> (default) or <code>"landscape"</code>. Doc-level (<code>meta.pageOrientation</code>) sets the default; per-page (<code>page.pageOrientation</code>) overrides.</p>
+
+      <h3>Margins</h3>
+      <p>Object with <code>top</code>, <code>right</code>, <code>bottom</code>, <code>left</code> in millimeters (any unit if you've set <code>meta.unit</code>). A4 default: <code>{top: 25, right: 22, bottom: 25, left: 22}</code>. The content area for default A4 is therefore 166 × 247 mm.</p>
+
+      <h3>Positioning units</h3>
+      <p>Positions and dimensions are millimeters by default. Font sizes are points. Override with <code>meta.unit: "mm" | "in" | "pt" | "px"</code>.</p>
+
+      <h2>Element types</h2>
+
+      <p>Every page has an <code>elements[]</code> array. Each element has a <code>type</code> discriminator:</p>
+
+      <table>
+        <thead><tr><th>Type</th><th>Use for</th></tr></thead>
+        <tbody>
+          <tr><td><code>text</code></td><td>Paragraphs, headings (with <code>heading: 1-6</code>), labels</td></tr>
+          <tr><td><code>richtext</code></td><td>Inline-formatted text — bold, italic, links, color spans</td></tr>
+          <tr><td><code>image</code></td><td>Embedded base64 images (via <code>resources</code>) or referenced URLs</td></tr>
+          <tr><td><code>table</code></td><td>Headers, rows, alternating colors, configurable borders</td></tr>
+          <tr><td><code>list</code></td><td>Ordered, unordered, nested with per-item type override</td></tr>
+          <tr><td><code>shape</code></td><td>rect, circle, ellipse, line, SVG path</td></tr>
+          <tr><td><code>collapsible</code></td><td>Expandable section with nested elements (interactive)</td></tr>
+          <tr><td><code>toc</code></td><td>Auto-generated table of contents from headings</td></tr>
+        </tbody>
+      </table>
+
+      <p>See the <a href="elements.html">element reference</a> for every property of every type.</p>
+
+      <h2>Styles</h2>
+
+      <p>Define reusable styles in <code>styles</code> and reference them by name from any element:</p>
+<pre><code><span class="punc">{</span>
+  <span class="key">"styles"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"h1"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"fontSize"</span><span class="punc">:</span> <span class="num">22</span><span class="punc">,</span> <span class="key">"fontWeight"</span><span class="punc">:</span> <span class="str">"bold"</span><span class="punc">,</span> <span class="key">"color"</span><span class="punc">:</span> <span class="str">"#0f172a"</span> <span class="punc">},</span>
+    <span class="key">"body"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"fontSize"</span><span class="punc">:</span> <span class="num">11</span><span class="punc">,</span> <span class="key">"lineHeight"</span><span class="punc">:</span> <span class="num">1.6</span> <span class="punc">}</span>
+  <span class="punc">},</span>
+  <span class="key">"pages"</span><span class="punc">:</span> <span class="punc">[{</span>
+    <span class="key">"elements"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Title"</span><span class="punc">,</span> <span class="key">"style"</span><span class="punc">:</span> <span class="str">"h1"</span> <span class="punc">},</span>
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Body text"</span><span class="punc">,</span> <span class="key">"style"</span><span class="punc">:</span> <span class="str">"body"</span> <span class="punc">}</span>
+    <span class="punc">]</span>
+  <span class="punc">}]</span>
+<span class="punc">}</span></code></pre>
+
+      <p>A <code>style</code> reference accepts: a single name (<code>"h1"</code>), an array (<code>["body", "highlighted"]</code> — merged left-to-right), or an inline object.</p>
+
+      <h2>Headers and footers</h2>
+
+      <h3>Template form (one-liner)</h3>
+<pre><code><span class="key">"footer"</span><span class="punc">:</span> <span class="punc">{</span>
+  <span class="key">"content"</span><span class="punc">:</span> <span class="str">"{{title}} — page {{pageNumber}} of {{totalPages}}"</span><span class="punc">,</span>
+  <span class="key">"style"</span><span class="punc">:</span> <span class="str">"muted"</span>
+<span class="punc">}</span></code></pre>
+      <p>Variables: <code>{{pageNumber}}</code>, <code>{{totalPages}}</code>, <code>{{title}}</code>, <code>{{author}}</code>.</p>
+
+      <h3>Element-tree form (full layout)</h3>
+<pre><code><span class="key">"header"</span><span class="punc">:</span> <span class="punc">{</span>
+  <span class="key">"height"</span><span class="punc">:</span> <span class="num">15</span><span class="punc">,</span>
+  <span class="key">"elements"</span><span class="punc">:</span> <span class="punc">[</span>
+    <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"image"</span><span class="punc">,</span> <span class="key">"resource"</span><span class="punc">:</span> <span class="str">"logo"</span><span class="punc">,</span> <span class="key">"position"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"x"</span><span class="punc">:</span> <span class="num">0</span><span class="punc">,</span> <span class="key">"y"</span><span class="punc">:</span> <span class="num">0</span> <span class="punc">},</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">30</span> <span class="punc">},</span>
+    <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Confidential"</span><span class="punc">,</span> <span class="key">"position"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"x"</span><span class="punc">:</span> <span class="num">100</span><span class="punc">,</span> <span class="key">"y"</span><span class="punc">:</span> <span class="num">3</span> <span class="punc">}</span> <span class="punc">}</span>
+  <span class="punc">]</span>
+<span class="punc">}</span></code></pre>
+
+      <h2>Resources</h2>
+
+      <p>Embed images as base64 once, reference them by key from any element:</p>
+<pre><code><span class="punc">{</span>
+  <span class="key">"resources"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"images"</span><span class="punc">:</span> <span class="punc">{</span>
+      <span class="key">"logo"</span><span class="punc">:</span> <span class="punc">{</span>
+        <span class="key">"src"</span><span class="punc">:</span> <span class="str">"embedded"</span><span class="punc">,</span>
+        <span class="key">"mimeType"</span><span class="punc">:</span> <span class="str">"image/png"</span><span class="punc">,</span>
+        <span class="key">"data"</span><span class="punc">:</span> <span class="str">"iVBORw0KGgoAAA..."</span>
+      <span class="punc">}</span>
+    <span class="punc">}</span>
+  <span class="punc">},</span>
+  <span class="key">"pages"</span><span class="punc">:</span> <span class="punc">[{</span>
+    <span class="key">"elements"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"image"</span><span class="punc">,</span> <span class="key">"resource"</span><span class="punc">:</span> <span class="str">"logo"</span><span class="punc">,</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">40</span> <span class="punc">}</span>
+    <span class="punc">]</span>
+  <span class="punc">}]</span>
+<span class="punc">}</span></code></pre>
+
+      <h2>Internal navigation</h2>
+
+      <p>Link to another page with a <code>#page-N</code> hash:</p>
+<pre><code><span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"See appendix"</span><span class="punc">,</span>
+  <span class="key">"link"</span><span class="punc">:</span> <span class="str">"#page-5"</span> <span class="punc">}</span>
+
+<span class="com">// or the explicit form</span>
+<span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"See appendix"</span><span class="punc">,</span>
+  <span class="key">"link"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"internal"</span><span class="punc">,</span> <span class="key">"target"</span><span class="punc">:</span> <span class="str">"#page-5"</span> <span class="punc">}</span> <span class="punc">}</span></code></pre>
+
+      <p>External URLs: <code>"link": "https://example.com"</code>.</p>
+
+      <div class="next-prev">
+        <a href="../cli.html" class="prev"><span class="label">← Previous</span><span class="title">CLI</span></a>
+        <a href="elements.html" class="next"><span class="label">Next →</span><span class="title">Element reference</span></a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live examples — jdf.js</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg" />
+  <link rel="stylesheet" href="../../docs.css" />
+  <link rel="stylesheet" href="https://unpkg.com/jdfjs/dist/jdfjs.css" />
+  <script type="module" src="https://unpkg.com/jdfjs"></script>
+  <script defer src="../../docs.js"></script>
+</head>
+<body>
+  <header class="docs-nav">
+    <a class="brand" href="../../"><svg viewBox="0 0 1024 1024" width="26" height="26"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs><rect width="1024" height="1024" rx="225" fill="url(#g)"/><text x="512" y="512" font-family="Inter,sans-serif" font-size="380" font-weight="900" fill="#fff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text></svg><span>JDF</span><span style="color:var(--muted);font-weight:500">/ docs</span></a>
+    <nav class="nav-links"><a href="../../">Home</a><a href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">GitHub ↗</a></nav>
+  </header>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" data-base="../"></aside>
+
+    <main class="docs-content">
+      <h1>Live examples</h1>
+      <p>Every embed below is a real <code>&lt;jdf&gt;</code> tag in this page — view source to confirm. Each demonstrates a different option combination.</p>
+
+      <h2>Minimal</h2>
+      <p>Just <code>src</code>. The default is a 600px-tall toolbar-only viewer.</p>
+<pre><code><span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"hello-world.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+      <div class="example-frame">
+        <div class="example-frame-label">live</div>
+        <jdf src="../../examples/hello-world.jdf"></jdf>
+      </div>
+
+      <h2>With sidebar</h2>
+      <p>Adds a thumbnail sidebar for page navigation. Best for multi-page documents.</p>
+<pre><code><span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"article.jdf"</span> <span class="key">sidebar</span><span class="punc">=</span><span class="str">"true"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+      <div class="example-frame">
+        <div class="example-frame-label">live · sidebar enabled</div>
+        <jdf src="../../examples/article.jdf" sidebar="true" height="700"></jdf>
+      </div>
+
+      <h2>Custom dimensions</h2>
+      <p><code>width</code> and <code>height</code> accept any CSS length: <code>"100%"</code>, <code>"600px"</code>, <code>"80vh"</code>, etc. Numbers are interpreted as pixels.</p>
+<pre><code><span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"invoice.jdf"</span> <span class="key">width</span><span class="punc">=</span><span class="str">"100%"</span> <span class="key">height</span><span class="punc">=</span><span class="str">"500"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+      <div class="example-frame">
+        <div class="example-frame-label">live · custom size</div>
+        <jdf src="../../examples/invoice.jdf" width="100%" height="500"></jdf>
+      </div>
+
+      <h2>Initial zoom</h2>
+      <p>Use <code>zoom</code> to set the starting magnification. <code>1</code> = 100%.</p>
+<pre><code><span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"hello-world.jdf"</span> <span class="key">zoom</span><span class="punc">=</span><span class="str">"0.7"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+      <div class="example-frame">
+        <div class="example-frame-label">live · zoom 0.7</div>
+        <jdf src="../../examples/hello-world.jdf" zoom="0.7"></jdf>
+      </div>
+
+      <h2>Fit-to-width</h2>
+      <p><code>fit="fit-width"</code> auto-zooms so the page fills the container width. Resizes responsively.</p>
+<pre><code><span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"hello-world.jdf"</span> <span class="key">fit</span><span class="punc">=</span><span class="str">"fit-width"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+      <div class="example-frame">
+        <div class="example-frame-label">live · fit-width</div>
+        <jdf src="../../examples/hello-world.jdf" fit="fit-width" height="600"></jdf>
+      </div>
+
+      <h2>Force dark mode</h2>
+      <p>By default the viewer follows OS preference. Force it explicitly with <code>dark-mode</code>.</p>
+<pre><code><span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"hello-world.jdf"</span> <span class="key">dark-mode</span><span class="punc">=</span><span class="str">"dark"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+      <div class="example-frame">
+        <div class="example-frame-label">live · forced dark</div>
+        <jdf src="../../examples/hello-world.jdf" dark-mode="dark"></jdf>
+      </div>
+
+      <h2>No toolbar (clean embed)</h2>
+      <p>For embedding inside a card or showcase where you want just the page, no chrome.</p>
+<pre><code><span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"hello-world.jdf"</span> <span class="key">toolbar</span><span class="punc">=</span><span class="str">"false"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+      <div class="example-frame">
+        <div class="example-frame-label">live · toolbar hidden</div>
+        <jdf src="../../examples/hello-world.jdf" toolbar="false" height="500"></jdf>
+      </div>
+
+      <h2>Start on a different page</h2>
+      <p><code>page="N"</code> jumps to page N (0-based) on initial load.</p>
+<pre><code><span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"article.jdf"</span> <span class="key">page</span><span class="punc">=</span><span class="str">"1"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+      <div class="example-frame">
+        <div class="example-frame-label">live · starts on page 2</div>
+        <jdf src="../../examples/article.jdf" page="1" height="600"></jdf>
+      </div>
+
+      <div class="next-prev">
+        <a href="index.html" class="prev"><span class="label">← Previous</span><span class="title">&lt;jdf&gt; tag</span></a>
+        <a href="api.html" class="next"><span class="label">Next →</span><span class="title">API reference</span></a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

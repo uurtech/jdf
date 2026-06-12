@@ -12,11 +12,12 @@ const SIDEBAR = (base) => `
   <ul>
     <li><a href="${base}index.html">Introduction</a></li>
     <li><a href="${base}getting-started.html">Getting started</a></li>
+    <li><a href="${base}why-ai.html">Why AI-friendly</a></li>
   </ul>
 
-  <h4>Web embed — jdfjs</h4>
+  <h4>Web embed — jdf.js</h4>
   <ul>
-    <li><a href="${base}embed/index.html">Overview</a></li>
+    <li><a href="${base}embed/index.html">&lt;jdf&gt; tag</a></li>
     <li><a href="${base}embed/examples.html">Live examples</a></li>
     <li><a href="${base}embed/api.html">API reference</a></li>
     <li><a href="${base}embed/frameworks.html">React · Vue · Svelte</a></li>
@@ -52,7 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
   aside.querySelectorAll("a").forEach((a) => {
     const href = a.getAttribute("href");
     if (!href || href.startsWith("http")) return;
-    // Resolve relative
     const url = new URL(href, location.href);
     const path = url.pathname.replace(/\/$/, "");
     if (path === here || (here.endsWith("/") && path === here + "index.html")) {

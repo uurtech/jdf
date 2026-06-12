@@ -360,15 +360,28 @@ section > h2 {
 }
 
 .why-icon {
-  font-size: 28px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 14px;
+  font-weight: 700;
   margin-bottom: 12px;
   display: inline-flex;
   width: 44px;
   height: 44px;
   border-radius: 10px;
   background: var(--brand-soft);
+  color: var(--brand);
   align-items: center;
   justify-content: center;
+  letter-spacing: -0.02em;
+}
+
+.why-card-highlight {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.04));
+  border-color: rgba(59, 130, 246, 0.3);
+}
+.why-card-highlight .why-icon {
+  background: var(--brand);
+  color: #ffffff;
 }
 
 .why-card h3 {

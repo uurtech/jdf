@@ -76,7 +76,7 @@
           <div class="channel-icon">&lt;/&gt;</div>
           <div>
             <div class="channel-title">jdf.js — web embed</div>
-            <div class="channel-sub">25 kB JS library · <code>&lt;jdf-viewer src="..."&gt;</code></div>
+            <div class="channel-sub">25 kB JS library · <code>&lt;jdf src="..."&gt;</code></div>
           </div>
         </a>
         <a class="channel" href="docs/cli.html">
@@ -115,18 +115,23 @@ brew install jdf">
       <p class="section-lead">It's JSON. Every consequence below falls out of that.</p>
 
       <div class="why-grid">
+        <div class="why-card why-card-highlight">
+          <div class="why-icon">AI</div>
+          <h3>LLMs read it natively</h3>
+          <p>JSON is the language LLMs already speak. No PDF parsing, no broken columns, no lost tables. Hand a <code>.jdf</code> to GPT or Claude and it sees the structure exactly as you wrote it. <a href="docs/why-ai.html">More →</a></p>
+        </div>
         <div class="why-card">
-          <div class="why-icon">📂</div>
+          <div class="why-icon">$</div>
           <h3>Every tool already works</h3>
           <p><code>cat</code>, <code>grep</code>, <code>jq</code>, VS Code, every linter, every diff tool. No plugin, no learning curve.</p>
         </div>
         <div class="why-card">
-          <div class="why-icon">🔀</div>
+          <div class="why-icon">git</div>
           <h3><code>git diff</code> is real</h3>
           <p>Change one heading, the diff is one line. Documents review the same way as code.</p>
         </div>
         <div class="why-card">
-          <div class="why-icon">⚡</div>
+          <div class="why-icon">{ }</div>
           <h3>Generate with one line</h3>
           <p><code>JSON.stringify(doc)</code>. No PDF library, no font dictionaries, no encoding rules.</p>
         </div>
@@ -136,7 +141,7 @@ brew install jdf">
           <p>Autocomplete in your editor. CLI validation in CI. Type-safe generation.</p>
         </div>
         <div class="why-card">
-          <div class="why-icon">🔍</div>
+          <div class="why-icon">⌕</div>
           <h3>Search is text search</h3>
           <p><code>grep "TODO" *.jdf</code> works. <code>jq</code> queries pull every table cell on the page.</p>
         </div>

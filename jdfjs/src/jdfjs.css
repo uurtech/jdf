@@ -217,8 +217,7 @@
   text-align: center;
 }
 
-/* === Custom element / shorthand tag visual defaults === */
-jdf-viewer,
+/* === <jdf> visual defaults === */
 jdf {
   display: block;
   width: 100%;

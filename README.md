@@ -4,11 +4,11 @@ A document format that's just JSON. Open `.jdf` in any text editor and you see t
 
 JDF runs in three places:
 
-| | What it is | Install |
+| Surface | What it is | Install |
 |---|---|---|
-| 🖥️ **JDF Reader** | Native macOS app — read, edit, import PDF/MD, export PDF | `brew tap uurtech/jdf && brew install jdf` |
-| 🌐 **jdf.js** | 25 kB JavaScript library — embed `.jdf` files on any web page | `npm install jdfjs` or `<script src="https://unpkg.com/jdfjs">` |
-| 🛠 **`@jdf/cli`** | CLI for validating documents and converting from Markdown | `npx @jdf/cli validate file.jdf` |
+| **JDF Reader** | Native macOS app — read, edit, import PDF/MD, export PDF | `brew tap uurtech/jdf && brew install jdf` |
+| **jdf.js** | JavaScript library — embed `.jdf` files on any web page | `npm install jdfjs` or `<script src="https://unpkg.com/jdfjs">` |
+| **`@jdf/cli`** | CLI for validating documents and converting from Markdown | `npx @jdf/cli validate file.jdf` |
 
 ## Why JDF
 
@@ -177,36 +177,38 @@ Internal navigation: `link: "#page-3"` or `link: { type: "internal", target: "#p
 
 ## jdf.js — embed on the web
 
-[`jdfjs/`](jdfjs/) is a small JavaScript library that turns any `.jdf` URL into a fully styled, scrollable, searchable embed in a web page. Like PDF.js — but the file you point at is plain JSON.
+[`jdfjs/`](jdfjs/) is a small JavaScript library that turns any `.jdf` URL into a fully styled, scrollable, searchable embed in a web page. Like PDF.js — but the file is plain JSON.
 
-### Three ways to embed
+### Usage
 
 ```html
-<!-- 1. Custom element (recommended) — reactive src attribute -->
-<jdf-viewer src="/doc.jdf"></jdf-viewer>
-
-<!-- 2. Shorthand tag — behaves like <img> / <video> -->
 <jdf src="/doc.jdf"></jdf>
 
-<!-- 3. Data attribute — retrofit into existing layouts -->
-<div data-jdf="/doc.jdf" data-jdf-zoom="1.2" data-jdf-sidebar="true"></div>
+<!-- Configure via attributes -->
+<jdf src="/doc.jdf"
+     width="800"
+     height="600"
+     zoom="1.2"
+     sidebar="true"
+     dark-mode="auto"></jdf>
 ```
 
-All three are auto-detected when the page loads — drop them anywhere in your HTML, jdf.js scans on `DOMContentLoaded` and renders each one in place. New elements added later (SPAs, async content) are picked up by a `MutationObserver`. To opt out: `data-jdf-manual` on the element, or `window.JDFjsAutoInit = false` globally.
+That's the only embed form. Every `<jdf>` tag on the page is auto-detected on `DOMContentLoaded` and rendered. New tags added later (SPAs, async content) are picked up by a `MutationObserver`. To opt out per element: add `manual`. To disable globally: `window.JDFjsAutoInit = false` before loading the script.
 
 ### Configuration
 
-| Attribute | JS option | Type | Default |
-|---|---|---|---|
-| `src` | `(url arg)` | string | required |
-| `data-jdf-zoom` | `zoom` | number | `1` |
-| `data-jdf-sidebar` | `sidebar` | boolean | `false` |
-| `data-jdf-toolbar` | `toolbar` | boolean | `true` |
-| `data-jdf-dark-mode` | `darkMode` | `"auto"` · `"light"` · `"dark"` | `"auto"` |
-| `data-jdf-page` | `initialPage` | integer (0-based) | `0` |
-| `width` / `data-jdf-width` | `width` | number (px) or any CSS length | — |
-| `height` / `data-jdf-height` | `height` | number (px) or any CSS length | `600px` |
-| `data-jdf-fit` | `fit` | `"manual"` · `"fit-width"` · `"fit-page"` | `"manual"` |
+| Attribute | Type | Default |
+|---|---|---|
+| `src` | string | required |
+| `width` | number (px) or any CSS length | — |
+| `height` | number (px) or any CSS length | `600px` |
+| `zoom` | number | `1` |
+| `fit` | `"manual"` · `"fit-width"` · `"fit-page"` | `"manual"` |
+| `sidebar` | boolean | `false` |
+| `toolbar` | boolean | `true` |
+| `dark-mode` | `"auto"` · `"light"` · `"dark"` | `"auto"` |
+| `page` | integer (0-based) | `0` |
+| `manual` | boolean | — |
 
 ### Programmatic API
 
@@ -299,7 +301,7 @@ Done:
 - macOS / Linux / Windows builds via GitHub Actions release workflow.
 - JSON Schema, CLI validate, CI on all three OSes.
 - Homebrew tap (`uurtech/jdf`).
-- **jdf.js — web embed library** with auto-init, custom element (`<jdf-viewer>`), shorthand tag (`<jdf>`), data attribute (`data-jdf`), feature parity with the desktop renderer.
+- **jdf.js — web embed library** with auto-init, single `<jdf src="...">` form, feature parity with the desktop renderer.
 
 Not yet:
 - jdf.js published to npm (sources are in [`jdfjs/`](jdfjs/), build with `pnpm --filter jdfjs build`; a `npm publish` step is on the to-do list).

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Why JDF is AI-friendly — JDF</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+  <link rel="stylesheet" href="../docs.css" />
+  <script defer src="../docs.js"></script>
+</head>
+<body>
+  <header class="docs-nav">
+    <a class="brand" href="../"><svg viewBox="0 0 1024 1024" width="26" height="26"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs><rect width="1024" height="1024" rx="225" fill="url(#g)"/><text x="512" y="512" font-family="Inter,sans-serif" font-size="380" font-weight="900" fill="#fff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text></svg><span>JDF</span><span style="color:var(--muted);font-weight:500">/ docs</span></a>
+    <nav class="nav-links"><a href="../">Home</a><a href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">GitHub ↗</a></nav>
+  </header>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" data-base="./"></aside>
+
+    <main class="docs-content">
+      <h1>Why JDF is AI-friendly</h1>
+      <p>Large language models read text. PDFs are binary. This is the entire reason JDF exists in the AI era — and why every AI-shaped workflow built on top of PDF is a hack.</p>
+
+      <h2>The PDF problem for LLMs</h2>
+      <p>When you hand a PDF to an LLM, you can't actually hand it the file. You hand it the output of a parser:</p>
+      <ul>
+        <li><code>pdftotext</code> on a PDF returns a soup of broken lines, lost columns, and wrongly-grouped tables.</li>
+        <li><code>pdfplumber</code>, <code>pymupdf</code>, etc. work better but still inject layout artifacts the model has to "guess past".</li>
+        <li>Multi-column papers come out interleaved.</li>
+        <li>Tables come out as columns of numbers without row alignment.</li>
+        <li>Footnotes mix into the body. Headers repeat on every page. Page numbers fragment paragraphs.</li>
+        <li>Embedded images and diagrams: gone, or replaced with <code>[image]</code>.</li>
+      </ul>
+      <p>Every prompt that says "here is a PDF, summarize it" is actually saying "here is one parser's best guess at the PDF — please reconstruct what the author meant". The model burns tokens recovering structure that should never have been lost.</p>
+
+      <h2>The JDF answer</h2>
+      <p>A <code>.jdf</code> is JSON. The model already speaks JSON natively. It doesn't need a parser. It doesn't need to guess at structure. The structure <strong>is the file</strong>.</p>
+
+<pre><code><span class="punc">{</span>
+  <span class="key">"$jdf"</span><span class="punc">:</span> <span class="str">"1.0.0"</span><span class="punc">,</span>
+  <span class="key">"meta"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"title"</span><span class="punc">:</span> <span class="str">"Q3 Earnings"</span><span class="punc">,</span> <span class="key">"author"</span><span class="punc">:</span> <span class="str">"Acme Inc."</span> <span class="punc">},</span>
+  <span class="key">"pages"</span><span class="punc">:</span> <span class="punc">[{</span>
+    <span class="key">"elements"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Revenue grew 18% YoY."</span><span class="punc">,</span> <span class="key">"heading"</span><span class="punc">:</span> <span class="num">1</span> <span class="punc">},</span>
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"table"</span><span class="punc">,</span>
+        <span class="key">"headers"</span><span class="punc">:</span> <span class="punc">[</span><span class="str">"Quarter"</span><span class="punc">,</span> <span class="str">"Revenue"</span><span class="punc">,</span> <span class="str">"YoY"</span><span class="punc">],</span>
+        <span class="key">"rows"</span><span class="punc">:</span> <span class="punc">[[</span><span class="str">"Q1"</span><span class="punc">,</span> <span class="str">"$2.3M"</span><span class="punc">,</span> <span class="str">"+12%"</span><span class="punc">],</span> <span class="punc">[</span><span class="str">"Q2"</span><span class="punc">,</span> <span class="str">"$2.7M"</span><span class="punc">,</span> <span class="str">"+15%"</span><span class="punc">]]</span> <span class="punc">}</span>
+    <span class="punc">]</span>
+  <span class="punc">}]</span>
+<span class="punc">}</span></code></pre>
+
+      <p>That's the file. Headings are tagged. Tables are real arrays with named columns. The author is in <code>meta.author</code>, not buried in a corrupt XMP packet.</p>
+
+      <h2>Concrete consequences for AI workflows</h2>
+
+      <h3>1. Cleaner context</h3>
+      <p>The model sees the document the way you'd want it to. No <code>[image truncated]</code>, no broken hyphenation, no "page 3 of 14" line in the middle of a paragraph.</p>
+
+      <h3>2. Smaller tokens</h3>
+      <p>JSON is more compact than parser-extracted text once you account for the structure tags the model would otherwise have to infer. You pay for what's there — not for noise.</p>
+
+      <h3>3. Tool use that just works</h3>
+      <p>If you're building an agent that operates on documents, you can hand it <code>jq</code> queries directly:</p>
+<pre><code><span class="com"># pull every heading</span>
+jq <span class="str">'.pages[].elements[] | select(.heading) | .content'</span> doc.jdf
+
+<span class="com"># list all tables</span>
+jq <span class="str">'.pages[].elements[] | select(.type == "table")'</span> doc.jdf
+
+<span class="com"># find every external link</span>
+jq <span class="str">'.. | objects | select(.type == "external") | .target'</span> doc.jdf</code></pre>
+      <p>No PDF library. No regex. No "the parser missed this row". The agent's tool call returns structured data because the document <strong>is</strong> structured data.</p>
+
+      <h3>4. Generation is symmetric</h3>
+      <p>If an LLM can <em>read</em> JDF natively, it can also <em>write</em> JDF natively. Asking GPT or Claude to "produce a one-page report" works, because the output is a JSON object — the same shape it just consumed. PDF generation requires either a tool call into a heavyweight library or hallucinated bytes.</p>
+
+      <h3>5. RAG without the PDF middle-man</h3>
+      <p>Most retrieval-augmented systems ingest PDFs by extracting text, embedding chunks, and praying the chunking didn't slice through a table. With JDF you embed elements directly:</p>
+<pre><code><span class="com">// each element is its own retrieval unit, with metadata</span>
+<span class="key">for</span> (<span class="key">const</span> page <span class="key">of</span> doc.pages) {
+  <span class="key">for</span> (<span class="key">const</span> el <span class="key">of</span> page.elements) {
+    <span class="key">if</span> (el.type === <span class="str">"text"</span>) {
+      <span class="key">await</span> embed(el.content<span class="punc">,</span> { type<span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> heading<span class="punc">:</span> el.heading })<span class="punc">;</span>
+    } <span class="key">else if</span> (el.type === <span class="str">"table"</span>) {
+      <span class="key">await</span> embed(serialize(el)<span class="punc">,</span> { type<span class="punc">:</span> <span class="str">"table"</span><span class="punc">,</span> rows<span class="punc">:</span> el.rows.length })<span class="punc">;</span>
+    }
+  }
+}</code></pre>
+      <p>Each chunk carries semantic metadata — type, heading level, page number — that the model uses at retrieval time. No more "this chunk is half a paragraph and half a table cell".</p>
+
+      <h2>The bigger picture</h2>
+      <p>The web invented Markdown so humans and machines could share the same source for short text. JDF does the same thing for the next layer up — long-form documents with structure, layout, and embedded media. PDF was designed in 1993 for laser printers; it predates almost every concern AI workflows now have.</p>
+
+      <p>If your stack involves an LLM touching documents, the format ought to be one the LLM can read without a translator.</p>
+
+      <div class="next-prev">
+        <a href="getting-started.html" class="prev"><span class="label">← Previous</span><span class="title">Getting started</span></a>
+        <a href="embed/" class="next"><span class="label">Next →</span><span class="title">Embed on the web</span></a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

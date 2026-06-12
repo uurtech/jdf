@@ -1,6 +1,6 @@
 {
   "name": "jdfjs",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "Render JDF (JSON Document Format) documents in the browser. Drop-in replacement for embedding PDFs — point at a .jdf file and it appears on the page, fully styled, searchable, with a clickable TOC.",
   "license": "MIT",
   "author": "Ugur Kazdal <ugur@uurtech.com>",
@@ -11,7 +11,15 @@
     "directory": "jdfjs"
   },
   "bugs": "https://github.com/uurtech/jdf/issues",
-  "keywords": ["jdf", "json", "document", "viewer", "renderer", "embed", "pdf-alternative"],
+  "keywords": [
+    "jdf",
+    "json",
+    "document",
+    "viewer",
+    "renderer",
+    "embed",
+    "pdf-alternative"
+  ],
   "type": "module",
   "main": "./dist/jdfjs.js",
   "module": "./dist/jdfjs.js",

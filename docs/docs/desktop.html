@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JDF Reader (desktop) — JDF</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+  <link rel="stylesheet" href="../docs.css" />
+  <script defer src="../docs.js"></script>
+</head>
+<body>
+  <header class="docs-nav">
+    <a class="brand" href="../"><svg viewBox="0 0 1024 1024" width="26" height="26"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs><rect width="1024" height="1024" rx="225" fill="url(#g)"/><text x="512" y="512" font-family="Inter,sans-serif" font-size="380" font-weight="900" fill="#fff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text></svg><span>JDF</span><span style="color:var(--muted);font-weight:500">/ docs</span></a>
+    <nav class="nav-links"><a href="../">Home</a><a href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">GitHub ↗</a></nav>
+  </header>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" data-base="./"></aside>
+
+    <main class="docs-content">
+      <h1>JDF Reader — desktop app</h1>
+      <p>A native Tauri-based macOS app that reads, renders, edits, and auto-saves <code>.jdf</code> files. Imports PDFs and Markdown to JDF on the fly. Exports back to PDF.</p>
+
+      <h2>Install</h2>
+<pre><code>brew tap uurtech/jdf
+brew install jdf</code></pre>
+      <p>Installs <code>JDF Reader.app</code> into <code>/Applications</code>. Updates: <code>brew upgrade --cask jdf</code>.</p>
+
+      <h2>Open documents</h2>
+      <ul>
+        <li><strong>Drag &amp; drop</strong> — drop a <code>.jdf</code>, <code>.pdf</code>, or <code>.md</code> file onto the welcome screen.</li>
+        <li><strong>Finder double-click</strong> — file associations are registered for <code>.jdf</code> and <code>.md</code>.</li>
+        <li><strong>Cmd+O</strong> — file picker.</li>
+        <li><strong>Recent files</strong> — last 10 documents listed on the welcome screen.</li>
+      </ul>
+
+      <h2>Edit a paragraph</h2>
+      <p>Double-click any element. The whole paragraph (or heading, list item, table cell, collapsible title, image src/alt) becomes an inline editor. Type. Press <kbd>Enter</kbd> or click anywhere else — the change saves to disk in ~150 ms.</p>
+
+      <h2>Restructure on hover</h2>
+      <p>Hover any element. A floating toolbar appears in the top-right corner with <strong>↑ Move up · ↓ Move down · ⧉ Duplicate · × Delete</strong>. No right-click, no menu hunting.</p>
+
+      <h2>Insert new elements</h2>
+      <p>The Insert bar at the top of every page lets you append a Text / Rich text / List / Table / Shape / Image / Section / TOC element with a single click.</p>
+
+      <h2>Pages</h2>
+      <p>The sidebar shows a colored mini-preview of every page. Click <code>+</code> for a new page. Hover any thumbnail and click the red <code>×</code> to delete it.</p>
+
+      <h2>Memory model</h2>
+      <ul>
+        <li>A <code>.jdf</code> opens in memory and <strong>auto-saves</strong> to its source file on every commit.</li>
+        <li>A <code>.pdf</code> or <code>.md</code> is converted to JDF in memory only — the original file is never touched. The toolbar shows <code>● Unsaved (in memory)</code> while you edit. Closing the window prompts to save as <code>.jdf</code> or discard.</li>
+        <li>Switch to the JSON view in the toolbar — two-way bound. Edit JSON, blur or <kbd>Cmd+S</kbd>, the rendered view follows. Edit visually, the JSON updates as you go.</li>
+      </ul>
+
+      <h2>PDF import</h2>
+      <p>Drag a <code>.pdf</code> onto the viewer and you get an editable JDF copy that <strong>looks identical</strong> to the original. Per text run the importer extracts: position (mm), font family, size, bold/italic, color, opacity, links. Vector shapes (rect, line, path) preserved with their fills and strokes. Embedded images decoded into <code>resources.images</code> as base64 PNG and placed at their original transform.</p>
+
+      <h2>PDF export</h2>
+      <p><kbd>Cmd+Shift+E</kbd> or the toolbar PDF button. Honors page size, orientation, text colors, real TOC, embedded images. Renders text/richtext/list/table/collapsible/shape.</p>
+
+      <h2>Undo / redo</h2>
+      <p><kbd>Cmd+Z</kbd> / <kbd>Cmd+Shift+Z</kbd>. 100-step history covering every text edit, structural change, and JSON commit.</p>
+
+      <h2>Multiple windows</h2>
+      <p><kbd>Cmd+N</kbd> or the toolbar "New" button. Compare two documents side-by-side.</p>
+
+      <h2>Keyboard shortcuts</h2>
+      <table>
+        <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>Cmd+O</kbd></td><td>Open file</td></tr>
+          <tr><td><kbd>Cmd+W</kbd></td><td>Close document</td></tr>
+          <tr><td><kbd>Cmd+N</kbd></td><td>New window</td></tr>
+          <tr><td><kbd>Cmd+S</kbd></td><td>Save As <code>.jdf</code></td></tr>
+          <tr><td><kbd>Cmd+Shift+E</kbd></td><td>Export PDF</td></tr>
+          <tr><td><kbd>Cmd+Z</kbd> / <kbd>Cmd+Shift+Z</kbd></td><td>Undo / redo</td></tr>
+          <tr><td><kbd>Cmd+F</kbd></td><td>Search</td></tr>
+          <tr><td><kbd>Cmd+B</kbd></td><td>Toggle sidebar</td></tr>
+          <tr><td><kbd>Cmd+D</kbd></td><td>Toggle dark mode</td></tr>
+          <tr><td><kbd>Cmd+P</kbd></td><td>Print</td></tr>
+          <tr><td><kbd>Cmd+=</kbd> / <kbd>Cmd+-</kbd> / <kbd>Cmd+0</kbd></td><td>Zoom in / out / reset</td></tr>
+          <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>Previous / next page</td></tr>
+          <tr><td>Double-click</td><td>Edit element</td></tr>
+          <tr><td><kbd>Enter</kbd> / <kbd>Esc</kbd> / <kbd>Cmd+Enter</kbd></td><td>Commit / cancel / multi-line commit</td></tr>
+          <tr><td><kbd>?</kbd></td><td>Show shortcut overlay</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Linux and Windows</h2>
+      <p>Builds (<code>.deb</code>, <code>.AppImage</code>, <code>.rpm</code>, <code>.msi</code>, <code>.exe</code>) are produced by GitHub Actions on every tag — see the <a href="https://github.com/uurtech/jdf/releases/latest" target="_blank" rel="noopener">latest release</a>.</p>
+
+      <div class="next-prev">
+        <a href="getting-started.html" class="prev"><span class="label">← Previous</span><span class="title">Getting started</span></a>
+        <a href="cli.html" class="next"><span class="label">Next →</span><span class="title">CLI</span></a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

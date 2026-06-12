@@ -28,7 +28,7 @@
 
       <div class="example-frame">
         <div class="example-frame-label">Live: &lt;jdf src="../examples/hello-world.jdf"&gt;</div>
-        <jdf src="../examples/hello-world.jdf" data-jdf-zoom="0.85"></jdf>
+        <jdf src="../examples/hello-world.jdf" zoom="0.85"></jdf>
       </div>
 
       <h2>2. Embed one in your site</h2>
@@ -59,18 +59,20 @@ brew install jdf</code></pre>
 }<span class="punc">;</span>
 
 <span class="key">await</span> fs.writeFile(<span class="str">"out.jdf"</span><span class="punc">,</span> JSON.stringify(doc<span class="punc">,</span> <span class="key">null</span><span class="punc">,</span> <span class="num">2</span>))<span class="punc">;</span></code></pre>
-      <p>No PDF library, no font dictionaries, no encoding rules. <a href="format/">Format reference →</a></p>
+      <p>No PDF library, no font dictionaries, no encoding rules. <a href="https://github.com/uurtech/jdf/blob/master/spec/jdf-schema.json" target="_blank" rel="noopener">Full schema reference ↗</a></p>
 
       <h2>5. Validate it in CI</h2>
 <pre><code>npx @jdf/cli validate my-doc.jdf</code></pre>
-      <p>Reports path-level errors against the JSON Schema, with warnings vs hard failures separated. <a href="cli.html">CLI docs →</a></p>
+      <p>Reports path-level errors against the JSON Schema, with warnings vs hard failures separated. <a href="https://github.com/uurtech/jdf#cli" target="_blank" rel="noopener">CLI usage ↗</a></p>
 
       <h2>What's next</h2>
       <p>Pick a path:</p>
       <ul>
         <li><a href="embed/">Embedding JDF on the web with jdf.js</a> — for putting a document on your site.</li>
+        <li><a href="why-ai.html">Why JDF is AI-friendly</a> — LLMs read JSON, not binary blobs.</li>
         <li><a href="format/">The format spec</a> — for understanding every element and style property.</li>
         <li><a href="desktop.html">The desktop Reader</a> — for reading and editing on your Mac.</li>
+        <li><a href="cli.html">The CLI</a> — for validating and converting documents.</li>
       </ul>
 
       <div class="next-prev">

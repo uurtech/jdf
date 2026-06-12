@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API reference — jdf.js</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg" />
+  <link rel="stylesheet" href="../../docs.css" />
+  <script defer src="../../docs.js"></script>
+</head>
+<body>
+  <header class="docs-nav">
+    <a class="brand" href="../../"><svg viewBox="0 0 1024 1024" width="26" height="26"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs><rect width="1024" height="1024" rx="225" fill="url(#g)"/><text x="512" y="512" font-family="Inter,sans-serif" font-size="380" font-weight="900" fill="#fff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text></svg><span>JDF</span><span style="color:var(--muted);font-weight:500">/ docs</span></a>
+    <nav class="nav-links"><a href="../../">Home</a><a href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">GitHub ↗</a></nav>
+  </header>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" data-base="../"></aside>
+
+    <main class="docs-content">
+      <h1>API reference</h1>
+      <p>Programmatic API for the <code>jdfjs</code> npm package. Use this when you need imperative control: hot-swap documents, react to page changes, or render in-memory documents without a fetch.</p>
+
+<pre><code>npm install jdfjs</code></pre>
+
+      <h2>Exports</h2>
+      <table>
+        <thead><tr><th>Symbol</th><th>What</th></tr></thead>
+        <tbody>
+          <tr><td><code>embed(container, url, options?)</code></td><td>Fetch + render. Returns a Promise of <code>JDFViewerInstance</code>.</td></tr>
+          <tr><td><code>render(container, doc, options?)</code></td><td>Render an in-memory <code>JdfDocument</code>. Synchronous.</td></tr>
+          <tr><td><code>JDFViewer</code></td><td>Class form — <code>new JDFViewer(container, doc, options)</code>.</td></tr>
+          <tr><td><code>jdf(root?)</code></td><td>Manually scan the DOM (or a subtree) for <code>&lt;jdf&gt;</code> tags. Useful for SPAs.</td></tr>
+          <tr><td><code>JDFViewerOptions</code></td><td>TypeScript option type.</td></tr>
+          <tr><td><code>JDFViewerInstance</code></td><td>TypeScript instance type returned by <code>embed</code> / <code>render</code>.</td></tr>
+          <tr><td><code>JdfDocument</code> · <code>Element</code> · <code>Page</code></td><td>Re-exported from <code>@jdf/core</code> for convenience.</td></tr>
+        </tbody>
+      </table>
+
+      <h2><code>embed(container, url, options?)</code></h2>
+      <p>Fetch a <code>.jdf</code> file by URL and render it into the container.</p>
+<pre><code><span class="key">import</span> { embed } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
+<span class="key">import</span> <span class="str">"jdfjs/style.css"</span><span class="punc">;</span>
+
+<span class="key">const</span> v <span class="punc">=</span> <span class="key">await</span> embed(<span class="str">"#viewer"</span><span class="punc">,</span> <span class="str">"/whitepaper.jdf"</span><span class="punc">,</span> {
+  zoom<span class="punc">:</span> <span class="num">1.2</span><span class="punc">,</span>
+  sidebar<span class="punc">:</span> <span class="key">true</span><span class="punc">,</span>
+  width<span class="punc">:</span> <span class="str">"100%"</span><span class="punc">,</span>
+  height<span class="punc">:</span> <span class="str">"80vh"</span><span class="punc">,</span>
+  fit<span class="punc">:</span> <span class="str">"fit-width"</span><span class="punc">,</span>
+  onPageChange<span class="punc">:</span> (i) <span class="punc">=&gt;</span> console.log(<span class="str">"on page"</span><span class="punc">,</span> i)<span class="punc">,</span>
+  onLoad<span class="punc">:</span> (doc) <span class="punc">=&gt;</span> console.log(<span class="str">"loaded"</span><span class="punc">,</span> doc.meta.title)<span class="punc">,</span>
+  onError<span class="punc">:</span> (err) <span class="punc">=&gt;</span> console.error(err)<span class="punc">,</span>
+})<span class="punc">;</span></code></pre>
+
+      <p><strong>Container:</strong> <code>HTMLElement</code> or a CSS selector string. The element you pass becomes the viewer.</p>
+      <p><strong>URL:</strong> any URL the browser can fetch. CORS must be allowed if cross-origin.</p>
+      <p><strong>Throws / rejects</strong> on fetch errors, invalid JSON, or missing <code>$jdf</code> field. <code>onError</code> is also called.</p>
+
+      <h2><code>render(container, doc, options?)</code></h2>
+      <p>Render an in-memory <code>JdfDocument</code> directly — no network. Synchronous.</p>
+<pre><code><span class="key">import</span> { render<span class="punc">,</span> JdfDocument } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
+
+<span class="key">const</span> doc<span class="punc">:</span> JdfDocument <span class="punc">=</span> {
+  $jdf<span class="punc">:</span> <span class="str">"1.0.0"</span><span class="punc">,</span>
+  meta<span class="punc">:</span> { title<span class="punc">:</span> <span class="str">"Generated"</span> }<span class="punc">,</span>
+  pages<span class="punc">:</span> [{
+    elements<span class="punc">:</span> [
+      { type<span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> content<span class="punc">:</span> <span class="str">"Hello"</span><span class="punc">,</span> heading<span class="punc">:</span> <span class="num">1</span> }<span class="punc">,</span>
+      { type<span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> content<span class="punc">:</span> <span class="str">"Generated at runtime"</span> }
+    ]<span class="punc">,</span>
+  }]<span class="punc">,</span>
+}<span class="punc">;</span>
+
+<span class="key">const</span> v <span class="punc">=</span> render(<span class="str">"#out"</span><span class="punc">,</span> doc<span class="punc">,</span> { darkMode<span class="punc">:</span> <span class="str">"dark"</span> })<span class="punc">;</span></code></pre>
+
+      <h2>Options</h2>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Default</th></tr></thead>
+        <tbody>
+          <tr><td><code>zoom</code></td><td>number</td><td><code>1</code></td></tr>
+          <tr><td><code>sidebar</code></td><td>boolean</td><td><code>false</code></td></tr>
+          <tr><td><code>toolbar</code></td><td>boolean</td><td><code>true</code></td></tr>
+          <tr><td><code>darkMode</code></td><td><code>"auto"</code> · <code>"light"</code> · <code>"dark"</code></td><td><code>"auto"</code></td></tr>
+          <tr><td><code>initialPage</code></td><td>integer (0-based)</td><td><code>0</code></td></tr>
+          <tr><td><code>width</code></td><td>number (px) or any CSS length</td><td>—</td></tr>
+          <tr><td><code>height</code></td><td>number (px) or any CSS length</td><td><code>"600px"</code></td></tr>
+          <tr><td><code>fit</code></td><td><code>"manual"</code> · <code>"fit-width"</code> · <code>"fit-page"</code></td><td><code>"manual"</code></td></tr>
+          <tr><td><code>onPageChange</code></td><td><code>(pageIndex: number) =&gt; void</code></td><td>—</td></tr>
+          <tr><td><code>onLoad</code></td><td><code>(doc: JdfDocument) =&gt; void</code></td><td>—</td></tr>
+          <tr><td><code>onError</code></td><td><code>(err: Error) =&gt; void</code></td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Instance methods</h2>
+      <p>Both <code>embed</code> and <code>render</code> return a <code>JDFViewerInstance</code>:</p>
+
+      <table>
+        <thead><tr><th>Method</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>setZoom(zoom: number)</code></td><td>Set zoom level (0.25 – 3).</td></tr>
+          <tr><td><code>getZoom(): number</code></td><td>Current zoom.</td></tr>
+          <tr><td><code>goToPage(idx: number)</code></td><td>Scroll to page <code>idx</code> (0-based, clamped).</td></tr>
+          <tr><td><code>getCurrentPage(): number</code></td><td>Index of the most-visible page.</td></tr>
+          <tr><td><code>setDocument(doc: JdfDocument)</code></td><td>Hot-swap the document, re-render.</td></tr>
+          <tr><td><code>destroy()</code></td><td>Tear down — clears the container and removes observers.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Class form</h2>
+      <p>For advanced wiring (multiple instances, custom toolbar):</p>
+<pre><code><span class="key">import</span> { JDFViewer } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
+
+<span class="key">const</span> el <span class="punc">=</span> document.getElementById(<span class="str">"v"</span>)<span class="punc">!;</span>
+<span class="key">const</span> v <span class="punc">=</span> <span class="key">new</span> JDFViewer(el<span class="punc">,</span> doc<span class="punc">,</span> { darkMode<span class="punc">:</span> <span class="str">"dark"</span> })<span class="punc">;</span>
+<span class="com">// later</span>
+v.setDocument(otherDoc)<span class="punc">;</span></code></pre>
+
+      <h2><code>jdf(root?)</code></h2>
+      <p>Manually scan a subtree for <code>&lt;jdf&gt;</code> tags. Auto-init runs on <code>DOMContentLoaded</code> + a <code>MutationObserver</code>, so you usually don't need this — but in some SPA frameworks the observer can miss content that mounts during a transition.</p>
+<pre><code><span class="key">import</span> { jdf } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
+
+router.afterEach(() <span class="punc">=&gt;</span> jdf())<span class="punc">;</span>          <span class="com">// scan whole document</span>
+jdf(document.querySelector(<span class="str">"#main"</span>))<span class="punc">;</span> <span class="com">// scan one container</span></code></pre>
+
+      <h2>Disabling auto-init</h2>
+      <p>Per element: add <code>manual</code>:</p>
+<pre><code><span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"/doc.jdf"</span> <span class="key">manual</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+
+      <p>Globally — set <strong>before</strong> the script loads:</p>
+<pre><code><span class="punc">&lt;</span><span class="key">script</span><span class="punc">&gt;</span> window.JDFjsAutoInit <span class="punc">=</span> <span class="key">false</span><span class="punc">; &lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
+<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/jdfjs"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span></code></pre>
+
+      <h2>Events</h2>
+      <p>When <code>embed</code> fails, the container fires a custom event you can listen to:</p>
+<pre><code>document.querySelector(<span class="str">"jdf"</span>)<span class="punc">!.</span>addEventListener(<span class="str">"jdf-error"</span><span class="punc">,</span> (e) <span class="punc">=&gt;</span> {
+  console.error(<span class="str">"jdf failed:"</span><span class="punc">,</span> e.detail)<span class="punc">;</span>
+})<span class="punc">;</span></code></pre>
+
+      <div class="next-prev">
+        <a href="examples.html" class="prev"><span class="label">← Previous</span><span class="title">Live examples</span></a>
+        <a href="frameworks.html" class="next"><span class="label">Next →</span><span class="title">React · Vue · Svelte</span></a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
