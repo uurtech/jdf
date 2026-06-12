@@ -33,7 +33,7 @@ tools/jdf-cli/        — validate/import CLI
 
 1. **Type-check everything**: `pnpm typecheck` (covers `apps/reader` and `tools/jdf-cli`).
 2. **Compile Rust**: `cd apps/reader/src-tauri && cargo check`.
-3. **Validate the spec changes round-trip**: if you've touched the format, run `pnpm --filter @jdf/cli start validate spec/examples/hello-world.jdf` and make sure it still passes.
+3. **Validate the spec changes round-trip**: if you've touched the format, run `pnpm --filter @uurtech/jdf-cli start validate spec/examples/hello-world.jdf` and make sure it still passes.
 4. Keep the diff focused. One feature or fix per PR.
 5. Don't commit `.DS_Store`, `dist/`, `target/`, or anything in `.gitignore`.
 

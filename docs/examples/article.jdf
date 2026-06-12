@@ -1,56 +1,275 @@
 {
   "$jdf": "1.0.0",
-  "meta": { "title": "Why we built JDF", "author": "Ugur Kazdal", "pageSize": "A4", "unit": "mm" },
-  "styles": {
-    "h1": { "fontFamily": "Inter", "fontSize": 30, "fontWeight": "bold", "color": "#0f172a", "lineHeight": 1.1 },
-    "h2": { "fontFamily": "Inter", "fontSize": 16, "fontWeight": "bold", "color": "#1e293b", "marginTop": 8 },
-    "lead": { "fontFamily": "Inter", "fontSize": 14, "color": "#475569", "lineHeight": 1.6, "fontStyle": "italic" },
-    "body": { "fontFamily": "Inter", "fontSize": 11, "lineHeight": 1.7, "color": "#334155" },
-    "code": { "fontFamily": "JetBrains Mono", "fontSize": 9.5, "color": "#1e293b", "backgroundColor": "#f1f5f9", "padding": 12, "borderRadius": 6, "lineHeight": 1.5 },
-    "byline": { "fontFamily": "Inter", "fontSize": 9, "color": "#94a3b8", "letterSpacing": 1 }
+  "footer": {
+    "content": "{{title}}  ·  page {{pageNumber}} of {{totalPages}}",
+    "style": {
+      "color": "#94a3b8",
+      "fontFamily": "Inter",
+      "fontSize": 9
+    }
   },
-  "footer": { "content": "{{title}}  ·  page {{pageNumber}} of {{totalPages}}", "style": { "fontFamily": "Inter", "fontSize": 9, "color": "#94a3b8" } },
+  "meta": {
+    "author": "Ugur Kazdal",
+    "pageSize": "A4",
+    "title": "Why we built JDF",
+    "unit": "mm"
+  },
   "pages": [
     {
-      "id": "page-1",
       "elements": [
-        { "type": "text", "content": "OPINION  ·  2026", "style": "byline", "position": { "x": 0, "y": 4 }, "width": 166 },
-        { "type": "text", "content": "Why we built JDF", "heading": 1, "style": "h1", "tocEntry": "Why we built JDF", "position": { "x": 0, "y": 12 }, "width": 166 },
-        { "type": "text", "content": "PDF was designed in 1993 for laser printers. The web has since rewritten every other format on the planet — except documents.", "style": "lead", "position": { "x": 0, "y": 38 }, "width": 166 },
-        { "type": "shape", "shape": "rect", "fill": "#2563eb", "position": { "x": 0, "y": 60 }, "width": 16, "height": 0.5 },
-
-        { "type": "text", "content": "The problem", "heading": 2, "tocEntry": "The problem", "tocLevel": 2, "style": "h2", "position": { "x": 0, "y": 70 }, "width": 166 },
-        { "type": "text", "content": "Every fix-a-typo task currently requires Adobe Acrobat ($240/year), a Word roundtrip, or some janky online converter. Every git diff on a PDF is meaningless. Every script that generates one needs a 200KB library to encode fonts as Type 1 dictionaries.", "style": "body", "position": { "x": 0, "y": 86 }, "width": 166 },
-
-        { "type": "text", "content": "The premise", "heading": 2, "tocEntry": "The premise", "tocLevel": 2, "style": "h2", "position": { "x": 0, "y": 130 }, "width": 166 },
-        { "type": "text", "content": "What if a document was just JSON? Open it in any text editor — clean source. Open it in a viewer — a rendered page. Edit either side, the other follows. cat, grep, jq, VS Code, every diff tool already understands JSON. There's nothing left to invent.", "style": "body", "position": { "x": 0, "y": 146 }, "width": 166 },
-
-        { "type": "text", "content": "{\n  \"$jdf\": \"1.0.0\",\n  \"meta\": { \"title\": \"Hello\" },\n  \"pages\": [{ \"elements\": [\n    { \"type\": \"text\", \"content\": \"Hi\", \"heading\": 1 }\n  ]}]\n}", "style": "code", "position": { "x": 0, "y": 195 }, "width": 166 }
-      ]
+        {
+          "content": "OPINION  ·  2026",
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "style": "byline",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "Why we built JDF",
+          "heading": 1,
+          "position": {
+            "x": 0,
+            "y": 12
+          },
+          "style": "h1",
+          "tocEntry": "Why we built JDF",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "PDF was designed in 1993 for laser printers. The web has since rewritten every other format on the planet — except documents.",
+          "position": {
+            "x": 0,
+            "y": 38
+          },
+          "style": "lead",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "fill": "#2563eb",
+          "height": 0.5,
+          "position": {
+            "x": 0,
+            "y": 60
+          },
+          "shape": "rect",
+          "type": "shape",
+          "width": 16
+        },
+        {
+          "content": "The problem",
+          "heading": 2,
+          "position": {
+            "x": 0,
+            "y": 70
+          },
+          "style": "h2",
+          "tocEntry": "The problem",
+          "tocLevel": 2,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "Every fix-a-typo task currently requires Adobe Acrobat ($240/year), a Word roundtrip, or some janky online converter. Every git diff on a PDF is meaningless. Every script that generates one needs a 200KB library to encode fonts as Type 1 dictionaries.",
+          "position": {
+            "x": 0,
+            "y": 86
+          },
+          "style": "body",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "The premise",
+          "heading": 2,
+          "position": {
+            "x": 0,
+            "y": 130
+          },
+          "style": "h2",
+          "tocEntry": "The premise",
+          "tocLevel": 2,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "What if a document was just JSON? Open it in any text editor — clean source. Open it in a viewer — a rendered page. Edit either side, the other follows. cat, grep, jq, VS Code, every diff tool already understands JSON. There's nothing left to invent.",
+          "position": {
+            "x": 0,
+            "y": 146
+          },
+          "style": "body",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "{\n  \"$jdf\": \"1.0.0\",\n  \"meta\": { \"title\": \"Hello\" },\n  \"pages\": [{ \"elements\": [\n    { \"type\": \"text\", \"content\": \"Hi\", \"heading\": 1 }\n  ]}]\n}\n",
+          "position": {
+            "x": 0,
+            "y": 195
+          },
+          "style": "code",
+          "type": "text",
+          "width": 166
+        }
+      ],
+      "id": "page-1"
     },
     {
-      "id": "page-2",
       "elements": [
-        { "type": "text", "content": "OPINION  ·  2026", "style": "byline", "position": { "x": 0, "y": 4 }, "width": 166 },
-
-        { "type": "text", "content": "What you get", "heading": 2, "tocEntry": "What you get", "tocLevel": 2, "style": "h2", "position": { "x": 0, "y": 12 }, "width": 166 },
-        { "type": "list", "listType": "unordered", "position": { "x": 0, "y": 28 }, "width": 166, "style": "body",
-          "items": [
-            { "content": "A native macOS desktop reader (10 MB) that reads, renders, edits, and auto-saves." },
-            { "content": "A 25 KB JavaScript library (jdfjs) that drops a viewer onto any web page with one tag." },
-            { "content": "A CLI that validates against the JSON Schema and converts Markdown into JDF." },
-            { "content": "A format that survives — JSON has no vendor, no proprietary parser." }
-          ]
+        {
+          "content": "OPINION  ·  2026",
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "style": "byline",
+          "type": "text",
+          "width": 166
         },
-
-        { "type": "text", "content": "Embedding on the web", "heading": 2, "tocEntry": "Embedding", "tocLevel": 2, "style": "h2", "position": { "x": 0, "y": 80 }, "width": 166 },
-        { "type": "text", "content": "Three lines and a tag — your document appears on the page, fully styled, scrollable, with a clickable TOC.", "style": "body", "position": { "x": 0, "y": 96 }, "width": 166 },
-
-        { "type": "text", "content": "<link rel=\"stylesheet\" href=\"https://unpkg.com/jdfjs/dist/jdfjs.css\">\n<script type=\"module\" src=\"https://unpkg.com/jdfjs\"></script>\n<jdf src=\"/whitepaper.jdf\"></jdf>", "style": "code", "position": { "x": 0, "y": 116 }, "width": 166 },
-
-        { "type": "text", "content": "What's next", "heading": 2, "tocEntry": "What's next", "tocLevel": 2, "style": "h2", "position": { "x": 0, "y": 165 }, "width": 166 },
-        { "type": "text", "content": "Editor plugins. Real-time collaboration over CRDTs. A rich-text inspector. A Figma-to-JDF converter. The format is small enough that the surface area of useful tooling is enormous — and JSON means the tooling already half-exists.", "style": "body", "position": { "x": 0, "y": 181 }, "width": 166 }
-      ]
+        {
+          "content": "What you get",
+          "heading": 2,
+          "position": {
+            "x": 0,
+            "y": 12
+          },
+          "style": "h2",
+          "tocEntry": "What you get",
+          "tocLevel": 2,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "items": [
+            {
+              "content": "A native macOS desktop reader (10 MB) that reads, renders, edits, and auto-saves."
+            },
+            {
+              "content": "A 25 KB JavaScript library (jdfjs) that drops a viewer onto any web page with one tag."
+            },
+            {
+              "content": "A CLI that validates against the JSON Schema and converts Markdown into JDF."
+            },
+            {
+              "content": "A format that survives — JSON has no vendor, no proprietary parser."
+            }
+          ],
+          "listType": "unordered",
+          "position": {
+            "x": 0,
+            "y": 28
+          },
+          "style": "body",
+          "type": "list",
+          "width": 166
+        },
+        {
+          "content": "Embedding on the web",
+          "heading": 2,
+          "position": {
+            "x": 0,
+            "y": 80
+          },
+          "style": "h2",
+          "tocEntry": "Embedding",
+          "tocLevel": 2,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "Three lines and a tag — your document appears on the page, fully styled, scrollable, with a clickable TOC.",
+          "position": {
+            "x": 0,
+            "y": 96
+          },
+          "style": "body",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "<link rel=\"stylesheet\" href=\"https://unpkg.com/jdfjs/dist/jdfjs.css\">\n<script type=\"module\" src=\"https://unpkg.com/jdfjs\"></script>\n<jdf src=\"/whitepaper.jdf\"></jdf>",
+          "position": {
+            "x": 0,
+            "y": 116
+          },
+          "style": "code",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "What's next",
+          "heading": 2,
+          "position": {
+            "x": 0,
+            "y": 165
+          },
+          "style": "h2",
+          "tocEntry": "What's next",
+          "tocLevel": 2,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "Editor plugins. Real-time collaboration over CRDTs. A rich-text inspector. A Figma-to-JDF converter. The format is small enough that the surface area of useful tooling is enormous — and JSON means the tooling already half-exists.",
+          "position": {
+            "x": 0,
+            "y": 181
+          },
+          "style": "body",
+          "type": "text",
+          "width": 166
+        }
+      ],
+      "id": "page-2"
     }
-  ]
+  ],
+  "styles": {
+    "body": {
+      "color": "#334155",
+      "fontFamily": "Inter",
+      "fontSize": 11,
+      "lineHeight": 1.7
+    },
+    "byline": {
+      "color": "#94a3b8",
+      "fontFamily": "Inter",
+      "fontSize": 9,
+      "letterSpacing": 1
+    },
+    "code": {
+      "backgroundColor": "#f1f5f9",
+      "borderRadius": 6,
+      "color": "#1e293b",
+      "fontFamily": "JetBrains Mono",
+      "fontSize": 9.5,
+      "lineHeight": 1.5,
+      "padding": 12
+    },
+    "h1": {
+      "color": "#0f172a",
+      "fontFamily": "Inter",
+      "fontSize": 30,
+      "fontWeight": "bold",
+      "lineHeight": 1.1
+    },
+    "h2": {
+      "color": "#1e293b",
+      "fontFamily": "Inter",
+      "fontSize": 16,
+      "fontWeight": "bold",
+      "marginTop": 8
+    },
+    "lead": {
+      "color": "#475569",
+      "fontFamily": "Inter",
+      "fontSize": 14,
+      "fontStyle": "italic",
+      "lineHeight": 1.6
+    }
+  }
 }

@@ -1,20 +1,33 @@
 {
-  "name": "@jdf/cli",
+  "name": "@uurtech/jdf-cli",
   "version": "0.1.0",
-  "private": true,
+  "description": "Command-line tool for the JDF (JSON Document Format) — validate and convert documents.",
+  "license": "MIT",
+  "author": "Ugur Kazdal",
+  "homepage": "https://github.com/uurtech/jdf#readme",
+  "repository": { "type": "git", "url": "git+https://github.com/uurtech/jdf.git", "directory": "tools/jdf-cli" },
+  "bugs": { "url": "https://github.com/uurtech/jdf/issues" },
+  "keywords": ["jdf", "json", "document", "cli", "validator", "ajv", "json-schema", "pdf-alternative"],
   "type": "module",
-  "bin": { "jdf": "src/index.ts" },
+  "main": "./dist/index.js",
+  "bin": { "jdf": "./dist/index.js" },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": { "node": ">=18" },
   "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
     "start": "tsx src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
-    "@jdf/core": "workspace:*",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1"
   },
   "devDependencies": {
+    "@jdf/core": "workspace:*",
     "@types/node": "^22.10.0",
+    "tsup": "^8.3.5",
     "tsx": "^4.19.2",
     "typescript": "^5.5.0"
   }

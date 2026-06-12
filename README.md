@@ -14,7 +14,7 @@ JDF runs in three places:
 |---|---|---|
 | **JDF Reader** | Native macOS app — read, edit, import PDF/MD, export PDF | `brew tap uurtech/jdf && brew install jdf` |
 | **jdf.js** | JavaScript library — embed `.jdf` files on any web page | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf">` |
-| **`@jdf/cli`** | CLI for validating documents and converting from Markdown | `npx @jdf/cli validate file.jdf` |
+| **`@uurtech/jdf-cli`** | CLI for validating documents and converting from Markdown | `npx @uurtech/jdf-cli validate file.jdf` |
 
 ## Why JDF
 
@@ -182,7 +182,7 @@ Editing lives in the desktop Reader only — jdf.js is a viewer, the CLI is non-
 | **JDF Reader** (macOS) | `brew tap uurtech/jdf && brew install jdf` — DMG / `.app`, signed via GitHub release |
 | **JDF Reader** (Linux / Windows) | `.deb` / `.AppImage` / `.rpm` / `.msi` / `.exe` from the [latest release](https://github.com/uurtech/jdf/releases/latest) |
 | **jdf.js** | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf">` |
-| **`@jdf/cli`** | `npx @jdf/cli validate file.jdf` (no install) |
+| **`@uurtech/jdf-cli`** | `npx @uurtech/jdf-cli validate file.jdf` (no install) |
 
 ### Not yet (planned)
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env -S npx tsx
 import { validate } from "./commands/validate";
 import { importMarkdown } from "./commands/import-md";
 import { importPdfPlaceholder } from "./commands/import-pdf";

@@ -18,15 +18,15 @@
     <aside class="docs-sidebar" data-base="./"></aside>
 
     <main class="docs-content">
-      <h1>CLI — <code>@jdf/cli</code></h1>
+      <h1>CLI — <code>@uurtech/jdf-cli</code></h1>
       <p>Command-line tool for validating <code>.jdf</code> documents against the JSON Schema and converting source formats into JDF. Designed to be safe to drop into CI.</p>
 
       <h2>Install</h2>
 <pre><code><span class="com"># run on demand (no install)</span>
-npx @jdf/cli validate doc.jdf
+npx @uurtech/jdf-cli validate doc.jdf
 
 <span class="com"># or install globally</span>
-npm install -g @jdf/cli
+npm install -g @uurtech/jdf-cli
 jdf --help</code></pre>
 
       <h2>Commands</h2>
@@ -50,7 +50,7 @@ jdf --help</code></pre>
 
       <p>Exit code: <code>0</code> if valid, <code>1</code> if not. Drop into a CI step:</p>
 <pre><code><span class="com"># .github/workflows/ci.yml</span>
-- run<span class="punc">:</span> npx @jdf/cli validate docs/whitepaper.jdf</code></pre>
+- run<span class="punc">:</span> npx @uurtech/jdf-cli validate docs/whitepaper.jdf</code></pre>
 
       <h3><code>jdf import &lt;file.{md,pdf}&gt; [-o output.jdf]</code></h3>
       <p>Convert a Markdown or PDF file to a <code>.jdf</code>:</p>
@@ -77,11 +77,11 @@ jdf import paper.pdf -o paper.jdf       <span class="com"># PDF</span></code></p
       <span class="punc">-</span> uses<span class="punc">:</span> actions/setup-node@v4
         <span class="key">with</span><span class="punc">:</span>
           node-version<span class="punc">:</span> 20
-      <span class="punc">-</span> run<span class="punc">:</span> npx @jdf/cli validate docs/*.jdf</code></pre>
+      <span class="punc">-</span> run<span class="punc">:</span> npx @uurtech/jdf-cli validate docs/*.jdf</code></pre>
 
       <h2>Programmatic use</h2>
       <p>The CLI is also a library — import it in scripts:</p>
-<pre><code><span class="key">import</span> { validate } <span class="key">from</span> <span class="str">"@jdf/cli/validate"</span><span class="punc">;</span>
+<pre><code><span class="key">import</span> { validate } <span class="key">from</span> <span class="str">"@uurtech/jdf-cli/validate"</span><span class="punc">;</span>
 
 <span class="key">const</span> ok <span class="punc">=</span> <span class="key">await</span> validate(<span class="str">"./doc.jdf"</span>)<span class="punc">;</span>
 <span class="key">if</span> (<span class="punc">!</span>ok) process.exit(<span class="num">1</span>)<span class="punc">;</span></code></pre>
