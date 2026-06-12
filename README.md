@@ -3,11 +3,9 @@
 A document format that's just JSON. Open `.jdf` in any text editor and you see the source. Open it in JDF Reader and you see a rendered page. Edit either side, the other reflects it.
 
 <p align="center">
-  <img src="docs/screenshot1.png" alt="JDF Reader rendered view" width="48%">
+  <img src="docs/screenshot1.png" alt="JDF Reader rendered view">
 <br>
-  <img src="docs/screenshot2.png" alt="JDF Reader source view" width="48%">
-<br>  
-<img src="docs/screenshot3.png" alt="JDF Reader web element view" width="48%">
+<img src="docs/screenshot3.png" alt="JDF Reader web element view">
 </p>
 
 JDF runs in three places:
