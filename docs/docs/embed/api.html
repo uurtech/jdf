@@ -19,9 +19,9 @@
 
     <main class="docs-content">
       <h1>API reference</h1>
-      <p>Programmatic API for the <code>jdfjs</code> npm package. Use this when you need imperative control: hot-swap documents, react to page changes, or render in-memory documents without a fetch.</p>
+      <p>Programmatic API for the <code>@uurtech/jdf</code> npm package. Use this when you need imperative control: hot-swap documents, react to page changes, or render in-memory documents without a fetch.</p>
 
-<pre><code>npm install jdfjs</code></pre>
+<pre><code>npm install @uurtech/jdf</code></pre>
 
       <h2>Exports</h2>
       <table>
@@ -39,8 +39,8 @@
 
       <h2><code>embed(container, url, options?)</code></h2>
       <p>Fetch a <code>.jdf</code> file by URL and render it into the container.</p>
-<pre><code><span class="key">import</span> { embed } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
-<span class="key">import</span> <span class="str">"jdfjs/style.css"</span><span class="punc">;</span>
+<pre><code><span class="key">import</span> { embed } <span class="key">from</span> <span class="str">"@uurtech/jdf"</span><span class="punc">;</span>
+<span class="key">import</span> <span class="str">"@uurtech/jdf/style.css"</span><span class="punc">;</span>
 
 <span class="key">const</span> v <span class="punc">=</span> <span class="key">await</span> embed(<span class="str">"#viewer"</span><span class="punc">,</span> <span class="str">"/whitepaper.jdf"</span><span class="punc">,</span> {
   zoom<span class="punc">:</span> <span class="num">1.2</span><span class="punc">,</span>
@@ -59,7 +59,7 @@
 
       <h2><code>render(container, doc, options?)</code></h2>
       <p>Render an in-memory <code>JdfDocument</code> directly — no network. Synchronous.</p>
-<pre><code><span class="key">import</span> { render<span class="punc">,</span> JdfDocument } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
+<pre><code><span class="key">import</span> { render<span class="punc">,</span> JdfDocument } <span class="key">from</span> <span class="str">"@uurtech/jdf"</span><span class="punc">;</span>
 
 <span class="key">const</span> doc<span class="punc">:</span> JdfDocument <span class="punc">=</span> {
   $jdf<span class="punc">:</span> <span class="str">"1.0.0"</span><span class="punc">,</span>
@@ -109,7 +109,7 @@
 
       <h2>Class form</h2>
       <p>For advanced wiring (multiple instances, custom toolbar):</p>
-<pre><code><span class="key">import</span> { JDFViewer } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
+<pre><code><span class="key">import</span> { JDFViewer } <span class="key">from</span> <span class="str">"@uurtech/jdf"</span><span class="punc">;</span>
 
 <span class="key">const</span> el <span class="punc">=</span> document.getElementById(<span class="str">"v"</span>)<span class="punc">!;</span>
 <span class="key">const</span> v <span class="punc">=</span> <span class="key">new</span> JDFViewer(el<span class="punc">,</span> doc<span class="punc">,</span> { darkMode<span class="punc">:</span> <span class="str">"dark"</span> })<span class="punc">;</span>
@@ -118,7 +118,7 @@ v.setDocument(otherDoc)<span class="punc">;</span></code></pre>
 
       <h2><code>jdf(root?)</code></h2>
       <p>Manually scan a subtree for <code>&lt;jdf&gt;</code> tags. Auto-init runs on <code>DOMContentLoaded</code> + a <code>MutationObserver</code>, so you usually don't need this — but in some SPA frameworks the observer can miss content that mounts during a transition.</p>
-<pre><code><span class="key">import</span> { jdf } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
+<pre><code><span class="key">import</span> { jdf } <span class="key">from</span> <span class="str">"@uurtech/jdf"</span><span class="punc">;</span>
 
 router.afterEach(() <span class="punc">=&gt;</span> jdf())<span class="punc">;</span>          <span class="com">// scan whole document</span>
 jdf(document.querySelector(<span class="str">"#main"</span>))<span class="punc">;</span> <span class="com">// scan one container</span></code></pre>
@@ -129,7 +129,7 @@ jdf(document.querySelector(<span class="str">"#main"</span>))<span class="punc">
 
       <p>Globally — set <strong>before</strong> the script loads:</p>
 <pre><code><span class="punc">&lt;</span><span class="key">script</span><span class="punc">&gt;</span> window.JDFjsAutoInit <span class="punc">=</span> <span class="key">false</span><span class="punc">; &lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
-<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/jdfjs"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span></code></pre>
+<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span></code></pre>
 
       <h2>Events</h2>
       <p>When <code>embed</code> fails, the container fires a custom event you can listen to:</p>

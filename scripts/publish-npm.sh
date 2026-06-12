@@ -59,7 +59,8 @@ echo "→ Building $PKG_NAME@$PKG_VER..."
 pnpm build
 
 echo "→ Publishing to npm..."
-pnpm publish --access public --no-git-checks
+# Use npm CLI directly — pnpm publish has a code path that 404s on first publish.
+npm publish --access public
 
 echo ""
 echo "✓ Published $PKG_NAME@$PKG_VER"

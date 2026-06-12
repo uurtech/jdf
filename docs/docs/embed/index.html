@@ -6,8 +6,8 @@
   <title>Embed JDF on the web — jdf.js</title>
   <link rel="icon" type="image/svg+xml" href="../../favicon.svg" />
   <link rel="stylesheet" href="../../docs.css" />
-  <link rel="stylesheet" href="https://unpkg.com/jdfjs/dist/jdfjs.css" />
-  <script type="module" src="https://unpkg.com/jdfjs"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf/dist/jdfjs.css" />
+  <script type="module" src="https://unpkg.com/@uurtech/jdf"></script>
   <script defer src="../../docs.js"></script>
 </head>
 <body>
@@ -30,8 +30,8 @@
       <h2>Hello, embed</h2>
       <p>Drop these three lines into any HTML page and you have a fully working JDF viewer:</p>
 
-<pre><code><span class="punc">&lt;</span><span class="key">link</span> <span class="key">rel</span><span class="punc">=</span><span class="str">"stylesheet"</span> <span class="key">href</span><span class="punc">=</span><span class="str">"https://unpkg.com/jdfjs/dist/jdfjs.css"</span><span class="punc">&gt;</span>
-<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/jdfjs"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
+<pre><code><span class="punc">&lt;</span><span class="key">link</span> <span class="key">rel</span><span class="punc">=</span><span class="str">"stylesheet"</span> <span class="key">href</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf/dist/jdfjs.css"</span><span class="punc">&gt;</span>
+<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
 
 <span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"/whitepaper.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
 
@@ -79,7 +79,7 @@
       </table>
 
       <p>To opt out of auto-init for a specific tag, add <code>manual</code>. For SPA pages where you mount content async, call <code>jdf()</code> manually:</p>
-<pre><code><span class="key">import</span> { jdf } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
+<pre><code><span class="key">import</span> { jdf } <span class="key">from</span> <span class="str">"@uurtech/jdf"</span><span class="punc">;</span>
 <span class="com">// after your async content lands</span>
 jdf()<span class="punc">;</span>           <span class="com">// scan the whole document</span>
 jdf(myContainer)<span class="punc">;</span> <span class="com">// scan inside one container</span></code></pre>
@@ -87,10 +87,10 @@ jdf(myContainer)<span class="punc">;</span> <span class="com">// scan inside one
       <h2>Programmatic API</h2>
       <p>For full control, install via npm and use the JS API directly:</p>
 
-<pre><code>npm install jdfjs</code></pre>
+<pre><code>npm install @uurtech/jdf</code></pre>
 
-<pre><code><span class="key">import</span> { embed<span class="punc">,</span> render<span class="punc">,</span> JDFViewer } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
-<span class="key">import</span> <span class="str">"jdfjs/style.css"</span><span class="punc">;</span>
+<pre><code><span class="key">import</span> { embed<span class="punc">,</span> render<span class="punc">,</span> JDFViewer } <span class="key">from</span> <span class="str">"@uurtech/jdf"</span><span class="punc">;</span>
+<span class="key">import</span> <span class="str">"@uurtech/jdf/style.css"</span><span class="punc">;</span>
 
 <span class="com">// 1. Embed by URL</span>
 <span class="key">const</span> v1 <span class="punc">=</span> <span class="key">await</span> embed(<span class="str">"#viewer"</span><span class="punc">,</span> <span class="str">"/doc.jdf"</span><span class="punc">,</span> {

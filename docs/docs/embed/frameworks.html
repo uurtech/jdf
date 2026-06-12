@@ -22,15 +22,15 @@
       <p>jdf.js ships as a custom element (<code>&lt;jdf&gt;</code>), so it works in every framework without a wrapper. The snippets below show the idiomatic way to use it in each.</p>
 
       <div class="callout">
-        <strong>Heads-up:</strong> import <code>jdfjs/style.css</code> once at the app root. Without the stylesheet, the embed renders unstyled.
+        <strong>Heads-up:</strong> import <code>@uurtech/jdf/style.css</code> once at the app root. Without the stylesheet, the embed renders unstyled.
       </div>
 
       <h2>React</h2>
 
       <h3>Use the custom element directly</h3>
 <pre><code><span class="com">// app.tsx</span>
-<span class="key">import</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
-<span class="key">import</span> <span class="str">"jdfjs/style.css"</span><span class="punc">;</span>
+<span class="key">import</span> <span class="str">"@uurtech/jdf"</span><span class="punc">;</span>
+<span class="key">import</span> <span class="str">"@uurtech/jdf/style.css"</span><span class="punc">;</span>
 
 <span class="key">export default function</span> Whitepaper() {
   <span class="key">return</span> <span class="punc">&lt;</span>jdf src<span class="punc">=</span><span class="str">"/whitepaper.jdf"</span> width<span class="punc">=</span><span class="str">"100%"</span> height<span class="punc">=</span><span class="str">"800"</span> <span class="punc">/&gt;;</span>
@@ -52,8 +52,8 @@
 
       <h3>Programmatic with hooks</h3>
 <pre><code><span class="key">import</span> { useEffect<span class="punc">,</span> useRef } <span class="key">from</span> <span class="str">"react"</span><span class="punc">;</span>
-<span class="key">import</span> { embed } <span class="key">from</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
-<span class="key">import</span> <span class="str">"jdfjs/style.css"</span><span class="punc">;</span>
+<span class="key">import</span> { embed } <span class="key">from</span> <span class="str">"@uurtech/jdf"</span><span class="punc">;</span>
+<span class="key">import</span> <span class="str">"@uurtech/jdf/style.css"</span><span class="punc">;</span>
 
 <span class="key">export function</span> JdfEmbed({ src }<span class="punc">:</span> { src<span class="punc">:</span> <span class="key">string</span> }) {
   <span class="key">const</span> ref <span class="punc">=</span> useRef<span class="punc">&lt;</span>HTMLDivElement<span class="punc">&gt;</span>(<span class="key">null</span>)<span class="punc">;</span>
@@ -83,8 +83,8 @@
 <span class="punc">&lt;/</span><span class="key">template</span><span class="punc">&gt;</span>
 
 <span class="punc">&lt;</span><span class="key">script</span> <span class="key">setup</span> <span class="key">lang</span><span class="punc">=</span><span class="str">"ts"</span><span class="punc">&gt;</span>
-<span class="key">import</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
-<span class="key">import</span> <span class="str">"jdfjs/style.css"</span><span class="punc">;</span>
+<span class="key">import</span> <span class="str">"@uurtech/jdf"</span><span class="punc">;</span>
+<span class="key">import</span> <span class="str">"@uurtech/jdf/style.css"</span><span class="punc">;</span>
 <span class="key">const</span> docUrl <span class="punc">=</span> <span class="str">"/whitepaper.jdf"</span><span class="punc">;</span>
 <span class="punc">&lt;/</span><span class="key">script</span><span class="punc">&gt;</span></code></pre>
 
@@ -93,8 +93,8 @@
 
 <pre><code><span class="punc">&lt;!-- App.svelte --&gt;</span>
 <span class="punc">&lt;</span><span class="key">script</span><span class="punc">&gt;</span>
-  <span class="key">import</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
-  <span class="key">import</span> <span class="str">"jdfjs/style.css"</span><span class="punc">;</span>
+  <span class="key">import</span> <span class="str">"@uurtech/jdf"</span><span class="punc">;</span>
+  <span class="key">import</span> <span class="str">"@uurtech/jdf/style.css"</span><span class="punc">;</span>
   <span class="key">let</span> src <span class="punc">=</span> <span class="str">"/whitepaper.jdf"</span><span class="punc">;</span>
 <span class="punc">&lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
 
@@ -107,8 +107,8 @@
 
 <pre><code><span class="com">// app/components/Jdf.tsx</span>
 <span class="str">"use client"</span><span class="punc">;</span>
-<span class="key">import</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
-<span class="key">import</span> <span class="str">"jdfjs/style.css"</span><span class="punc">;</span>
+<span class="key">import</span> <span class="str">"@uurtech/jdf"</span><span class="punc">;</span>
+<span class="key">import</span> <span class="str">"@uurtech/jdf/style.css"</span><span class="punc">;</span>
 
 <span class="key">export default function</span> Jdf({ src }<span class="punc">:</span> { src<span class="punc">:</span> <span class="key">string</span> }) {
   <span class="key">return</span> <span class="punc">&lt;</span>jdf src<span class="punc">=</span>{src} width<span class="punc">=</span><span class="str">"100%"</span> height<span class="punc">=</span><span class="str">"800"</span> <span class="punc">/&gt;;</span>
@@ -116,16 +116,16 @@
 
       <h2>Astro</h2>
 <pre><code><span class="punc">---</span>
-<span class="key">import</span> <span class="str">"jdfjs"</span><span class="punc">;</span>
-<span class="key">import</span> <span class="str">"jdfjs/style.css"</span><span class="punc">;</span>
+<span class="key">import</span> <span class="str">"@uurtech/jdf"</span><span class="punc">;</span>
+<span class="key">import</span> <span class="str">"@uurtech/jdf/style.css"</span><span class="punc">;</span>
 <span class="key">const</span> { src } <span class="punc">=</span> Astro.props<span class="punc">;</span>
 <span class="punc">---</span>
 <span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">={</span>src<span class="punc">}</span> <span class="key">width</span><span class="punc">=</span><span class="str">"100%"</span> <span class="key">height</span><span class="punc">=</span><span class="str">"800"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
 
       <h2>Vanilla / no framework</h2>
       <p>Easiest possible setup — just a script tag:</p>
-<pre><code><span class="punc">&lt;</span><span class="key">link</span> <span class="key">rel</span><span class="punc">=</span><span class="str">"stylesheet"</span> <span class="key">href</span><span class="punc">=</span><span class="str">"https://unpkg.com/jdfjs/dist/jdfjs.css"</span><span class="punc">&gt;</span>
-<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/jdfjs"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
+<pre><code><span class="punc">&lt;</span><span class="key">link</span> <span class="key">rel</span><span class="punc">=</span><span class="str">"stylesheet"</span> <span class="key">href</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf/dist/jdfjs.css"</span><span class="punc">&gt;</span>
+<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
 
 <span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"/whitepaper.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
 

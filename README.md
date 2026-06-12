@@ -7,7 +7,7 @@ JDF runs in three places:
 | Surface | What it is | Install |
 |---|---|---|
 | **JDF Reader** | Native macOS app — read, edit, import PDF/MD, export PDF | `brew tap uurtech/jdf && brew install jdf` |
-| **jdf.js** | JavaScript library — embed `.jdf` files on any web page | `npm install jdfjs` or `<script src="https://unpkg.com/jdfjs">` |
+| **jdf.js** | JavaScript library — embed `.jdf` files on any web page | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf">` |
 | **`@jdf/cli`** | CLI for validating documents and converting from Markdown | `npx @jdf/cli validate file.jdf` |
 
 ## Why JDF
@@ -47,8 +47,8 @@ Linux and Windows builds (`.deb`, `.AppImage`, `.rpm`, `.msi`, `.exe`) are produ
 Embed JDF documents on any web page with one tag:
 
 ```html
-<link rel="stylesheet" href="https://unpkg.com/jdfjs/dist/jdfjs.css">
-<script type="module" src="https://unpkg.com/jdfjs"></script>
+<link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf/dist/jdfjs.css">
+<script type="module" src="https://unpkg.com/@uurtech/jdf"></script>
 
 <jdf src="/whitepaper.jdf"></jdf>
 ```
@@ -56,12 +56,12 @@ Embed JDF documents on any web page with one tag:
 Or via npm for full programmatic control:
 
 ```bash
-npm install jdfjs
+npm install @uurtech/jdf
 ```
 
 ```js
-import { embed } from "jdfjs";
-import "jdfjs/style.css";
+import { embed } from "@uurtech/jdf";
+import "@uurtech/jdf/style.css";
 
 await embed("#viewer", "/doc.jdf", { zoom: 1.2, sidebar: true });
 ```
@@ -177,7 +177,7 @@ Internal navigation: `link: "#page-3"` or `link: { type: "internal", target: "#p
 
 ## jdf.js — embed on the web
 
-[`jdfjs/`](jdfjs/) is a small JavaScript library that turns any `.jdf` URL into a fully styled, scrollable, searchable embed in a web page. Like PDF.js — but the file is plain JSON.
+**`@uurtech/jdf`** (sources in [`jdfjs/`](jdfjs/)) is a small JavaScript library that turns any `.jdf` URL into a fully styled, scrollable, searchable embed in a web page. Like PDF.js — but the file is plain JSON.
 
 ### Usage
 
@@ -213,8 +213,8 @@ That's the only embed form. Every `<jdf>` tag on the page is auto-detected on `D
 ### Programmatic API
 
 ```js
-import { embed, render, JDFViewer } from "jdfjs";
-import "jdfjs/style.css";
+import { embed, render, JDFViewer } from "@uurtech/jdf";
+import "@uurtech/jdf/style.css";
 
 // 1. Embed by URL
 const v = await embed("#viewer", "/doc.jdf", {
@@ -230,12 +230,12 @@ v.goToPage(2);
 v.setZoom(1.5);
 
 // 2. Render an in-memory document (no fetch)
-import type { JdfDocument } from "jdfjs";
+import type { JdfDocument } from "@uurtech/jdf";
 const doc: JdfDocument = { $jdf: "1.0.0", meta: { title: "Hi" }, pages: [...] };
 render("#out", doc);
 ```
 
-The library is `dist/jdfjs.js` (~25 kB minified + gzipped). No framework, no build dependencies. Browser support: Chrome 88+, Firefox 87+, Safari 14+, Edge 88+.
+The library bundles to `dist/jdfjs.js` (~25 kB minified + gzipped). No framework, no build dependencies. Browser support: Chrome 88+, Firefox 87+, Safari 14+, Edge 88+.
 
 Full reference: [`jdfjs/README.md`](jdfjs/README.md) · [`docs/docs/embed/`](docs/docs/embed/index.html).
 
@@ -274,7 +274,7 @@ pnpm start import README.md -o out.jdf
 ```
 spec/                JSON Schema + examples
 packages/jdf-core/   TypeScript types + utils
-jdfjs/               jdf.js — web embed library (npm: jdfjs)
+jdfjs/               jdf.js — web embed library (npm: @uurtech/jdf)
 apps/reader/         Tauri v2 app
   src/
     components/      element renderers, JSON view, MD view, sidebar, toolbar
@@ -304,7 +304,7 @@ Done:
 - **jdf.js — web embed library** with auto-init, single `<jdf src="...">` form, feature parity with the desktop renderer.
 
 Not yet:
-- jdf.js published to npm (sources are in [`jdfjs/`](jdfjs/), build with `pnpm --filter jdfjs build`; a `npm publish` step is on the to-do list).
+- jdf.js is published to npm as [`@uurtech/jdf`](https://www.npmjs.com/package/@uurtech/jdf) (sources in [`jdfjs/`](jdfjs/), build with `pnpm --filter jdfjs build`; ship with `bash scripts/publish-npm.sh`).
 - PDF table detection (cells come in as separate text elements at correct coordinates; geometry-based row/column grouping is on the roadmap).
 - Multi-page overflow on PDF export.
 - VS Code extension (preview + schema hint).
@@ -314,10 +314,10 @@ See [`CHANGELOG.md`](CHANGELOG.md) for the per-release log.
 
 ## Releasing (maintainer)
 
-One command bumps versions, builds the dmg, creates a GitHub release with the dmg attached, updates the Homebrew Cask in both repos, and `npm publish`-es jdfjs:
+One command bumps versions, builds the dmg, creates a GitHub release with the dmg attached, updates the Homebrew Cask in both repos, and publishes `@uurtech/jdf` to npm:
 
 ```bash
-bash scripts/release.sh patch    # 0.1.0 → 0.1.1 across desktop + jdfjs
+bash scripts/release.sh patch    # 0.1.0 → 0.1.1 across desktop + @uurtech/jdf
 bash scripts/release.sh minor    # bump minor version
 bash scripts/release.sh major    # bump major version
 ```
@@ -326,7 +326,7 @@ Or each step on its own:
 
 ```bash
 bash scripts/publish-dmg.sh patch    # desktop bundle + GitHub release + Cask update
-bash scripts/publish-npm.sh patch    # jdfjs build + npm publish
+bash scripts/publish-npm.sh patch    # @uurtech/jdf build + npm publish
 ```
 
 Requires `NPM_TOKEN` and `GITHUB_TOKEN` in `/.env` (see `.env.example`). The tap repo (`uurtech/homebrew-jdf`) should be cloned next to this repo so its Cask is auto-pushed.

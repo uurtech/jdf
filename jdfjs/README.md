@@ -1,13 +1,13 @@
 # jdf.js
 
-[![npm](https://img.shields.io/npm/v/jdfjs.svg)](https://www.npmjs.com/package/jdfjs)
+[![npm](https://img.shields.io/npm/v/jdfjs.svg)](https://www.npmjs.com/package/@uurtech/jdf)
 [![license](https://img.shields.io/npm/l/jdfjs.svg)](LICENSE)
 
 Render [JDF (JSON Document Format)](https://github.com/uurtech/jdf) files in any web page with a single tag. Like PDF.js — but the file you point at is plain JSON, so you can also generate it, diff it, and edit it with any tool.
 
 ```html
-<link rel="stylesheet" href="https://unpkg.com/jdfjs/dist/jdfjs.css">
-<script type="module" src="https://unpkg.com/jdfjs"></script>
+<link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf/dist/jdfjs.css">
+<script type="module" src="https://unpkg.com/@uurtech/jdf"></script>
 
 <jdf src="/whitepaper.jdf"></jdf>
 ```
@@ -17,13 +17,13 @@ That's the whole thing. Every `<jdf>` tag on the page is detected on load and re
 ## Install
 
 ```bash
-npm install jdfjs
+npm install @uurtech/jdf
 ```
 
 Or via CDN — no install at all:
 
 ```html
-<script type="module" src="https://unpkg.com/jdfjs"></script>
+<script type="module" src="https://unpkg.com/@uurtech/jdf"></script>
 ```
 
 ## Usage
@@ -66,8 +66,8 @@ document.querySelector("jdf").setAttribute("src", "/other.jdf");
 For full control, install via npm and call the JS API directly:
 
 ```js
-import { embed, render, JDFViewer, jdf } from "jdfjs";
-import "jdfjs/style.css";
+import { embed, render, JDFViewer, jdf } from "@uurtech/jdf";
+import "@uurtech/jdf/style.css";
 
 // 1. Embed by URL into any container
 const v = await embed("#viewer", "/doc.jdf", {
@@ -84,7 +84,7 @@ v.setZoom(1.5);
 v.destroy();
 
 // 2. Render an in-memory document (no fetch)
-import type { JdfDocument } from "jdfjs";
+import type { JdfDocument } from "@uurtech/jdf";
 const doc: JdfDocument = {
   $jdf: "1.0.0",
   meta: { title: "Generated", pageSize: "A4" },
@@ -107,7 +107,7 @@ v3.setDocument(otherDoc); // hot-swap
 Auto-init runs on `DOMContentLoaded` and watches the DOM with a `MutationObserver`, so `<jdf>` tags added later are picked up automatically. To trigger a manual scan after a route change:
 
 ```js
-import { jdf } from "jdfjs";
+import { jdf } from "@uurtech/jdf";
 jdf();                       // scan the whole document
 jdf(myContainer);             // scan only inside myContainer
 ```
