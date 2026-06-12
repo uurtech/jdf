@@ -1,6 +1,6 @@
 cask "jdf" do
-  version "0.1.3"
-  sha256 "edaca272e08c727987ca4705315694d1a78953ae8e6eeacde6b3dc27cc4afefd"
+  version "0.1.4"
+  sha256 "27a84e73c9c31e682623168c1f6b7206d154394fa3ba933826734922a363532a"
 
   url "https://github.com/uurtech/jdf/releases/download/v#{version}/JDF.Reader_#{version}_aarch64.dmg"
   name "JDF Reader"
@@ -8,7 +8,7 @@ cask "jdf" do
   homepage "https://github.com/uurtech/jdf"
 
   depends_on arch: :arm64
-  depends_on macos: ">= :catalina"
+  depends_on macos: :catalina
 
   app "JDF Reader.app"
 

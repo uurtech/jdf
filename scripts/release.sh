@@ -38,10 +38,11 @@ bash scripts/publish-npm.sh
 
 READER_VER=$(node -p "require('./apps/reader/package.json').version")
 JDFJS_VER=$(node -p "require('./jdfjs/package.json').version")
+JDFJS_NAME=$(node -p "require('./jdfjs/package.json').name")
 
 echo ""
 echo "✓ Release complete."
 echo "  Desktop: v$READER_VER  https://github.com/uurtech/jdf/releases/tag/v$READER_VER"
 echo "  Brew:    brew upgrade --cask jdf"
-echo "  Web:     npm install jdfjs@$JDFJS_VER"
-echo "  CDN:     https://unpkg.com/jdfjs@$JDFJS_VER/dist/jdfjs.js"
+echo "  Web:     npm install $JDFJS_NAME@$JDFJS_VER"
+echo "  CDN:     https://unpkg.com/$JDFJS_NAME@$JDFJS_VER/dist/jdfjs.js"
