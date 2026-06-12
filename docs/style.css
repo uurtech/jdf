@@ -700,16 +700,14 @@ footer ul li a:hover { color: var(--brand); }
   ::selection { background: rgba(96, 165, 250, 0.4); }
 }
 
-/* Hero screenshots */
+/* Hero screenshots — stacked vertically, plenty of breathing room */
 .screenshots {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 4rem auto 0;
   padding: 0 1.5rem;
-}
-.shots-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
 }
 .shot {
   margin: 0;
@@ -726,7 +724,7 @@ footer ul li a:hover { color: var(--brand); }
   border: 1px solid rgba(15, 23, 42, 0.08);
 }
 .shot figcaption {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   color: #64748b;
   text-align: center;
 }
@@ -736,7 +734,4 @@ footer ul li a:hover { color: var(--brand); }
     box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.3);
   }
   .shot figcaption { color: #94a3b8; }
-}
-@media (max-width: 720px) {
-  .shots-grid { grid-template-columns: 1fr; gap: 1rem; }
 }
