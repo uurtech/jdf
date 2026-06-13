@@ -7,6 +7,8 @@
     "core:event:default",
     "core:event:allow-listen",
     "core:event:allow-emit",
+    "core:window:allow-close",
+    "core:window:allow-destroy",
     "dialog:default",
     "dialog:allow-open",
     "dialog:allow-save",
