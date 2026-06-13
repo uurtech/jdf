@@ -505,6 +505,98 @@ section > h2 {
   line-height: 1.65;
 }
 
+/* === RAG === */
+.rag-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.rag-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.rag-table th,
+.rag-table td {
+  padding: 14px 18px;
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid var(--border);
+  line-height: 1.6;
+}
+
+.rag-table thead th {
+  background: var(--bg-soft-2);
+  color: var(--text-soft);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-top: 0;
+}
+
+.rag-table tbody tr:first-child td { border-top: 0; }
+
+.rag-table td:first-child {
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  width: 1%;
+}
+
+.rag-table td:nth-child(2) { color: var(--muted); }
+.rag-table td:nth-child(3) { color: var(--text); }
+
+.rag-table code { font-size: 0.88em; }
+
+.rag-note {
+  margin-top: 24px;
+  padding: 18px 22px;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  font-size: 14.5px;
+  color: var(--text);
+  line-height: 1.65;
+}
+
+.rag-note strong { color: var(--brand-strong); }
+
+.rag-foot {
+  margin-top: 24px;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .rag-table thead { display: none; }
+  .rag-table,
+  .rag-table tbody,
+  .rag-table tr,
+  .rag-table td { display: block; width: 100%; }
+  .rag-table tr {
+    border-top: 1px solid var(--border);
+    padding: 8px 0;
+  }
+  .rag-table tbody tr:first-child { border-top: 0; }
+  .rag-table td { border-top: 0; padding: 6px 18px; white-space: normal; }
+  .rag-table td:first-child {
+    background: var(--bg-soft-2);
+    padding-top: 12px;
+    padding-bottom: 4px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+  }
+  .rag-table td:nth-child(2)::before { content: "PDF: "; color: var(--muted); font-weight: 600; }
+  .rag-table td:nth-child(3)::before { content: "JDF: "; color: var(--brand); font-weight: 600; }
+}
+
 /* === COMPARISON === */
 .cmp-table {
   display: grid;

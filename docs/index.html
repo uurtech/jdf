@@ -42,6 +42,7 @@
     </a>
     <nav class="nav-links">
       <a href="#why">Why</a>
+      <a href="#rag">RAG</a>
       <a href="#features">Features</a>
       <a href="#install">Install</a>
       <a href="docs/">Docs</a>
@@ -161,6 +162,64 @@ brew install jdf">
           <h3>No vendor, no lock-in</h3>
           <p>Opens the same way today and in 20 years. JSON has no proprietary owner.</p>
         </div>
+      </div>
+    </section>
+
+    <section id="rag" class="rag">
+      <h2>RAG / AI ingestion — why JSON beats PDF</h2>
+      <p class="section-lead">A retrieval pipeline that ingests JDF skips most of the work it would do on a PDF. The structure that PDF parsers try to <em>reconstruct</em> is already in the file.</p>
+
+      <div class="rag-table-wrap">
+        <table class="rag-table">
+          <thead>
+            <tr><th>Pipeline stage</th><th>PDF</th><th>JDF</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Parse / extract</td>
+              <td><code>pdfplumber</code> / <code>pymupdf</code> / <code>unstructured</code> — layout analysis, font heuristics, OCR fallback for image-only pages</td>
+              <td><code>JSON.parse(content)</code> — no layout reconstruction, the structure is already in the file</td>
+            </tr>
+            <tr>
+              <td>Chunking</td>
+              <td>Token-windowed splits that frequently slice through tables, lists, footnotes</td>
+              <td>Each element (<code>text</code> / <code>richtext</code> / <code>table</code> / <code>list</code> / <code>image</code>) is a natural retrieval unit — no chunker config</td>
+            </tr>
+            <tr>
+              <td>Metadata</td>
+              <td>Synthesised after the fact (page number, "is this a heading?") and often wrong</td>
+              <td>First-class on every element: <code>type</code>, <code>heading</code>, page index, position, link target</td>
+            </tr>
+            <tr>
+              <td>Embedding noise</td>
+              <td>Repeated page headers / footers / page numbers leak into chunks</td>
+              <td><code>header</code> and <code>footer</code> live in their own tree, never in content chunks</td>
+            </tr>
+            <tr>
+              <td>Re-indexing on edit</td>
+              <td>Re-parse + re-chunk + re-embed the whole PDF</td>
+              <td>Diff the JSON, re-embed only the changed elements</td>
+            </tr>
+            <tr>
+              <td>Tables</td>
+              <td>Cells smear across columns; multi-row headers collapse</td>
+              <td><code>{ headers: [...], rows: [[...]] }</code> — every cell at its real coordinate</td>
+            </tr>
+            <tr>
+              <td>Images / figures</td>
+              <td>Dropped or stubbed as <code>[image]</code></td>
+              <td>Stored in <code>resources.images</code> with alt text and a stable anchor — a vision step can fetch it at the exact retrieval point</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rag-note">
+        <strong>Benchmarks coming.</strong> The wins above are <em>structural</em> — pipeline stages JDF removes entirely — not measured timings. We're running benchmarks on a public corpus (academic PDFs, financial filings, scanned reports) and will publish parse / chunk / embed / retrieval numbers here as soon as they're ready. If you run a comparison on your own corpus, please <a href="https://github.com/uurtech/jdf/issues" target="_blank" rel="noopener">open an issue</a> — we'd like to include it.
+      </div>
+
+      <div class="rag-foot">
+        <a class="btn-secondary" href="docs/why-ai.html">Long-form: why JDF is AI-friendly →</a>
       </div>
     </section>
 

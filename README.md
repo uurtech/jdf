@@ -237,7 +237,7 @@ JDF removes most of the work a typical retrieval-augmented-generation pipeline d
 | **Tables** | Cells smear across columns; multi-row headers collapse | `{ headers: [...], rows: [[...]] }` — every cell at its real coordinate |
 | **Images** | Dropped or stubbed as `[image]` | Stored in `resources.images` with alt text and an anchor element — a vision step can fetch the image at the exact retrieval point |
 
-> Note: the real-world speedup depends on your PDFs (text-only vs. scanned), parser, and chunker. We haven't published benchmark numbers — the wins above are structural (steps you no longer have to do), not measured timings. If you run a comparison on your own corpus, please open an issue with the methodology.
+> **Benchmarks coming.** The wins above are *structural* — pipeline stages JDF removes entirely — not measured timings. We're running benchmarks on a public corpus (academic PDFs, financial filings, scanned reports) covering parse, chunk, embed, and retrieval cost; this section will be updated with the numbers as soon as they're ready. Real-world speedup depends on your PDFs (text-only vs. scanned), parser, and chunker — if you run a comparison on your own corpus first, please [open an issue](https://github.com/uurtech/jdf/issues) with the methodology and we'll include it.
 
 A minimal RAG ingestor for JDF is a single loop — no PDF library, no layout heuristics, no chunker config:
 

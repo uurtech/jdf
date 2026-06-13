@@ -146,7 +146,11 @@ jq <span class="str">'.. | objects | select(.type == "external") | .target'</spa
         </tbody>
       </table>
 
-      <p>The bottom line is qualitative: fewer pipeline stages, smaller vector index, no chunker tuning, and incremental re-indexing on every save. If you measure on your own corpus, please publish the numbers — there isn't a public benchmark yet.</p>
+      <p>The bottom line is qualitative: fewer pipeline stages, smaller vector index, no chunker tuning, and incremental re-indexing on every save.</p>
+
+      <div class="callout">
+        <strong>Benchmarks coming.</strong> The wins above are <em>structural</em> — pipeline stages JDF removes entirely — not measured timings. We're running benchmarks on a public corpus (academic PDFs, financial filings, scanned reports) covering parse, chunk, embed, and retrieval cost. This page will be updated with numbers as soon as they're ready. If you run a comparison on your own corpus first, please <a href="https://github.com/uurtech/jdf/issues" target="_blank" rel="noopener">open an issue</a> with the methodology — we'd like to include it.
+      </div>
 
       <h2>Side-by-side: same document, two formats</h2>
       <p>Imagine asking a model "what was Q2 revenue?" — given the same source document.</p>
