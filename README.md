@@ -225,17 +225,19 @@ Round-trip back to `.pdf` via the toolbar (or `Cmd+Shift+E`). Respects:
 
 ## RAG / AI ingestion
 
-JDF is dramatically faster — and noticeably more accurate — to feed into a retrieval-augmented-generation pipeline than PDF. Every stage of the pipeline gets cheaper:
+JDF removes most of the work a typical retrieval-augmented-generation pipeline does on PDFs. The structure that PDF parsers try to reconstruct is already in the file, so several pipeline stages become trivial or vanish entirely:
 
-| Stage | PDF | JDF | Why JDF wins |
-|---|---|---|---|
-| **Parse / extract** | `pdfplumber` / `pymupdf` / `unstructured` — typically 100–500 ms per page, with layout analysis | `JSON.parse(content)` — sub-millisecond for the whole document | No layout reconstruction. The structure is already in the file. |
-| **Chunking** | Token-windowed splits that frequently slice through tables, lists, footnotes | Each element (`text`, `richtext`, `table`, `list`, `image`) is a natural retrieval unit | Semantic boundaries are preserved for free — no chunker heuristics. |
-| **Metadata** | Synthesized after the fact (page number, "is this a heading?") and often wrong | First-class on every element: `type`, `heading`, page index, position, link target | Filter retrievals (`type == "table"`, `heading <= 2`) without a custom indexer. |
-| **Embedding noise** | Repeated page headers / footers / page numbers leak into chunks | `header` and `footer` live in their own tree, never in content chunks | Less garbage tokenised, smaller index, cleaner cosine scores. |
-| **Re-indexing on edit** | Re-parse + re-chunk + re-embed the whole PDF | Diff the JSON, re-embed only the changed elements | Incremental indexing is trivial — JDF diffs are line-level. |
-| **Tables** | Cells smear across columns; multi-row headers collapse | `{ headers: [...], rows: [[...]] }` — every cell at its real coordinate | Table-aware retrieval ("Q2 revenue?") actually hits the right row. |
-| **Images** | Dropped or stubbed as `[image]` | Stored in `resources.images` with alt text and an anchor element | A vision-model step can fetch the image at the exact retrieval point. |
+| Stage | PDF | JDF |
+|---|---|---|
+| **Parse / extract** | `pdfplumber` / `pymupdf` / `unstructured` — layout analysis, font heuristics, OCR fallback for image-only pages | `JSON.parse(content)` — no layout reconstruction, the structure is already in the file |
+| **Chunking** | Token-windowed splits that frequently slice through tables, lists, footnotes | Each element (`text`, `richtext`, `table`, `list`, `image`) is a natural retrieval unit — no chunker config |
+| **Metadata** | Synthesized after the fact (page number, "is this a heading?") and often wrong | First-class on every element: `type`, `heading`, page index, position, link target |
+| **Embedding noise** | Repeated page headers / footers / page numbers leak into chunks | `header` and `footer` live in their own tree, never in content chunks |
+| **Re-indexing on edit** | Re-parse + re-chunk + re-embed the whole PDF | Diff the JSON, re-embed only the changed elements |
+| **Tables** | Cells smear across columns; multi-row headers collapse | `{ headers: [...], rows: [[...]] }` — every cell at its real coordinate |
+| **Images** | Dropped or stubbed as `[image]` | Stored in `resources.images` with alt text and an anchor element — a vision step can fetch the image at the exact retrieval point |
+
+> Note: the real-world speedup depends on your PDFs (text-only vs. scanned), parser, and chunker. We haven't published benchmark numbers — the wins above are structural (steps you no longer have to do), not measured timings. If you run a comparison on your own corpus, please open an issue with the methodology.
 
 A minimal RAG ingestor for JDF is a single loop — no PDF library, no layout heuristics, no chunker config:
 
@@ -270,7 +272,7 @@ for (const [pageIndex, page] of doc.pages.entries()) {
 
 The same pipeline against a PDF needs `pdfplumber` (or equivalent), a layout heuristic to detect headings, a chunker that respects tables, and an OCR fallback for image-only pages — and still loses fidelity at every step.
 
-In practice this means: **shorter ingest jobs, smaller vector indexes, more accurate retrieval, and incremental re-indexing on every save**. See [`docs/docs/why-ai.html`](docs/docs/why-ai.html) for the long-form discussion of why every modern LLM reads JDF more easily than PDF.
+See [`docs/docs/why-ai.html`](docs/docs/why-ai.html) for the long-form discussion of why every modern LLM reads JDF more easily than PDF.
 
 ## Format
 

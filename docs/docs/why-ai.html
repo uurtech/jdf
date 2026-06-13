@@ -103,15 +103,15 @@ jq <span class="str">'.. | objects | select(.type == "external") | .target'</spa
 }</code></pre>
       <p>Each chunk carries semantic metadata — type, heading level, page number — that the model uses at retrieval time. No more "this chunk is half a paragraph and half a table cell".</p>
 
-      <h4>Pipeline-by-pipeline: where the time actually goes</h4>
-      <p>For every stage of a typical RAG pipeline, JDF is faster <em>and</em> more accurate than PDF — not by a small margin:</p>
+      <h4>Pipeline-by-pipeline: what JDF removes from the pipeline</h4>
+      <p>The argument here is structural, not benchmarked: several stages a PDF pipeline has to do, a JDF pipeline simply doesn't. We haven't published timing numbers — actual speedups depend on your PDFs, parser, and chunker — but the work itself is gone:</p>
       <table class="why-table">
         <thead><tr><th>Stage</th><th>PDF</th><th>JDF</th></tr></thead>
         <tbody>
           <tr>
             <td>Parse / extract</td>
-            <td><code>pdfplumber</code> / <code>pymupdf</code> / <code>unstructured</code> — roughly <strong>100–500&nbsp;ms per page</strong>, plus layout analysis</td>
-            <td><code>JSON.parse(content)</code> — <strong>sub-millisecond for the whole document</strong></td>
+            <td><code>pdfplumber</code> / <code>pymupdf</code> / <code>unstructured</code> — layout analysis, font heuristics, OCR fallback for image-only pages</td>
+            <td><code>JSON.parse(content)</code> — no layout reconstruction, the structure is already in the file</td>
           </tr>
           <tr>
             <td>Chunking</td>
@@ -146,7 +146,7 @@ jq <span class="str">'.. | objects | select(.type == "external") | .target'</spa
         </tbody>
       </table>
 
-      <p>The bottom line: ingest jobs finish faster, the resulting vector index is smaller, retrieval scores cleaner, and incremental re-indexing on every save is trivial. PDF makes you pay all of those costs every time the document changes.</p>
+      <p>The bottom line is qualitative: fewer pipeline stages, smaller vector index, no chunker tuning, and incremental re-indexing on every save. If you measure on your own corpus, please publish the numbers — there isn't a public benchmark yet.</p>
 
       <h2>Side-by-side: same document, two formats</h2>
       <p>Imagine asking a model "what was Q2 revenue?" — given the same source document.</p>
