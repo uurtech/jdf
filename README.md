@@ -184,27 +184,11 @@ Editing lives in the desktop Reader only — jdf.js is a viewer, the CLI is non-
 | **jdf.js** | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf">` |
 | **`@uurtech/jdf-cli`** | `npx @uurtech/jdf-cli validate file.jdf` (no install) |
 
-### Not yet (planned)
+## Page model
 
-- PDF import in CLI (the importer currently lives in the Reader frontend; extracting it to a shared `@jdf/pdf-import` package is on the roadmap).
-- PDF export in CLI.
-- Editing in jdf.js (today it's a strict renderer).
-- Linux/Windows code signing (builds work, signing is per-platform follow-up).
+Page sizes: A4, A3, A5, Letter, Legal, Tabloid, custom (`{width, height}` in mm). Portrait or landscape — set at the document level (`meta.pageOrientation`) or per-page. Margins are merged: doc-level `meta.margins` + per-page overrides. Headers and footers accept either a template string (`{{pageNumber}} {{totalPages}} {{title}} {{author}}`) or a full element tree.
 
-## What it renders
-
-| Element | Capabilities |
-|---|---|
-| `text` | `heading: 1-6`, `align`, `tocEntry`, internal/external `link`, full `style` |
-| `richtext` | per-run `bold`/`italic`/`underline`/`strikethrough`/`color`/`fontSize`/`fontFamily`/`link` |
-| `image` | embedded base64 (`resource`) or referenced (`src` URL/path); `fit: contain\|cover\|fill\|none` |
-| `table` | headers, rows with string or `{content, colspan, rowspan}` cells, alternating rows, configurable inner/outer borders, column alignment, cell-level styles |
-| `list` | ordered / unordered, mixed nested (per-item `listType` overrides parent) |
-| `shape` | `rect`, `circle`, `ellipse`, `line`, SVG `path`; fill, stroke (string or `{color, width}` object), opacity |
-| `collapsible` | expandable section with nested elements |
-| `toc` | auto-generated from headings, hierarchical (`tocLevel` / `heading` level), `depth` filter, click-to-navigate |
-
-Page sizes: A4, A3, A5, Letter, Legal, Tabloid, custom (`{width, height}` mm). Portrait or landscape, doc-level or per-page. Margins, headers, footers (template strings with `{{pageNumber}} {{totalPages}} {{title}} {{author}}`, or full element trees).
+Element-by-element capabilities are listed in the [Feature matrix](#feature-matrix--what-runs-where) above; the JSON Schema in [`spec/jdf-schema.json`](spec/jdf-schema.json) is the source of truth.
 
 ## PDF import: full fidelity
 
@@ -333,14 +317,19 @@ Full reference: [`jdfjs/README.md`](jdfjs/README.md) · [`docs/docs/embed/`](doc
 ## CLI
 
 ```bash
-cd tools/jdf-cli
+# run on demand (no install)
+npx @uurtech/jdf-cli validate doc.jdf
+npx @uurtech/jdf-cli import README.md          # → README.jdf
+npx @uurtech/jdf-cli import paper.pdf -o out.jdf
 
-pnpm start validate ../../spec/examples/hello-world.jdf
-pnpm start import README.md            # → README.jdf
-pnpm start import README.md -o out.jdf
+# or install globally
+npm install -g @uurtech/jdf-cli
+jdf validate doc.jdf
 ```
 
-`validate` runs Ajv against the JSON Schema and reports path-level errors plus warnings.
+`validate` runs Ajv against the JSON Schema and reports path-level errors plus warnings. `import` accepts `.md` (works) and `.pdf` (planned — currently delegates to the desktop importer).
+
+When working from a clone of this repo, the dev entry point is `pnpm --filter @uurtech/jdf-cli start <subcommand>` — same arguments, runs from source via `tsx`.
 
 ## Keyboard shortcuts
 
@@ -396,8 +385,12 @@ Done:
 - Published to npm as [`@uurtech/jdf`](https://www.npmjs.com/package/@uurtech/jdf) — install via `npm install @uurtech/jdf` or load from CDN at `https://unpkg.com/@uurtech/jdf`.
 
 Not yet:
+- PDF import in the CLI (works in the Reader; the CLI command currently delegates to the desktop importer).
+- PDF export in the CLI.
+- Editing in jdf.js (today it's strictly a renderer).
 - PDF table detection (cells come in as separate text elements at correct coordinates; geometry-based row/column grouping is on the roadmap).
 - Multi-page overflow on PDF export.
+- Linux/Windows code signing (builds work; signing is a per-platform follow-up).
 - VS Code extension (preview + schema hint).
 - Apple notarization (the cask runs `xattr -cr` to clear quarantine, but a notarized build would silence Gatekeeper entirely).
 

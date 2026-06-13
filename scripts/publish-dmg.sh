@@ -14,6 +14,7 @@
 #   - apps/reader/src-tauri/Cargo.toml
 #   - apps/reader/src-tauri/tauri.conf.json
 #   - jdfjs/package.json (in lockstep with the reader)
+#   - tools/jdf-cli/package.json (in lockstep with the reader)
 
 set -euo pipefail
 
@@ -45,11 +46,13 @@ DMG_BUNDLE_DIR="$REPO_ROOT/apps/reader/src-tauri/target/release/bundle/dmg"
 
 # ── Step 1: bump versions in lockstep ──────────────────────────────────────
 if [[ -n "$BUMP" ]]; then
-  echo "→ Bumping version ($BUMP) across reader + jdfjs"
+  echo "→ Bumping version ($BUMP) across reader + jdfjs + jdf-cli"
   # Reader (npm package)
   (cd apps/reader && npm version "$BUMP" --no-git-tag-version >/dev/null)
   # jdfjs (npm package)
   (cd jdfjs && npm version "$BUMP" --no-git-tag-version >/dev/null)
+  # CLI (npm package)
+  (cd tools/jdf-cli && npm version "$BUMP" --no-git-tag-version >/dev/null)
 fi
 
 NEW_VER=$(node -p "require('./apps/reader/package.json').version")

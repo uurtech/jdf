@@ -1,7 +1,7 @@
 # jdf.js
 
-[![npm](https://img.shields.io/npm/v/jdfjs.svg)](https://www.npmjs.com/package/@uurtech/jdf)
-[![license](https://img.shields.io/npm/l/jdfjs.svg)](LICENSE)
+[![npm](https://img.shields.io/npm/v/@uurtech/jdf.svg)](https://www.npmjs.com/package/@uurtech/jdf)
+[![license](https://img.shields.io/npm/l/@uurtech/jdf.svg)](LICENSE)
 
 Render [JDF (JSON Document Format)](https://github.com/uurtech/jdf) files in any web page with a single tag. Like PDF.js — but the file you point at is plain JSON, so you can also generate it, diff it, and edit it with any tool.
 

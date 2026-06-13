@@ -60,7 +60,7 @@ jdf import paper.pdf -o paper.jdf       <span class="com"># PDF</span></code></p
 
       <p>Markdown import uses <code>pulldown-cmark</code> with full GFM (tables, blockquotes, fenced code, links, images, task lists, hr, strikethrough). Bold/italic emit as <code>richtext</code> runs.</p>
 
-      <p>PDF import (planned) uses the same PDF.js-based extractor as the desktop reader: positions, fonts, colors, vector shapes, embedded images.</p>
+      <p>PDF import is currently a placeholder — it prints a hint to use the desktop Reader. The plan is to extract <code>apps/reader/src/import/pdfToJdf.ts</code> into a shared <code>@uurtech/jdf-pdf-import</code> package with a Node entry point so the CLI can run the same PDF.js-based extractor (positions, fonts, colors, vector shapes, embedded images).</p>
 
       <h2>Schema validation in CI</h2>
       <p>If your project generates <code>.jdf</code> files programmatically, validate them on every PR. Example workflow:</p>
@@ -78,13 +78,6 @@ jdf import paper.pdf -o paper.jdf       <span class="com"># PDF</span></code></p
         <span class="key">with</span><span class="punc">:</span>
           node-version<span class="punc">:</span> 20
       <span class="punc">-</span> run<span class="punc">:</span> npx @uurtech/jdf-cli validate docs/*.jdf</code></pre>
-
-      <h2>Programmatic use</h2>
-      <p>The CLI is also a library — import it in scripts:</p>
-<pre><code><span class="key">import</span> { validate } <span class="key">from</span> <span class="str">"@uurtech/jdf-cli/validate"</span><span class="punc">;</span>
-
-<span class="key">const</span> ok <span class="punc">=</span> <span class="key">await</span> validate(<span class="str">"./doc.jdf"</span>)<span class="punc">;</span>
-<span class="key">if</span> (<span class="punc">!</span>ok) process.exit(<span class="num">1</span>)<span class="punc">;</span></code></pre>
 
       <div class="next-prev">
         <a href="desktop.html" class="prev"><span class="label">← Previous</span><span class="title">Desktop Reader</span></a>
