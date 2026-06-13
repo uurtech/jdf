@@ -223,6 +223,55 @@ Round-trip back to `.pdf` via the toolbar (or `Cmd+Shift+E`). Respects:
 
 `.md` opens with a continuous-scroll, GitHub-style render (`marked`, full GFM: tables, blockquotes, code, links, images, task lists, hr, strikethrough). Toolbar toggle flips to the paged JDF render of the same content. `Cmd+F` highlights matches inline with `<mark>` tags in the live MD output, line-by-line.
 
+## RAG / AI ingestion
+
+JDF is dramatically faster — and noticeably more accurate — to feed into a retrieval-augmented-generation pipeline than PDF. Every stage of the pipeline gets cheaper:
+
+| Stage | PDF | JDF | Why JDF wins |
+|---|---|---|---|
+| **Parse / extract** | `pdfplumber` / `pymupdf` / `unstructured` — typically 100–500 ms per page, with layout analysis | `JSON.parse(content)` — sub-millisecond for the whole document | No layout reconstruction. The structure is already in the file. |
+| **Chunking** | Token-windowed splits that frequently slice through tables, lists, footnotes | Each element (`text`, `richtext`, `table`, `list`, `image`) is a natural retrieval unit | Semantic boundaries are preserved for free — no chunker heuristics. |
+| **Metadata** | Synthesized after the fact (page number, "is this a heading?") and often wrong | First-class on every element: `type`, `heading`, page index, position, link target | Filter retrievals (`type == "table"`, `heading <= 2`) without a custom indexer. |
+| **Embedding noise** | Repeated page headers / footers / page numbers leak into chunks | `header` and `footer` live in their own tree, never in content chunks | Less garbage tokenised, smaller index, cleaner cosine scores. |
+| **Re-indexing on edit** | Re-parse + re-chunk + re-embed the whole PDF | Diff the JSON, re-embed only the changed elements | Incremental indexing is trivial — JDF diffs are line-level. |
+| **Tables** | Cells smear across columns; multi-row headers collapse | `{ headers: [...], rows: [[...]] }` — every cell at its real coordinate | Table-aware retrieval ("Q2 revenue?") actually hits the right row. |
+| **Images** | Dropped or stubbed as `[image]` | Stored in `resources.images` with alt text and an anchor element | A vision-model step can fetch the image at the exact retrieval point. |
+
+A minimal RAG ingestor for JDF is a single loop — no PDF library, no layout heuristics, no chunker config:
+
+```ts
+import fs from "node:fs/promises";
+import type { JdfDocument } from "@jdf/core";
+
+const doc: JdfDocument = JSON.parse(await fs.readFile("paper.jdf", "utf8"));
+
+for (const [pageIndex, page] of doc.pages.entries()) {
+  for (const el of page.elements) {
+    const text =
+      el.type === "text" || el.type === "richtext" ? el.content :
+      el.type === "list"  ? el.items.map(i => i.content).join("\n") :
+      el.type === "table" ? [el.headers, ...el.rows].map(r => r.join(" | ")).join("\n") :
+      null;
+    if (!text) continue;
+
+    await index.upsert({
+      id: `${doc.meta?.title}-p${pageIndex}-${el.type}`,
+      vector: await embed(text),
+      metadata: {
+        type: el.type,
+        heading: (el as any).heading ?? null,
+        page: pageIndex + 1,
+        title: doc.meta?.title,
+      },
+    });
+  }
+}
+```
+
+The same pipeline against a PDF needs `pdfplumber` (or equivalent), a layout heuristic to detect headings, a chunker that respects tables, and an OCR fallback for image-only pages — and still loses fidelity at every step.
+
+In practice this means: **shorter ingest jobs, smaller vector indexes, more accurate retrieval, and incremental re-indexing on every save**. See [`docs/docs/why-ai.html`](docs/docs/why-ai.html) for the long-form discussion of why every modern LLM reads JDF more easily than PDF.
+
 ## Format
 
 ```json

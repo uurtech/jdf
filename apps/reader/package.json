@@ -1,6 +1,6 @@
 {
   "name": "@jdf/reader",
-  "version": "0.1.11",
+  "version": "0.1.13",
   "private": true,
   "type": "module",
   "scripts": {
