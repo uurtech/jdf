@@ -6,8 +6,8 @@
   <title>Embed JDF on the web — jdf.js</title>
   <link rel="icon" type="image/svg+xml" href="../../favicon.svg" />
   <link rel="stylesheet" href="../../docs.css" />
-  <link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf@0.1.8/dist/jdfjs.css" />
-  <script type="module" src="https://unpkg.com/@uurtech/jdf@0.1.8"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf@0.1.11/dist/jdfjs.css" />
+  <script type="module" src="https://unpkg.com/@uurtech/jdf@0.1.11"></script>
   <script defer src="../../docs.js"></script>
 </head>
 <body>
@@ -21,7 +21,7 @@
 
     <main class="docs-content">
       <h1>Embed JDF on the web</h1>
-      <p><strong>jdf.js</strong> is a JavaScript library that turns any <code>.jdf</code> URL into a fully styled, scrollable, searchable embed in your web page. Think PDF.js — but the file you point at is plain JSON, so you can also generate it, diff it, and edit it with any tool.</p>
+      <p><strong>jdf.js</strong> is a JavaScript library that turns any <code>.jdf</code> or <code>.jdfx</code> URL into a fully styled, scrollable, searchable embed in your web page. Think PDF.js — but the file you point at is plain JSON (or a zip of JSON + assets), so you can also generate it, diff it, and edit it with any tool. The library detects the extension and parses the right format automatically.</p>
 
       <div class="callout">
         <strong>The whole library:</strong> 25 kB minified + gzipped. No framework. No dependencies you have to install. Works in every modern browser.
@@ -30,8 +30,8 @@
       <h2>Hello, embed</h2>
       <p>Drop these three lines into any HTML page and you have a fully working JDF viewer:</p>
 
-<pre><code><span class="punc">&lt;</span><span class="key">link</span> <span class="key">rel</span><span class="punc">=</span><span class="str">"stylesheet"</span> <span class="key">href</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf@0.1.8/dist/jdfjs.css"</span><span class="punc">&gt;</span>
-<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf@0.1.8"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
+<pre><code><span class="punc">&lt;</span><span class="key">link</span> <span class="key">rel</span><span class="punc">=</span><span class="str">"stylesheet"</span> <span class="key">href</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf@0.1.11/dist/jdfjs.css"</span><span class="punc">&gt;</span>
+<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf@0.1.11"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
 
 <span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"/whitepaper.jdf"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
 

@@ -50,6 +50,17 @@
         { "path": "/tmp/**" }
       ]
     },
+    {
+      "identifier": "fs:allow-write-file",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$HOME/Downloads/**" },
+        { "path": "$HOME/Documents/**" },
+        { "path": "$HOME/Desktop/**" },
+        { "path": "/Users/**" },
+        { "path": "/tmp/**" }
+      ]
+    },
     "fs:allow-exists"
   ]
 }

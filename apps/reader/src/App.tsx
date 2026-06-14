@@ -25,8 +25,13 @@ import { importPdfToJdf } from "./import/pdfToJdf";
 
 interface LoadedFile {
   path: string;
-  type: "jdf" | "md" | "pdf";
+  type: "jdf" | "jdfx" | "md" | "pdf";
   rawMarkdown?: string;
+}
+
+let activeJdfx: { release: () => void } | null = null;
+function releaseActiveJdfx() {
+  if (activeJdfx) { activeJdfx.release(); activeJdfx = null; }
 }
 
 function basename(p: string): string {
@@ -57,7 +62,10 @@ export default function App() {
   let saveTimer: number | undefined;
 
   const isMarkdown = createMemo(() => loaded()?.type === "md");
-  const isEditableFile = createMemo(() => loaded()?.type === "jdf");
+  const isEditableFile = createMemo(() => {
+    const t = loaded()?.type;
+    return t === "jdf" || t === "jdfx";
+  });
 
   function persistRecent(files: string[]) {
     setRecentFiles(files);
@@ -81,11 +89,19 @@ export default function App() {
   async function autoSaveCurrent() {
     const cur = loaded();
     const d = doc();
-    if (!cur || !d || cur.type !== "jdf") return;
+    if (!cur || !d) return;
+    if (cur.type !== "jdf" && cur.type !== "jdfx") return;
     setSavingState("saving");
     try {
-      const { invoke } = await import("@tauri-apps/api/core");
-      await invoke("save_document", { path: cur.path, document: d });
+      if (cur.type === "jdfx") {
+        const { packJdfx } = await import("./jdfx");
+        const { writeFile } = await import("@tauri-apps/plugin-fs");
+        const { bytes } = await packJdfx(d);
+        await writeFile(cur.path, bytes);
+      } else {
+        const { invoke } = await import("@tauri-apps/api/core");
+        await invoke("save_document", { path: cur.path, document: d });
+      }
       flashSaved();
     } catch (e: any) {
       setSavingState("error");
@@ -108,7 +124,7 @@ export default function App() {
 
   function commit(next: JdfDocument) {
     history.push(next);
-    if (loaded()?.type === "jdf") scheduleAutoSave();
+    if (isEditableFile()) scheduleAutoSave();
     else setDirty(true);
   }
 
@@ -162,6 +178,7 @@ export default function App() {
       const content = await readTextFile(path);
       const parsed = JSON.parse(content) as JdfDocument;
       if (!parsed.$jdf) throw new Error("Not a JDF document");
+      releaseActiveJdfx();
       setLoaded({ path, type: "jdf" });
       history.reset(parsed);
       setViewMode("jdf");
@@ -172,6 +189,47 @@ export default function App() {
     } catch (e: any) {
       removeFromRecent(path);
       setError5s(`Open failed: ${e.message || e}`);
+    }
+  }
+
+  async function loadJdfx(path: string) {
+    try {
+      const { readFile } = await import("@tauri-apps/plugin-fs");
+      const { unpackJdfx } = await import("./jdfx");
+      const bytes = await readFile(path);
+      const unpacked = await unpackJdfx(bytes);
+
+      // Inline asset URLs into the document so the existing image renderer
+      // (which reads `src` / `resources.images.<key>.data`) just works without
+      // any awareness of the zip.
+      const doc = unpacked.document;
+      if (!doc.resources) doc.resources = { images: {} };
+      if (!doc.resources.images) doc.resources.images = {};
+      function rebind(els: any[] | undefined) {
+        if (!els) return;
+        for (const el of els) {
+          if (el?.type === "image" && el.resource) {
+            const url = unpacked.assetUrls.get(el.resource);
+            if (url) el.src = url;
+          }
+          if (el?.elements) rebind(el.elements);
+          if (el?.children) rebind(el.children);
+        }
+      }
+      for (const page of doc.pages || []) rebind(page.elements as any[]);
+
+      releaseActiveJdfx();
+      activeJdfx = { release: unpacked.release };
+      setLoaded({ path, type: "jdfx" });
+      history.reset(doc);
+      setViewMode("jdf");
+      setCurrentPage(0);
+      setSavingState("idle");
+      setDirty(false);
+      addToRecent(path);
+    } catch (e: any) {
+      removeFromRecent(path);
+      setError5s(`Open failed: ${e?.message || e}`);
     }
   }
 
@@ -202,9 +260,12 @@ export default function App() {
     setImporting(true);
     try {
       const { readTextFile } = await import("@tauri-apps/plugin-fs");
-      const raw = await readTextFile(path);
+      const { preprocessMarkdownImages } = await import("./import/markdownImages");
+      const rawOriginal = await readTextFile(path);
+      const raw = await preprocessMarkdownImages(rawOriginal, path);
+      const title = basename(path).replace(/\.(md|markdown)$/i, "") || "Document";
       const { invoke } = await import("@tauri-apps/api/core");
-      const parsed = await invoke<JdfDocument>("import_markdown", { path });
+      const parsed = await invoke<JdfDocument>("import_markdown_content", { content: raw, title });
       if (parsed?.pages) {
         setLoaded({ path, type: "md", rawMarkdown: raw });
         history.reset(parsed);
@@ -223,7 +284,8 @@ export default function App() {
 
   function openByExtension(filePath: string) {
     const lower = filePath.toLowerCase();
-    if (lower.endsWith(".jdf")) loadJdf(filePath);
+    if (lower.endsWith(".jdfx")) loadJdfx(filePath);
+    else if (lower.endsWith(".jdf")) loadJdf(filePath);
     else if (lower.endsWith(".pdf")) importPdfFile(filePath);
     else if (lower.endsWith(".md") || lower.endsWith(".markdown")) importMarkdownFile(filePath);
     else setError5s(`Unsupported file type: ${filePath}`);
@@ -262,7 +324,7 @@ export default function App() {
       const win = getCurrentWindow();
       const unlisten = await win.onCloseRequested(async (e) => {
         const hasPendingJdfSave = !!saveTimer;
-        const hasUnsavedImport = dirty() && loaded() && loaded()!.type !== "jdf";
+        const hasUnsavedImport = dirty() && loaded() && !isEditableFile();
         if (!hasPendingJdfSave && !hasUnsavedImport) return;
         e.preventDefault();
         if (hasPendingJdfSave) await flushPendingSave();
@@ -288,7 +350,7 @@ export default function App() {
     // interceptor — calling `close()` from inside the same JS context can
     // race with our own interceptor and silently no-op.
     try {
-      if (dirty() && loaded() && loaded()!.type !== "jdf") {
+      if (dirty() && loaded() && !isEditableFile()) {
         const ok = window.confirm(
           "You have unsaved edits to an imported document.\n\nThe edits live in memory only — closing now will lose them.\n\nClick OK to save them as a .jdf file, Cancel to close without saving."
         );
@@ -314,7 +376,7 @@ export default function App() {
   async function closeDocument(): Promise<boolean> {
     // Internal helper — clear the loaded doc and return to welcome screen.
     // Not wired to any visible button anymore, kept for future use.
-    if (loaded()?.type === "jdf") {
+    if (isEditableFile()) {
       await flushPendingSave();
     } else if (dirty() && doc()) {
       const choice = window.confirm(
@@ -384,8 +446,8 @@ export default function App() {
       const result = await open({
         multiple: false,
         filters: [
-          { name: "All Supported", extensions: ["jdf", "pdf", "md", "markdown"] },
-          { name: "JDF", extensions: ["jdf"] },
+          { name: "All Supported", extensions: ["jdf", "jdfx", "pdf", "md", "markdown"] },
+          { name: "JDF", extensions: ["jdf", "jdfx"] },
           { name: "PDF", extensions: ["pdf"] },
           { name: "Markdown", extensions: ["md", "markdown"] },
         ],
@@ -401,19 +463,32 @@ export default function App() {
     const d = doc();
     if (!cur || !d) return;
     try {
+      const { shouldUseJdfx, packJdfx } = await import("./jdfx");
+      const useJdfx = shouldUseJdfx(d);
+      const stem = d.meta?.title || basename(cur.path).replace(/\.[^.]+$/, "");
       const { save } = await import("@tauri-apps/plugin-dialog");
       const path = await save({
-        filters: [{ name: "JDF", extensions: ["jdf"] }],
-        defaultPath: `${d.meta.title || basename(cur.path).replace(/\.[^.]+$/, "")}.jdf`,
+        filters: useJdfx
+          ? [{ name: "JDF Bundle", extensions: ["jdfx"] }, { name: "JDF", extensions: ["jdf"] }]
+          : [{ name: "JDF", extensions: ["jdf"] }, { name: "JDF Bundle", extensions: ["jdfx"] }],
+        defaultPath: `${stem}.${useJdfx ? "jdfx" : "jdf"}`,
       });
-      if (path) {
+      if (!path) return;
+      const out = String(path);
+      const lower = out.toLowerCase();
+      if (lower.endsWith(".jdfx")) {
+        const { writeFile } = await import("@tauri-apps/plugin-fs");
+        const { bytes } = await packJdfx(d);
+        await writeFile(out, bytes);
+        setLoaded({ ...cur, path: out, type: "jdfx" });
+      } else {
         const { invoke } = await import("@tauri-apps/api/core");
-        await invoke("save_document", { path: String(path), document: d });
-        setLoaded({ ...cur, path: String(path), type: "jdf" });
-        setDirty(false);
-        addToRecent(String(path));
-        flashSaved();
+        await invoke("save_document", { path: out, document: d });
+        setLoaded({ ...cur, path: out, type: "jdf" });
       }
+      setDirty(false);
+      addToRecent(out);
+      flashSaved();
     } catch (e: any) {
       setError5s(`Save failed: ${e}`);
     }
@@ -501,7 +576,7 @@ export default function App() {
             </Show>
             <div class="flex-1 overflow-hidden">
               <Show when={viewMode() === "json"}>
-                <JsonViewer document={doc()!} editable={loaded()?.type === "jdf"} onCommit={commitFullDoc} />
+                <JsonViewer document={doc()!} editable={isEditableFile()} onCommit={commitFullDoc} />
               </Show>
               <Show when={viewMode() === "markdown" && loaded()?.rawMarkdown != null}>
                 <MarkdownViewer content={loaded()!.rawMarkdown!} zoom={zoom()} searchQuery={mdSearchQuery()} />

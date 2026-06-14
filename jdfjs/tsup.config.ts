@@ -12,7 +12,7 @@ export default defineConfig({
   minify: true,
   splitting: false,
   treeshake: true,
-  noExternal: ["@jdf/core"],
+  noExternal: ["@jdf/core", "jszip"],
   globalName: "JDFjs",
   outExtension: ({ format }) => (format === "cjs" ? { js: ".cjs" } : { js: ".js" }),
   onSuccess: async () => {

@@ -1,6 +1,6 @@
 # JDF — JSON Document Format
 
-A document format that's just JSON. Open `.jdf` in any text editor and you see the source. Open it in JDF Reader and you see a rendered page. Edit either side, the other reflects it.
+A document format that's just JSON. Open `.jdf` in any text editor and you see the source. Open it in JDF Reader and you see a rendered page. Edit either side, the other reflects it. When the document carries embedded assets (images, fonts) it ships as `.jdfx` — a zip bundle around the same JSON, so a single file still travels self-contained.
 
 <p align="center">
   <img src="docs/screenshot1.png" alt="JDF Reader rendered view">
@@ -13,7 +13,7 @@ JDF runs in three places:
 | Surface | What it is | Install |
 |---|---|---|
 | **JDF Reader** | Native macOS app — read, edit, import PDF/MD, export PDF | `brew tap uurtech/jdf && brew install jdf` |
-| **jdf.js** | JavaScript library — embed `.jdf` files on any web page | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf">` |
+| **jdf.js** | JavaScript library — embed `.jdf` files on any web page | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf@0.1.11">` |
 | **`@uurtech/jdf-cli`** | CLI for validating documents and converting from Markdown | `npx @uurtech/jdf-cli validate file.jdf` |
 
 ## Why JDF
@@ -53,8 +53,8 @@ Linux and Windows builds (`.deb`, `.AppImage`, `.rpm`, `.msi`, `.exe`) are produ
 Embed JDF documents on any web page with one tag:
 
 ```html
-<link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf/dist/jdfjs.css">
-<script type="module" src="https://unpkg.com/@uurtech/jdf"></script>
+<link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf@0.1.11/dist/jdfjs.css">
+<script type="module" src="https://unpkg.com/@uurtech/jdf@0.1.11"></script>
 
 <jdf src="/whitepaper.jdf"></jdf>
 ```
@@ -87,7 +87,7 @@ Requires Node 20+, pnpm 9+, Rust stable, Xcode CLT (macOS).
 
 ## Open & edit
 
-**Open**: drag any `.jdf`, `.pdf`, or `.md` onto the welcome screen, double-click in Finder (file associations are registered), or `Cmd+O`.
+**Open**: drag any `.jdf`, `.jdfx`, `.pdf`, or `.md` onto the welcome screen, double-click in Finder (file associations are registered for both `.jdf` and `.jdfx`), or `Cmd+O`.
 
 **Edit a paragraph**: double-click it. The whole paragraph (or heading, list item, table cell, collapsible title, image src/alt) becomes an inline editor. Type. Press `Enter` or click anywhere else — the change saves to disk in ~150 ms.
 
@@ -102,13 +102,13 @@ Requires Node 20+, pnpm 9+, Rust stable, Xcode CLT (macOS).
 **Multiple windows**: `⌘N` or the toolbar "New" button. Compare two documents side-by-side.
 
 **Memory model**:
-- A `.jdf` opens in memory and **auto-saves** to its source file on every commit.
-- A `.pdf` or `.md` is converted to JDF in memory only — the original file is never touched. The toolbar shows `● Unsaved (in memory)` while you edit. If you close the window with unsaved changes, you get a prompt to save it as `.jdf` or discard.
+- A `.jdf` or `.jdfx` opens in memory and **auto-saves** to its source file on every commit.
+- A `.pdf` or `.md` is converted to JDF in memory only — the original file is never touched. The toolbar shows `● Unsaved (in memory)` while you edit. If you close the window with unsaved changes, you get a prompt to save it (`.jdfx` if it has assets, `.jdf` otherwise) or discard.
 - The JSON view is a live two-way bind. Edit JSON, blur or `Cmd+S`, and the rendered view follows. Edit visually, the JSON updates as you go.
 
 ## Feature matrix — what runs where
 
-JDF lives in three runnable surfaces. They all consume the same `.jdf` file but expose different feature sets — the desktop Reader is the only place you edit, jdf.js is a renderer, the CLI is for validation and conversion.
+JDF lives in three runnable surfaces. They all consume both `.jdf` (plain JSON) and `.jdfx` (zip bundle) but expose different feature sets — the desktop Reader is the only place you edit, jdf.js is a renderer, the CLI is for validation and conversion.
 
 Legend: ✓ supported · ◐ partial / planned · — not applicable
 
@@ -181,7 +181,7 @@ Editing lives in the desktop Reader only — jdf.js is a viewer, the CLI is non-
 |---|---|
 | **JDF Reader** (macOS) | `brew tap uurtech/jdf && brew install jdf` — DMG / `.app`, signed via GitHub release |
 | **JDF Reader** (Linux / Windows) | `.deb` / `.AppImage` / `.rpm` / `.msi` / `.exe` from the [latest release](https://github.com/uurtech/jdf/releases/latest) |
-| **jdf.js** | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf">` |
+| **jdf.js** | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf@0.1.11">` |
 | **`@uurtech/jdf-cli`** | `npx @uurtech/jdf-cli validate file.jdf` (no install) |
 
 ## Page model
@@ -222,6 +222,50 @@ Round-trip back to `.pdf` via the toolbar (or `Cmd+Shift+E`). Respects:
 ## Markdown
 
 `.md` opens with a continuous-scroll, GitHub-style render (`marked`, full GFM: tables, blockquotes, code, links, images, task lists, hr, strikethrough). Toolbar toggle flips to the paged JDF render of the same content. `Cmd+F` highlights matches inline with `<mark>` tags in the live MD output, line-by-line.
+
+**Images in Markdown** — `![alt](path/to/picture.png)` works with relative paths (`komojam_target_architecture.drawio.png`), absolute paths, and `http(s)://` URLs. On import the relative ones are read from disk and base64-embedded into the document so the resulting `.jdf` is self-contained and portable. Both the JDF Reader app and the CLI (`jdf import file.md`) follow the same rule.
+
+## Images & assets — `.jdf` vs `.jdfx`
+
+JDF ships in **two file shapes** for the same schema. Both open the same way; the difference is how binary assets are stored.
+
+| Shape | Layout | When it's used | Why |
+|---|---|---|---|
+| **`.jdf`** | Single JSON file | No embedded assets — only text, http URLs, or trivially small inline data | Stays diffable, `cat`/`grep`/`jq` work on the file directly |
+| **`.jdfx`** | ZIP bundle: `document.json` + `manifest.json` + `assets/*` | One or more embedded images / fonts | Self-contained (one file to share), no base64 bloat in JSON, RAG can decide per-element whether to fetch the binary |
+
+The reader, jdf.js web embed, CLI, and PDF exporter all open both. The save flow picks `.jdfx` automatically when the document has any embedded asset; you can override the choice in the Save As dialog.
+
+### `.jdfx` layout
+
+```
+hello.jdfx                  (zip)
+├── document.json           ← JDF document — same schema as a standalone .jdf
+├── manifest.json           ← format metadata: version, generator, asset listing
+└── assets/
+    ├── asset-1.png
+    └── asset-2.jpg
+```
+
+**Scope rule:** `document.json.meta` owns *content* metadata (title, author, keywords, description). `manifest.json` owns *format* metadata (version, generator, asset listing). They never duplicate fields — `document.json` is the source of truth. Manifest schema: [`spec/jdfx-manifest-schema.json`](spec/jdfx-manifest-schema.json).
+
+### Three ways to reference an image
+
+| Form | Used in | Example |
+|---|---|---|
+| Bundle resource | `.jdfx` (default) | `{ "type": "image", "resource": "asset-1", "alt": "..." }` — bytes live in `assets/asset-1.png` |
+| `data:` URL | Inline in `.jdf` (small images / no zip) | `{ "type": "image", "src": "data:image/png;base64,iVBORw0KGgo..." }` |
+| `http(s)://` URL | CDN-hosted, shared figures | `{ "type": "image", "src": "https://cdn.example.com/diagram.png" }` |
+
+`fit` accepts `contain` (default), `cover`, `fill`, `none`. The renderer in the desktop app, the web embed, and the PDF exporter all resolve the three forms identically — no missing-image fallbacks anywhere in the pipeline.
+
+### Markdown imports
+
+`![alt](komojam_target_architecture.drawio.png)` works with relative paths, absolute paths, and `http(s)://` URLs. On import:
+
+1. Relative paths are resolved against the Markdown file's directory and read from disk.
+2. Bytes get embedded into the document.
+3. If at least one image was embedded, the importer writes a `.jdfx`; otherwise a plain `.jdf`. Same rule in the desktop reader and `jdf import file.md`.
 
 ## RAG / AI ingestion
 
@@ -433,19 +477,43 @@ Done:
 - JSON Schema, CLI validate, CI on all three OSes.
 - Homebrew tap (`uurtech/jdf`).
 - **jdf.js — web embed library** with auto-init, single `<jdf src="...">` form, feature parity with the desktop renderer.
-- Published to npm as [`@uurtech/jdf`](https://www.npmjs.com/package/@uurtech/jdf) — install via `npm install @uurtech/jdf` or load from CDN at `https://unpkg.com/@uurtech/jdf`.
-
-Not yet:
-- PDF import in the CLI (works in the Reader; the CLI command currently delegates to the desktop importer).
-- PDF export in the CLI.
-- Editing in jdf.js (today it's strictly a renderer).
-- PDF table detection (cells come in as separate text elements at correct coordinates; geometry-based row/column grouping is on the roadmap).
-- Multi-page overflow on PDF export.
-- Linux/Windows code signing (builds work; signing is a per-platform follow-up).
-- VS Code extension (preview + schema hint).
-- Apple notarization (the cask runs `xattr -cr` to clear quarantine, but a notarized build would silence Gatekeeper entirely).
+- Published to npm as [`@uurtech/jdf`](https://www.npmjs.com/package/@uurtech/jdf) — install via `npm install @uurtech/jdf` or load from CDN at `https://unpkg.com/@uurtech/jdf@0.1.11` (always pin a version in production).
+- **`.jdfx` zip bundles** — automatic for documents with embedded images/fonts. Reader, jdf.js, and CLI all read and write the format; manifest schema at [`spec/jdfx-manifest-schema.json`](spec/jdfx-manifest-schema.json).
+- **Markdown image imports** — `![alt](relative.png)` works in both the desktop importer and `jdf import file.md`. Relative paths are resolved against the source file's directory and embedded into the output bundle.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the per-release log.
+
+## Roadmap
+
+The next surface area, grouped by theme. Items at the top of each group are scheduled first.
+
+### RAG / AI tooling
+
+- **Public benchmark suite** — parse / chunk / embed / retrieval cost measured on a shared corpus (academic PDFs, financial filings, scanned reports). Results published at `docs/docs/benchmarks.html` and linked from the RAG section. Backs the structural claims in [`docs/docs/why-ai.html`](docs/docs/why-ai.html) with real numbers.
+- **`@uurtech/jdf-rag`** — RAG-ready ingestor as a published package. One import gives you an iterator of typed chunks (`text` / `richtext` / `table` / `list` / `image`) each carrying first-class metadata (page index, type, heading level, link target). No PDF library, no chunker config.
+- **`@uurtech/jdf-llm`** — structured-output helpers for the major LLM APIs (OpenAI `response_format`, Anthropic `tools`, Google `responseSchema`). Ships the JDF JSON Schema as a guaranteed-valid generation target plus prompt scaffolding for "produce a one-page report" workflows.
+
+### CLI parity with the desktop reader
+
+- **`jdf import file.pdf`** — full PDF import in the CLI. Extract the existing browser importer (`apps/reader/src/import/pdfToJdf.ts`) into `packages/jdf-pdf-import/` with two entry points: `browser.ts` (canvas) and `node.ts` (`node-canvas`). Desktop and CLI consume the same algorithm — no duplication.
+- **`jdf export file.jdf -o file.pdf`** — PDF export in the CLI. Wraps the Rust exporter as a standalone binary or ports it to JS.
+
+### Rendering & import quality
+
+- **PDF table detection** — geometry-based row/column grouping during PDF import. Today the importer emits cells as positioned `text` elements; this pass groups them into real `table` elements with `headers` + `rows`. The single biggest fidelity win for RAG retrieval and export round-trips.
+- **Multi-page overflow on PDF export** — content longer than the page flows to page N+1 instead of being clipped. Currently the exporter assumes one logical page per `page` entry.
+- **Editing in jdf.js** — opt-in editor mode (`<jdf src="..." editable>`) that mirrors the desktop reader's inline editing, hover action bar, and `Cmd+S` save. Today jdf.js is strictly a renderer.
+
+### Editor & ecosystem
+
+- **VS Code extension** — `.jdf` preview pane, JSON Schema-driven autocomplete, outline tree, click-to-jump from the JSON to the rendered element.
+- **Format version 1.1** — additive: more `style` properties (text shadow, gradient fills), `footnote` element, `column` layout primitive, `resources.fonts` (loaded from `assets/` in `.jdfx` bundles). Schema bump documented in `CHANGELOG.md` per the parity rules in [`CLAUDE.md`](CLAUDE.md).
+
+### Distribution & release
+
+- **Apple notarization** — notarized macOS build silences Gatekeeper entirely. Removes the `xattr -cr` workaround currently shipped in the Homebrew Cask.
+- **Linux & Windows code signing** — sign `.deb` / `.rpm` / `.msi` / `.exe` artifacts in the GitHub Actions release workflow.
+- **Auto-bump CDN pins on release** — `scripts/release.sh` rewrites every `unpkg.com/@uurtech/jdf@<old>` reference in `README.md`, `jdfjs/README.md`, and `docs/**/*.html` to the new version before tagging. Removes a class of "demo broke after release" bugs.
 
 ## Contributing
 

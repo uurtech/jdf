@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://jdf.uurtech.dev/spec/jdfx-manifest-schema.json",
+  "title": "JDFX Bundle Manifest",
+  "description": "Schema for the manifest.json file inside a .jdfx zip bundle. The bundle also contains document.json (validated against jdf-schema.json) and an assets/ directory of binary blobs referenced by element `resource` fields.",
+  "type": "object",
+  "required": ["format", "version", "document", "assets"],
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "type": "string",
+      "const": "jdfx"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Manifest schema version. Bumped when the manifest shape itself changes — independent of the JDF document format version inside document.json."
+    },
+    "document": {
+      "type": "string",
+      "const": "document.json"
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "modified": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "generator": {
+      "type": "string",
+      "description": "App name + version that wrote this bundle, e.g. \"JDF Reader 0.1.14\"."
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "path", "mimeType", "size"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier referenced by element `resource` fields in document.json."
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^assets/",
+            "description": "Path inside the zip, always under assets/."
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Uncompressed byte size of the asset."
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}

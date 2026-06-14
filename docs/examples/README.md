@@ -12,8 +12,8 @@ Sample files used by the documentation site for live `<jdf>` embeds and by the d
 ## Embed any of these in your own page
 
 ```html
-<link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf/dist/jdfjs.css">
-<script type="module" src="https://unpkg.com/@uurtech/jdf"></script>
+<link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf@0.1.11/dist/jdfjs.css">
+<script type="module" src="https://unpkg.com/@uurtech/jdf@0.1.11"></script>
 
 <jdf src="https://uurtech.github.io/jdf/examples/hello-world.jdf"></jdf>
 ```

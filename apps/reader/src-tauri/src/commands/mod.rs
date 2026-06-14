@@ -108,6 +108,13 @@ pub fn import_markdown(path: String) -> Result<serde_json::Value, String> {
     Ok(markdown_to_jdf(&content, &title))
 }
 
+/// Convert a Markdown string already loaded by the frontend (e.g. with
+/// relative image references rewritten to `data:` URLs) into a JDF document.
+#[tauri::command]
+pub fn import_markdown_content(content: String, title: String) -> Result<serde_json::Value, String> {
+    Ok(markdown_to_jdf(&content, &title))
+}
+
 fn page_size_mm(name: &str) -> (f32, f32) {
     match name {
         "A3" => (297.0, 420.0),

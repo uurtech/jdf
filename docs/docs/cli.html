@@ -19,7 +19,7 @@
 
     <main class="docs-content">
       <h1>CLI — <code>@uurtech/jdf-cli</code></h1>
-      <p>Command-line tool for validating <code>.jdf</code> documents against the JSON Schema and converting source formats into JDF. Designed to be safe to drop into CI.</p>
+      <p>Command-line tool for validating <code>.jdf</code> / <code>.jdfx</code> documents against the JSON Schema and converting source formats into JDF. Designed to be safe to drop into CI.</p>
 
       <h2>Install</h2>
 <pre><code><span class="com"># run on demand (no install)</span>
@@ -31,8 +31,8 @@ jdf --help</code></pre>
 
       <h2>Commands</h2>
 
-      <h3><code>jdf validate &lt;file.jdf&gt;</code></h3>
-      <p>Runs Ajv against <code>spec/jdf-schema.json</code> and reports path-level errors with warnings vs hard failures separated.</p>
+      <h3><code>jdf validate &lt;file.jdf|file.jdfx&gt;</code></h3>
+      <p>Runs Ajv against <code>spec/jdf-schema.json</code> and reports path-level errors with warnings vs hard failures separated. For <code>.jdfx</code> bundles the validator opens the zip, validates <code>document.json</code>, and prints the asset count from the manifest.</p>
 <pre><code>$ jdf validate spec/examples/hello-world.jdf
 
 ✓ Valid: hello-world.jdf
@@ -52,13 +52,21 @@ jdf --help</code></pre>
 <pre><code><span class="com"># .github/workflows/ci.yml</span>
 - run<span class="punc">:</span> npx @uurtech/jdf-cli validate docs/whitepaper.jdf</code></pre>
 
-      <h3><code>jdf import &lt;file.{md,pdf}&gt; [-o output.jdf]</code></h3>
-      <p>Convert a Markdown or PDF file to a <code>.jdf</code>:</p>
-<pre><code>jdf import README.md                    <span class="com"># → README.jdf</span>
-jdf import README.md -o readme.jdf      <span class="com"># custom output</span>
-jdf import paper.pdf -o paper.jdf       <span class="com"># PDF</span></code></pre>
+      <h3><code>jdf import &lt;file.{md,pdf}&gt; [-o output.{jdf,jdfx}]</code></h3>
+      <p>Convert a Markdown or PDF file to a JDF document:</p>
+<pre><code>jdf import README.md                       <span class="com"># text-only → README.jdf</span>
+jdf import notes.md                        <span class="com"># with images → notes.jdfx (auto)</span>
+jdf import notes.md -o notes.jdfx          <span class="com"># force the bundle form</span>
+jdf import paper.pdf -o paper.jdf          <span class="com"># PDF (planned, see below)</span></code></pre>
 
-      <p>Markdown import uses <code>pulldown-cmark</code> with full GFM (tables, blockquotes, fenced code, links, images, task lists, hr, strikethrough). Bold/italic emit as <code>richtext</code> runs.</p>
+      <p>Markdown import uses <code>marked</code>-style parsing with full GFM (tables, blockquotes, fenced code, links, images, task lists, hr, strikethrough). Bold/italic emit as <code>richtext</code> runs. Image references like <code>![alt](komojam_target_architecture.drawio.png)</code> resolve against the source file's directory and are read from disk during import.</p>
+
+      <p><strong>Auto file-shape selection.</strong> When you don't pass <code>-o</code>, the importer picks the right output:</p>
+      <ul>
+        <li>Document has <strong>no embedded assets</strong> → writes <code>file.jdf</code> (plain JSON).</li>
+        <li>Document has <strong>at least one embedded image / font</strong> → writes <code>file.jdfx</code> (zip bundle: <code>document.json</code> + <code>manifest.json</code> + <code>assets/</code>).</li>
+      </ul>
+      <p>If you specify <code>-o foo.jdf</code> explicitly on a document with assets, the assets stay base64-inline in <code>resources.images</code>. The schema is identical either way.</p>
 
       <p>PDF import is currently a placeholder — it prints a hint to use the desktop Reader. The plan is to extract <code>apps/reader/src/import/pdfToJdf.ts</code> into a shared <code>@uurtech/jdf-pdf-import</code> package with a Node entry point so the CLI can run the same PDF.js-based extractor (positions, fonts, colors, vector shapes, embedded images).</p>
 

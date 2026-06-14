@@ -21,6 +21,10 @@
       <h1>Format overview</h1>
       <p>A <code>.jdf</code> file is a single JSON document with six top-level fields. The full JSON Schema is at <a href="https://github.com/uurtech/jdf/blob/master/spec/jdf-schema.json" target="_blank" rel="noopener">spec/jdf-schema.json ↗</a>.</p>
 
+      <div class="callout">
+        <strong>Two file shapes, one schema.</strong> JDF ships as either <code>.jdf</code> (plain JSON, ideal for text-only documents) or <code>.jdfx</code> (zip bundle of <code>document.json</code> + <code>manifest.json</code> + <code>assets/</code>, automatic when the document carries embedded images or fonts). The schema documented on this page describes <code>document.json</code> — it is identical inside the bundle. Bundle manifest schema: <a href="https://github.com/uurtech/jdf/blob/master/spec/jdfx-manifest-schema.json" target="_blank" rel="noopener">spec/jdfx-manifest-schema.json ↗</a>.
+      </div>
+
       <h2>Top-level shape</h2>
 
       <table>

@@ -6,7 +6,7 @@ export type ViewMode = "jdf" | "markdown" | "json";
 interface ToolbarProps {
   document: JdfDocument | null;
   fileName?: string;
-  fileType?: "jdf" | "md" | "pdf";
+  fileType?: "jdf" | "jdfx" | "md" | "pdf";
   isMarkdown?: boolean;
   isEditableFile?: boolean;
   dirty?: boolean;
@@ -38,7 +38,8 @@ interface ToolbarProps {
 
 export function Toolbar(props: ToolbarProps) {
   const savingLabel = () => {
-    if (props.dirty && props.fileType !== "jdf") {
+    const isAutoSaved = props.fileType === "jdf" || props.fileType === "jdfx";
+    if (props.dirty && !isAutoSaved) {
       return { text: "● Unsaved (in memory)", color: "text-amber-600 dark:text-amber-400" };
     }
     switch (props.savingState) {
@@ -122,7 +123,7 @@ export function Toolbar(props: ToolbarProps) {
           <span class="text-xs text-gray-700 dark:text-gray-200 font-medium truncate max-w-44">
             {props.fileName || props.document!.meta.title}
           </span>
-          <Show when={props.fileType && props.fileType !== "jdf"}>
+          <Show when={props.fileType && props.fileType !== "jdf" && props.fileType !== "jdfx"}>
             <span class="text-[9px] uppercase font-bold tracking-wider text-gray-400 dark:text-gray-500 px-1 py-0.5 border border-gray-300 dark:border-slate-600 rounded">
               {props.fileType}
             </span>

@@ -1,8 +1,8 @@
 /**
  * Auto-init: scan the page for <jdf src="..."> tags and render each one.
  *
- *   <link rel="stylesheet" href="https://unpkg.com/jdfjs/dist/jdfjs.css">
- *   <script type="module" src="https://unpkg.com/jdfjs"></script>
+ *   <link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf@0.1.11/dist/jdfjs.css">
+ *   <script type="module" src="https://unpkg.com/@uurtech/jdf@0.1.11"></script>
  *   <jdf src="/whitepaper.jdf"></jdf>
  *
  * Configuration via attributes on <jdf>:

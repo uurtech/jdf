@@ -62,9 +62,21 @@ export async function embed(
   const el = resolveContainer(container);
   el.classList.add("jdfjs-loading");
   try {
-    const res = await fetch(url, { headers: { Accept: "application/json,application/jdf+json" } });
+    const isJdfx = /\.jdfx(\?|#|$)/i.test(url);
+    const res = await fetch(url, {
+      headers: isJdfx
+        ? { Accept: "application/jdf+zip,application/zip" }
+        : { Accept: "application/json,application/jdf+json" },
+    });
     if (!res.ok) throw new Error(`Failed to fetch ${url} (${res.status})`);
-    const doc = (await res.json()) as JdfDocument;
+
+    let doc: JdfDocument;
+    if (isJdfx) {
+      const { unpackJdfxToDocument } = await import("./jdfx");
+      doc = await unpackJdfxToDocument(await res.arrayBuffer());
+    } else {
+      doc = (await res.json()) as JdfDocument;
+    }
     if (!doc?.$jdf) throw new Error("Not a valid JDF document (missing $jdf field)");
     el.classList.remove("jdfjs-loading");
     return render(el, doc, options);

@@ -3,6 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
+import JSZip from "jszip";
+import { JDFX_DOCUMENT_PATH, JDFX_MANIFEST_PATH } from "@jdf/core";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,6 +19,26 @@ function resolveSchemaPath(): string {
 }
 const SCHEMA_PATH = resolveSchemaPath();
 
+async function loadDocument(filePath: string): Promise<{ doc: unknown; bundle?: { manifest: any; assetCount: number } } | null> {
+  if (filePath.toLowerCase().endsWith(".jdfx")) {
+    const zip = await JSZip.loadAsync(fs.readFileSync(filePath));
+    const docFile = zip.file(JDFX_DOCUMENT_PATH);
+    if (!docFile) {
+      console.error(`✗ Bundle missing ${JDFX_DOCUMENT_PATH}`);
+      return null;
+    }
+    const doc = JSON.parse(await docFile.async("string"));
+    let manifest: any = null;
+    const mf = zip.file(JDFX_MANIFEST_PATH);
+    if (mf) {
+      try { manifest = JSON.parse(await mf.async("string")); } catch { /* tolerate missing */ }
+    }
+    const assetCount = Object.values(zip.files).filter((f) => !f.dir && f.name.startsWith("assets/")).length;
+    return { doc, bundle: { manifest, assetCount } };
+  }
+  return { doc: JSON.parse(fs.readFileSync(filePath, "utf-8")) };
+}
+
 export async function validate(file: string): Promise<boolean> {
   const filePath = path.resolve(file);
   if (!fs.existsSync(filePath)) {
@@ -24,13 +46,15 @@ export async function validate(file: string): Promise<boolean> {
     return false;
   }
 
-  let doc: unknown;
+  let loaded: Awaited<ReturnType<typeof loadDocument>>;
   try {
-    doc = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    loaded = await loadDocument(filePath);
   } catch (e: any) {
-    console.error(`Invalid JSON: ${e.message}`);
+    console.error(`Invalid file: ${e.message}`);
     return false;
   }
+  if (!loaded) return false;
+  const { doc, bundle } = loaded;
 
   if (!fs.existsSync(SCHEMA_PATH)) {
     console.error(`Schema not found at ${SCHEMA_PATH}`);
@@ -48,10 +72,16 @@ export async function validate(file: string): Promise<boolean> {
     const pageCount = Array.isArray(d.pages) ? d.pages.length : 0;
     const elCount = Array.isArray(d.pages) ? d.pages.reduce((acc: number, p: any) => acc + (Array.isArray(p?.elements) ? p.elements.length : 0), 0) : 0;
     console.log(`✓ Valid: ${path.basename(filePath)}`);
-    console.log(`  Format:    ${d.$jdf}`);
+    console.log(`  Format:    ${d.$jdf}${bundle ? " (jdfx bundle)" : ""}`);
     console.log(`  Title:     ${d.meta?.title}`);
     console.log(`  Pages:     ${pageCount}`);
     console.log(`  Elements:  ${elCount}`);
+    if (bundle) {
+      console.log(`  Assets:    ${bundle.assetCount}`);
+      if (bundle.manifest?.generator) {
+        console.log(`  Generator: ${bundle.manifest.generator}`);
+      }
+    }
     return true;
   }
 

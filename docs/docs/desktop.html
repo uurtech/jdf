@@ -19,7 +19,7 @@
 
     <main class="docs-content">
       <h1>JDF Reader — desktop app</h1>
-      <p>A native Tauri-based macOS app that reads, renders, edits, and auto-saves <code>.jdf</code> files. Imports PDFs and Markdown to JDF on the fly. Exports back to PDF.</p>
+      <p>A native Tauri-based macOS app that reads, renders, edits, and auto-saves <code>.jdf</code> files (plain JSON) and <code>.jdfx</code> bundles (zip with embedded images / fonts). Imports PDFs and Markdown to JDF on the fly. Exports back to PDF.</p>
 
       <h2>Install</h2>
 <pre><code>brew tap uurtech/jdf
@@ -28,8 +28,8 @@ brew install jdf</code></pre>
 
       <h2>Open documents</h2>
       <ul>
-        <li><strong>Drag &amp; drop</strong> — drop a <code>.jdf</code>, <code>.pdf</code>, or <code>.md</code> file onto the welcome screen.</li>
-        <li><strong>Finder double-click</strong> — file associations are registered for <code>.jdf</code> and <code>.md</code>.</li>
+        <li><strong>Drag &amp; drop</strong> — drop a <code>.jdf</code>, <code>.jdfx</code>, <code>.pdf</code>, or <code>.md</code> file onto the welcome screen.</li>
+        <li><strong>Finder double-click</strong> — file associations are registered for <code>.jdf</code>, <code>.jdfx</code>, and <code>.md</code>.</li>
         <li><strong>Cmd+O</strong> — file picker.</li>
         <li><strong>Recent files</strong> — last 10 documents listed on the welcome screen.</li>
       </ul>
@@ -48,13 +48,17 @@ brew install jdf</code></pre>
 
       <h2>Memory model</h2>
       <ul>
-        <li>A <code>.jdf</code> opens in memory and <strong>auto-saves</strong> to its source file on every commit.</li>
-        <li>A <code>.pdf</code> or <code>.md</code> is converted to JDF in memory only — the original file is never touched. The toolbar shows <code>● Unsaved (in memory)</code> while you edit. Closing the window prompts to save as <code>.jdf</code> or discard.</li>
+        <li>A <code>.jdf</code> or <code>.jdfx</code> opens in memory and <strong>auto-saves</strong> to its source file on every commit.</li>
+        <li>A <code>.pdf</code> or <code>.md</code> is converted to JDF in memory only — the original file is never touched. The toolbar shows <code>● Unsaved (in memory)</code> while you edit. Closing the window prompts to save (as <code>.jdfx</code> if assets were embedded, otherwise <code>.jdf</code>) or discard.</li>
         <li>Switch to the JSON view in the toolbar — two-way bound. Edit JSON, blur or <kbd>Cmd+S</kbd>, the rendered view follows. Edit visually, the JSON updates as you go.</li>
       </ul>
 
+      <h2>Images &amp; <code>.jdfx</code> bundles</h2>
+      <p>JDF ships in two file shapes: <code>.jdf</code> (plain JSON, what you've been editing in any text editor) and <code>.jdfx</code> (zip bundle of <code>document.json</code> + <code>manifest.json</code> + <code>assets/</code>). The reader picks <strong>automatically</strong>: a document with embedded images / fonts saves as <code>.jdfx</code>; a text-only document stays <code>.jdf</code>. You can override the extension in the Save As dialog.</p>
+      <p>Both formats open the same way and have identical schemas inside; <code>.jdfx</code> just keeps the binary payload out of the JSON. <code>document.json.meta</code> remains the source of truth for content metadata (title, author, keywords); <code>manifest.json</code> only carries format metadata (version, generator, asset listing) — they never duplicate fields. Manifest schema: <a href="https://github.com/uurtech/jdf/blob/main/spec/jdfx-manifest-schema.json"><code>spec/jdfx-manifest-schema.json</code></a>.</p>
+
       <h2>PDF import</h2>
-      <p>Drag a <code>.pdf</code> onto the viewer and you get an editable JDF copy that <strong>looks identical</strong> to the original. Per text run the importer extracts: position (mm), font family, size, bold/italic, color, opacity, links. Vector shapes (rect, line, path) preserved with their fills and strokes. Embedded images decoded into <code>resources.images</code> as base64 PNG and placed at their original transform.</p>
+      <p>Drag a <code>.pdf</code> onto the viewer and you get an editable JDF copy that <strong>looks identical</strong> to the original. Per text run the importer extracts: position (mm), font family, size, bold/italic, color, opacity, links. Vector shapes (rect, line, path) preserved with their fills and strokes. Embedded images placed at their original transform — saved as a <code>.jdfx</code> bundle so the binary payload lives in <code>assets/</code> rather than bloating the JSON.</p>
 
       <h2>PDF export</h2>
       <p><kbd>Cmd+Shift+E</kbd> or the toolbar PDF button. Honors page size, orientation, text colors, real TOC, embedded images. Renders text/richtext/list/table/collapsible/shape.</p>

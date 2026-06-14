@@ -70,6 +70,7 @@ pub fn run() {
             commands::search_document,
             commands::import_pdf,
             commands::import_markdown,
+            commands::import_markdown_content,
             commands::export_pdf,
             open_in_new_window,
             consume_pending_file,
@@ -78,7 +79,7 @@ pub fn run() {
             let args: Vec<String> = std::env::args().collect();
             if let Some(file_path) = args.get(1) {
                 let lower = file_path.to_lowercase();
-                if lower.ends_with(".jdf") || lower.ends_with(".md") || lower.ends_with(".markdown") || lower.ends_with(".pdf") {
+                if lower.ends_with(".jdf") || lower.ends_with(".jdfx") || lower.ends_with(".md") || lower.ends_with(".markdown") || lower.ends_with(".pdf") {
                     let path = file_path.clone();
                     let pending = app.state::<PendingFile>();
                     *pending.0.lock().unwrap() = Some(path.clone());
@@ -110,7 +111,7 @@ pub fn run() {
                     Err(_) => url.to_string(),
                 };
                 let lower = path.to_lowercase();
-                if !(lower.ends_with(".jdf") || lower.ends_with(".md") || lower.ends_with(".markdown") || lower.ends_with(".pdf")) {
+                if !(lower.ends_with(".jdf") || lower.ends_with(".jdfx") || lower.ends_with(".md") || lower.ends_with(".markdown") || lower.ends_with(".pdf")) {
                     continue;
                 }
                 if !try_emit_open(app_handle, &path) {

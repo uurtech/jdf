@@ -72,15 +72,23 @@
         <thead><tr><th>Field</th><th>Type</th></tr></thead>
         <tbody>
           <tr><td><code>type</code></td><td><code>"image"</code></td></tr>
-          <tr><td><code>resource</code></td><td>string — key into <code>resources.images</code></td></tr>
-          <tr><td><code>src</code></td><td>string — URL, file path, or <code>data:</code> URI</td></tr>
+          <tr><td><code>resource</code></td><td>string — id of an asset. In a <code>.jdfx</code> bundle this points to <code>assets/&lt;id&gt;.&lt;ext&gt;</code>. In a plain <code>.jdf</code> it keys into <code>resources.images</code>.</td></tr>
+          <tr><td><code>src</code></td><td>string — <code>https://</code> URL or <code>data:</code> URI. Relative file paths are not portable and will not render — Markdown imports rewrite them to one of the other forms automatically.</td></tr>
           <tr><td><code>alt</code></td><td>string</td></tr>
           <tr><td><code>fit</code></td><td><code>"contain"</code> · <code>"cover"</code> · <code>"fill"</code> · <code>"none"</code></td></tr>
           <tr><td><code>link</code></td><td>same as text</td></tr>
         </tbody>
       </table>
-<pre><code><span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"image"</span><span class="punc">,</span> <span class="key">"resource"</span><span class="punc">:</span> <span class="str">"hero"</span><span class="punc">,</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">120</span><span class="punc">,</span> <span class="key">"height"</span><span class="punc">:</span> <span class="num">80</span><span class="punc">,</span> <span class="key">"fit"</span><span class="punc">:</span> <span class="str">"cover"</span> <span class="punc">}</span>
-<span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"image"</span><span class="punc">,</span> <span class="key">"src"</span><span class="punc">:</span> <span class="str">"https://cdn.example.com/logo.png"</span> <span class="punc">}</span></code></pre>
+<pre><code><span class="com">// .jdfx bundle — asset lives in assets/asset-1.png</span>
+<span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"image"</span><span class="punc">,</span> <span class="key">"resource"</span><span class="punc">:</span> <span class="str">"asset-1"</span><span class="punc">,</span> <span class="key">"alt"</span><span class="punc">:</span> <span class="str">"Komojam architecture"</span><span class="punc">,</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">160</span><span class="punc">,</span> <span class="key">"height"</span><span class="punc">:</span> <span class="num">90</span><span class="punc">,</span> <span class="key">"fit"</span><span class="punc">:</span> <span class="str">"contain"</span> <span class="punc">}</span>
+
+<span class="com">// Plain .jdf with a CDN URL</span>
+<span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"image"</span><span class="punc">,</span> <span class="key">"src"</span><span class="punc">:</span> <span class="str">"https://cdn.example.com/logo.png"</span> <span class="punc">}</span>
+
+<span class="com">// Plain .jdf with an inline base64 payload</span>
+<span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"image"</span><span class="punc">,</span> <span class="key">"src"</span><span class="punc">:</span> <span class="str">"data:image/png;base64,iVBORw0KGgo..."</span> <span class="punc">}</span></code></pre>
+
+      <p><strong>When to use which:</strong> the desktop reader, jdf.js, and the CLI all open both <code>.jdf</code> and <code>.jdfx</code>. Use the bundle form whenever the document carries embedded image / font payloads — it keeps the JSON small and gives RAG ingesters a clean separation between text content and binary assets. The reader's save flow picks <code>.jdfx</code> automatically when needed.</p>
 
       <h2><code>table</code></h2>
       <table>

@@ -1,25 +1,62 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { JdfDocument, Page, Element } from "@jdf/core";
+import { packJdfx, shouldUseJdfx } from "../jdfx";
 
 export async function importMarkdown(inputPath: string, outputPath?: string) {
   const input = path.resolve(inputPath);
-  const output = outputPath
-    ? path.resolve(outputPath)
-    : input.replace(/\.(md|markdown)$/i, ".jdf");
 
   console.log(`Importing: ${input}`);
+  const content = fs.readFileSync(input, "utf-8");
+  const doc = convertMarkdownToJdf(content, path.basename(input, path.extname(input)), path.dirname(input));
+
+  // Pick the right output extension. If the user gave an explicit name, honour it
+  // (may force `.jdf` even when images are present — base64 stays inline). If we
+  // pick the name, prefer `.jdfx` whenever the document has embedded assets.
+  let output: string;
+  if (outputPath) {
+    output = path.resolve(outputPath);
+  } else {
+    const stem = input.replace(/\.(md|markdown)$/i, "");
+    output = stem + (shouldUseJdfx(doc) ? ".jdfx" : ".jdf");
+  }
   console.log(`Output:    ${output}`);
 
-  const content = fs.readFileSync(input, "utf-8");
-  const doc = convertMarkdownToJdf(content, path.basename(input, path.extname(input)));
-
-  fs.writeFileSync(output, JSON.stringify(doc, null, 2));
-  console.log(`\nDone! Created ${doc.pages.length} page(s)`);
+  if (output.toLowerCase().endsWith(".jdfx")) {
+    const { bytes, manifest } = await packJdfx(doc);
+    fs.writeFileSync(output, bytes);
+    console.log(`\nDone! Created ${doc.pages.length} page(s), ${manifest.assets.length} asset(s) bundled`);
+  } else {
+    fs.writeFileSync(output, JSON.stringify(doc, null, 2));
+    console.log(`\nDone! Created ${doc.pages.length} page(s)`);
+  }
   console.log(`Open with: open -a "JDF Reader" "${output}"`);
 }
 
-function convertMarkdownToJdf(md: string, title: string): JdfDocument {
+const MIME_BY_EXT: Record<string, string> = {
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  gif: "image/gif",
+  webp: "image/webp",
+  svg: "image/svg+xml",
+  bmp: "image/bmp",
+};
+
+function resolveImageSrc(src: string, baseDir: string): string {
+  if (/^(https?:|data:|file:)/i.test(src)) return src;
+  const abs = path.isAbsolute(src) ? src : path.resolve(baseDir, src);
+  try {
+    const bytes = fs.readFileSync(abs);
+    const ext = path.extname(abs).slice(1).toLowerCase();
+    const mime = MIME_BY_EXT[ext] || "application/octet-stream";
+    return `data:${mime};base64,${bytes.toString("base64")}`;
+  } catch {
+    return src;
+  }
+}
+
+function convertMarkdownToJdf(md: string, title: string, baseDir: string = process.cwd()): JdfDocument {
   const maxY = 247;
   const contentWidth = 166;
   const pages: Page[] = [];
@@ -62,6 +99,32 @@ function convertMarkdownToJdf(md: string, title: string): JdfDocument {
         tocEntry: text,
         style: { fontFamily: "Inter", fontSize, fontWeight: "bold", color: level <= 2 ? "#0f172a" : "#1e293b" },
       });
+      y += height + 4;
+      i++;
+      continue;
+    }
+
+    // Standalone image: ![alt](src)
+    const imageMatch = line.match(/^\s*!\[([^\]]*)\]\(\s*([^)\s]+)[^)]*\)\s*$/);
+    if (imageMatch) {
+      const alt = imageMatch[1];
+      const src = resolveImageSrc(imageMatch[2], baseDir);
+      const height = 60;
+      if (y + height > maxY) {
+        pages.push({ id: `page-${pageNum}`, elements });
+        elements = [];
+        y = 5;
+        pageNum++;
+      }
+      elements.push({
+        type: "image",
+        src,
+        alt,
+        position: { x: 0, y },
+        width: contentWidth,
+        height,
+        fit: "contain",
+      } as any);
       y += height + 4;
       i++;
       continue;

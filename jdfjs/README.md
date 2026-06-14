@@ -6,8 +6,8 @@
 Render [JDF (JSON Document Format)](https://github.com/uurtech/jdf) files in any web page with a single tag. Like PDF.js — but the file you point at is plain JSON, so you can also generate it, diff it, and edit it with any tool.
 
 ```html
-<link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf/dist/jdfjs.css">
-<script type="module" src="https://unpkg.com/@uurtech/jdf"></script>
+<link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf@0.1.11/dist/jdfjs.css">
+<script type="module" src="https://unpkg.com/@uurtech/jdf@0.1.11"></script>
 
 <jdf src="/whitepaper.jdf"></jdf>
 ```
@@ -23,7 +23,7 @@ npm install @uurtech/jdf
 Or via CDN — no install at all:
 
 ```html
-<script type="module" src="https://unpkg.com/@uurtech/jdf"></script>
+<script type="module" src="https://unpkg.com/@uurtech/jdf@0.1.11"></script>
 ```
 
 ## Usage
@@ -50,7 +50,7 @@ document.querySelector("jdf").setAttribute("src", "/other.jdf");
 
 | Attribute | Type | Default | Notes |
 |---|---|---|---|
-| `src` | string | required | URL to a `.jdf` file |
+| `src` | string | required | URL to a `.jdf` (plain JSON) or `.jdfx` (zip bundle) file. The extension determines the parser. |
 | `width` | number (px) or any CSS length | — | e.g. `"800"` or `"100%"` |
 | `height` | number (px) or any CSS length | `600px` | e.g. `"80vh"` |
 | `zoom` | number | `1` | `1` = 100% |
@@ -114,9 +114,11 @@ jdf(myContainer);             // scan only inside myContainer
 
 To opt out per element, add `manual`. To disable auto-init globally, set `window.JDFjsAutoInit = false` **before** loading the script.
 
-## Hosting your `.jdf` file
+## Hosting `.jdf` and `.jdfx` files
 
-JDF files are static JSON — every static host works. Suggested response headers:
+Both formats are static — any static host works.
+
+**`.jdf`** (plain JSON):
 
 ```
 Content-Type: application/json
@@ -124,7 +126,15 @@ Cache-Control: public, max-age=3600
 Access-Control-Allow-Origin: *
 ```
 
-The fetch needs CORS allowed if the JDF is on a different origin from your page.
+**`.jdfx`** (zip bundle, used when the document carries embedded images / fonts):
+
+```
+Content-Type: application/jdf+zip
+Cache-Control: public, max-age=3600
+Access-Control-Allow-Origin: *
+```
+
+The fetch needs CORS allowed if the file is on a different origin from your page. jdf.js detects the extension on `src` and parses the right format automatically — `<jdf src="/whitepaper.jdfx">` just works.
 
 ## Browser support
 
