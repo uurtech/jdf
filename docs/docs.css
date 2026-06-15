@@ -16,22 +16,6 @@
   --code-text: #be185d;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b1120;
-    --bg-soft: #0f172a;
-    --bg-soft-2: #1e293b;
-    --text: #f1f5f9;
-    --text-soft: #cbd5e1;
-    --muted: #64748b;
-    --border: #1e293b;
-    --brand: #60a5fa;
-    --brand-soft: rgba(96, 165, 250, 0.12);
-    --code-bg: #1e293b;
-    --code-text: #f9a8d4;
-  }
-}
-
 * { box-sizing: border-box; }
 html, body {
   margin: 0; padding: 0;
@@ -52,7 +36,6 @@ code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.92em
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
-@media (prefers-color-scheme: dark) { .docs-nav { background: rgba(11, 17, 32, 0.92); } }
 
 .docs-nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--text); font-size: 16px; }
 .docs-nav .nav-links { display: flex; gap: 18px; font-size: 14px; }
@@ -126,11 +109,6 @@ code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.92em
 .docs-content code .num { color: #c026d3; }
 .docs-content code .punc { color: var(--text-soft); }
 .docs-content code .com { color: var(--muted); font-style: italic; }
-@media (prefers-color-scheme: dark) {
-  .docs-content code .key { color: #60a5fa; }
-  .docs-content code .str { color: #4ade80; }
-  .docs-content code .num { color: #f0abfc; }
-}
 
 .docs-content table {
   width: 100%; border-collapse: collapse; margin: 16px 0;
@@ -208,7 +186,6 @@ code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.92em
 }
 
 ::selection { background: rgba(37, 99, 235, 0.25); }
-@media (prefers-color-scheme: dark) { ::selection { background: rgba(96, 165, 250, 0.4); } }
 
 /* AI-focused callout — distinct from the default brand callout */
 .callout.callout-ai {
@@ -216,9 +193,6 @@ code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.92em
   border-left-color: #6366f1;
 }
 .callout.callout-ai strong { color: #4338ca; }
-@media (prefers-color-scheme: dark) {
-  .callout.callout-ai strong { color: #a5b4fc; }
-}
 
 /* Comparison table on why-ai page */
 .why-table {

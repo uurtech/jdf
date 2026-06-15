@@ -18,26 +18,6 @@
   --radius-sm: 8px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b1120;
-    --bg-soft: #0f172a;
-    --bg-soft-2: #1e293b;
-    --text: #f1f5f9;
-    --text-soft: #cbd5e1;
-    --muted: #64748b;
-    --border: #1e293b;
-    --brand: #60a5fa;
-    --brand-strong: #93c5fd;
-    --brand-soft: rgba(96, 165, 250, 0.12);
-    --code-bg: #1e293b;
-    --code-text: #f9a8d4;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 14px 40px rgba(0, 0, 0, 0.5), 0 6px 18px rgba(0, 0, 0, 0.4);
-  }
-}
-
 * { box-sizing: border-box; }
 
 html, body {
@@ -102,10 +82,6 @@ h1, h2, h3, h4 {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
-}
-
-@media (prefers-color-scheme: dark) {
-  .nav { background: rgba(11, 17, 32, 0.85); }
 }
 
 .brand {
@@ -424,12 +400,6 @@ section > h2 {
 .code .str { color: #16a34a; }
 .code .num { color: #c026d3; }
 .code .punc { color: var(--text-soft); }
-
-@media (prefers-color-scheme: dark) {
-  .code .key { color: #60a5fa; }
-  .code .str { color: #4ade80; }
-  .code .num { color: #f0abfc; }
-}
 
 .render-preview {
   display: flex;
@@ -788,9 +758,6 @@ footer ul li a:hover { color: var(--brand); }
 }
 
 ::selection { background: rgba(37, 99, 235, 0.25); }
-@media (prefers-color-scheme: dark) {
-  ::selection { background: rgba(96, 165, 250, 0.4); }
-}
 
 /* Hero screenshots — stacked vertically, plenty of breathing room */
 .screenshots {
@@ -819,13 +786,6 @@ footer ul li a:hover { color: var(--brand); }
   font-size: 0.875rem;
   color: #64748b;
   text-align: center;
-}
-@media (prefers-color-scheme: dark) {
-  .shot img {
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.3);
-  }
-  .shot figcaption { color: #94a3b8; }
 }
 
 /* Embed teaser — live <jdf> demo on the landing page */
@@ -881,11 +841,4 @@ footer ul li a:hover { color: var(--brand); }
   flex-wrap: wrap;
   margin-top: 1.5rem;
 }
-@media (prefers-color-scheme: dark) {
-  .embed-demo-render jdf {
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.3);
-    background: #0f172a;
-  }
-  .embed-demo-label { color: #94a3b8; }
-}
+
