@@ -761,9 +761,6 @@ footer ul li a:hover { color: var(--brand); }
 
 /* Hero screenshots — stacked vertically, plenty of breathing room */
 .screenshots {
-  max-width: 1100px;
-  margin: 4rem auto 0;
-  padding: 0 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 3rem;
@@ -789,28 +786,30 @@ footer ul li a:hover { color: var(--brand); }
 }
 
 /* Embed teaser — live <jdf> demo on the landing page */
-.embed-teaser {
-  max-width: 1100px;
-  margin: 5rem auto 0;
-  padding: 0 1.5rem;
-}
 .embed-demo {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.25rem;
-  margin: 2rem 0 1.5rem;
+  gap: 1.5rem;
+  margin: 8px 0 1.5rem;
 }
 .embed-demo-code pre {
   margin: 0;
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem 1.75rem;
   background: #0f172a;
   color: #e2e8f0;
   border-radius: 12px;
   font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 0.8125rem;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.9;
   overflow-x: auto;
   border: 1px solid rgba(15, 23, 42, 0.08);
+}
+.embed-demo-code pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  display: block;
+  white-space: pre;
 }
 .embed-demo-code pre code .key  { color: #60a5fa; }
 .embed-demo-code pre code .str  { color: #fde68a; }
@@ -821,8 +820,8 @@ footer ul li a:hover { color: var(--brand); }
   gap: 0.75rem;
 }
 .embed-demo-label {
-  font-size: 0.8125rem;
-  color: #64748b;
+  font-size: 13px;
+  color: var(--text-soft);
   text-align: center;
   font-weight: 500;
 }
@@ -831,14 +830,25 @@ footer ul li a:hover { color: var(--brand); }
   width: 100%;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 12px 30px -12px rgba(15, 23, 42, 0.25), 0 2px 6px rgba(15, 23, 42, 0.08);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
   background: #fff;
 }
 .embed-foot {
   display: flex;
-  gap: 0.75rem;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-top: 1.5rem;
+  justify-content: center;
+  margin-top: 24px;
+}
+.kbd-tag {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.7em;
+  font-weight: 600;
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+  padding: 4px 10px;
+  border-radius: 6px;
+  vertical-align: middle;
 }
 
