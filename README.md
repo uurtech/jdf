@@ -27,6 +27,27 @@ It's JSON. Every consequence below falls out of that:
 - Search is text search. `grep "TODO" *.jdf` works.
 - No vendor, no proprietary parser. Opens the same way today and in 20 years.
 
+## The endgame — documents stop being storage, start being interfaces
+
+If a JSON-native document format gets global adoption, it becomes a base layer for knowledge. Then:
+
+- Documents stop being "static files" — they become live, addressable structures.
+- Everything becomes machine-readable by default — no parser stage, no OCR fallback.
+- AI search becomes near-instant and accurate — retrieval against a real structure, not a guess at one.
+- PDFs fade out the way fax did once email arrived.
+- Every app plugs into the same document structure — one tree, every consumer.
+
+**The shift:** instead of *"AI trying to understand humans' files"*, humans start writing in a format already built for AI reasoning.
+
+What that unlocks:
+
+- **Education** content becomes instantly interactive.
+- **Legal & finance** documents become queryable in real time.
+- **Knowledge graphs** form automatically from documents.
+- **Every system** becomes interoperable by default.
+
+The real endgame: **documents stop being storage → they become interfaces.** That is the world-change scenario this format aims at.
+
 ## Install
 
 ### Desktop · macOS
