@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+            artifact: "*.dmg"
+          - platform: macos-13
+            target: x86_64-apple-darwin
+            artifact: "*.dmg"
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            artifact: "*.deb,*.AppImage,*.rpm"
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: "*.msi,*.exe"
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/reader/src-tauri
+
+      - name: Install Linux deps
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev libgtk-3-dev \
+            libayatana-appindicator3-dev librsvg2-dev libsoup-3.0-dev \
+            patchelf
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build Tauri bundles
+        run: pnpm --filter @jdf/reader tauri build --target ${{ matrix.target }}
+
+      - name: Upload bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: jdf-reader-${{ matrix.target }}
+          path: |
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
+            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
