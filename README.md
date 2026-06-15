@@ -5,7 +5,7 @@ A document format that's just JSON. Open `.jdf` in any text editor and you see t
 <p align="center">
   <img src="docs/screenshot1.png" alt="JDF Reader rendered view">
 <br>
-<img src="docs/screenshot3.png" alt="JDF Reader web element view">
+ <img src="docs/screenshot3.png" alt="JDF Reader web element view">
 </p>
 
 JDF runs in three places:
