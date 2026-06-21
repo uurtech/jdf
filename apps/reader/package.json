@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@jdf/core": "workspace:*",
+    "@jdf/pdf-import": "workspace:*",
     "@tauri-apps/api": "^2.2.0",
     "@tauri-apps/plugin-dialog": "^2.2.0",
     "@tauri-apps/plugin-fs": "^2.2.0",

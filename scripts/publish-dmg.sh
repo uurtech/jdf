@@ -33,6 +33,26 @@ if [[ -z "${GITHUB_TOKEN:-}" ]]; then
   exit 1
 fi
 
+# Apple signing/notarization vars — required for Gatekeeper-passing dmg.
+# All four must be present together; otherwise we abort instead of shipping
+# an unsigned build that breaks for every user except the one that built it.
+SIGN_AND_NOTARIZE=1
+for v in APPLE_SIGNING_IDENTITY APPLE_ID APPLE_TEAM_ID APPLE_APP_SPECIFIC_PASSWORD; do
+  if [[ -z "${!v:-}" ]]; then
+    SIGN_AND_NOTARIZE=0
+  fi
+done
+if [[ "$SIGN_AND_NOTARIZE" -eq 0 ]]; then
+  echo "⚠  Apple signing variables missing — the produced dmg will be UNSIGNED"
+  echo "   and macOS Gatekeeper will reject it on every machine except this one."
+  echo "   Fill APPLE_SIGNING_IDENTITY / APPLE_ID / APPLE_TEAM_ID /"
+  echo "   APPLE_APP_SPECIFIC_PASSWORD in /.env (see .env.example) to enable signing."
+  read -r -p "   Continue with an unsigned build? [y/N] " ans
+  if [[ ! "$ans" =~ ^[Yy]$ ]]; then
+    exit 1
+  fi
+fi
+
 BUMP="${1:-}"
 if [[ -n "$BUMP" && ! "$BUMP" =~ ^(patch|minor|major)$ ]]; then
   echo "Usage: $0 [patch|minor|major]"
@@ -73,6 +93,15 @@ rm -f apps/reader/src-tauri/Cargo.toml.bak
 
 # ── Step 2: build the dmg ───────────────────────────────────────────────────
 echo "→ Building JDF Reader.app + .dmg..."
+if [[ "$SIGN_AND_NOTARIZE" -eq 1 ]]; then
+  echo "  signing identity: $APPLE_SIGNING_IDENTITY"
+  # Tauri v2 reads APPLE_SIGNING_IDENTITY (and friends) from the environment
+  # and signs both the .app inside the bundle and the .dmg wrapper.
+  export APPLE_SIGNING_IDENTITY
+  export APPLE_ID
+  export APPLE_TEAM_ID
+  export APPLE_PASSWORD="$APPLE_APP_SPECIFIC_PASSWORD"
+fi
 pnpm --filter @jdf/reader tauri build --bundles dmg
 
 DMG="$(ls "$DMG_BUNDLE_DIR"/JDF\ Reader_${NEW_VER}_*.dmg 2>/dev/null | head -1)"
@@ -83,8 +112,31 @@ if [[ -z "$DMG" || ! -f "$DMG" ]]; then
 fi
 DMG_BASENAME="$(basename "$DMG")"
 DMG_URL_NAME="${DMG_BASENAME// /.}"   # GitHub replaces spaces with dots in URLs
-SHA256=$(shasum -a 256 "$DMG" | awk '{print $1}')
 
+# ── Step 2b: notarize + staple (only if signing creds present) ─────────────
+if [[ "$SIGN_AND_NOTARIZE" -eq 1 ]]; then
+  echo "→ Verifying signature on $DMG_BASENAME"
+  codesign --verify --deep --strict --verbose=2 "$DMG" || {
+    echo "✗ codesign verify failed — the produced dmg is not properly signed"
+    exit 1
+  }
+
+  echo "→ Submitting to Apple notary service (this can take a few minutes)..."
+  xcrun notarytool submit "$DMG" \
+    --apple-id "$APPLE_ID" \
+    --team-id "$APPLE_TEAM_ID" \
+    --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+    --wait
+
+  echo "→ Stapling notarization ticket onto dmg"
+  xcrun stapler staple "$DMG"
+
+  echo "→ Verifying stapled dmg passes Gatekeeper"
+  xcrun stapler validate "$DMG"
+  spctl --assess --type open --context context:primary-signature -vv "$DMG" || true
+fi
+
+SHA256=$(shasum -a 256 "$DMG" | awk '{print $1}')
 echo "→ DMG: $DMG_BASENAME"
 echo "→ sha256: $SHA256"
 

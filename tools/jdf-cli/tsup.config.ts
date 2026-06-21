@@ -13,7 +13,11 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   // Bundle workspace deps — they aren't published to npm separately.
-  noExternal: ["@jdf/core"],
+  noExternal: ["@jdf/core", "@jdf/pdf-import"],
+  // pdfjs-dist + @napi-rs/canvas are heavy native/binary deps — keep them
+  // external so the published package depends on them via npm rather than
+  // re-bundling. tsup will leave the import statements alone.
+  external: ["pdfjs-dist", "@napi-rs/canvas"],
   // Keep the shebang so `npx @uurtech/cli` and a globally-installed `jdf`
   // both invoke node correctly.
   banner: { js: "#!/usr/bin/env node" },

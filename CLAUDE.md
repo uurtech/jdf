@@ -4,23 +4,30 @@ This file is project-specific guidance for Claude (or any maintainer) when worki
 
 ## The repo is a 4-arm thing
 
-JDF lives in **four runnable surfaces** that all consume the same JSON format. They MUST stay in feature parity.
+JDF lives in **four runnable surfaces** that all consume the same JSON format. They MUST stay in feature parity. PDF→JDF conversion lives in a fifth, shared package — both the desktop reader and the CLI import it.
 
 ```
-┌──────────────────────┐    ┌─────────────────────────┐
-│ packages/jdf-core    │    │ spec/jdf-schema.json    │
-│  - TypeScript types  │    │  - JSON Schema spec      │
-│  - mm/in/pt/px utils │    │  - source of truth        │
-│  - page sizes        │    │                          │
-└──────────────────────┘    └─────────────────────────┘
+┌──────────────────────┐  ┌─────────────────────────┐  ┌────────────────────────┐
+│ packages/jdf-core    │  │ spec/jdf-schema.json    │  │ packages/jdf-pdf-import│
+│  - TypeScript types  │  │  - JSON Schema spec     │  │  - PDF → JDF algorithm │
+│  - mm/in/pt/px utils │  │  - source of truth      │  │  - browser + node ents │
+│  - page sizes        │  │                         │  │  - SHARED: reader+CLI  │
+└──────────────────────┘  └─────────────────────────┘  └────────────────────────┘
             │ imported by all four arms below
             ▼
-┌────────────────┐ ┌──────────────┐ ┌──────────────┐ ┌────────────────┐
-│ apps/reader/   │ │ jdfjs/       │ │ tools/jdf-cli│ │ src-tauri/     │
-│ (desktop app)  │ │ (web embed)  │ │ (validate +  │ │ (Rust backend, │
-│ SolidJS render │ │ vanilla DOM  │ │  import)     │ │  PDF export)   │
-└────────────────┘ └──────────────┘ └──────────────┘ └────────────────┘
+┌────────────────┐ ┌──────────────┐ ┌────────────────────┐ ┌────────────────┐
+│ apps/reader/   │ │ jdfjs/       │ │ tools/jdf-cli      │ │ src-tauri/     │
+│ (desktop app)  │ │ (web embed)  │ │ validate +         │ │ (Rust backend, │
+│ SolidJS render │ │ vanilla DOM  │ │ pdf/json/md→jdf    │ │  PDF export)   │
+└────────────────┘ └──────────────┘ └────────────────────┘ └────────────────┘
 ```
+
+**The CLI's job is two-fold and matters for the wider story:**
+
+- **PDF → JDF** for legacy ingestion: RAG pipelines, CI gates, build steps consuming structured documents instead of binary PDFs.
+- **JSON → JDF** for AI workflows: LLMs and agents emit JSON; the CLI wraps it into a validated `.jdf` (or `.jdfx`) so the output is always renderable, diffable, and grep-able.
+
+`jdf import file.md` exists for convenience but is not the headline use-case.
 
 ## Hard parity rules
 
@@ -40,7 +47,7 @@ If the element appears in PDF imports, also walk:
 
 | # | File | What to add |
 |---|---|---|
-| 6 | `apps/reader/src/import/pdfToJdf.ts` | PDF.js → JDF mapping for the new element |
+| 6 | `packages/jdf-pdf-import/src/core.ts` | PDF.js → JDF mapping for the new element. Both reader and CLI pick this up automatically. |
 
 ### When you change a renderer behaviour (style, layout, spacing)
 
@@ -55,9 +62,16 @@ Steps:
 
 ### When you change the PDF importer
 
-The PDF importer lives in `apps/reader/src/import/pdfToJdf.ts` (frontend, browser-only, uses canvas for image extraction). It is the **single source of truth** for PDF→JDF.
+The PDF→JDF algorithm lives in **`packages/jdf-pdf-import/src/core.ts`** — a single, runtime-agnostic implementation. Two thin entry points wrap it:
 
-If you ever extract this into a shared package (`packages/jdf-pdf-import/`), keep it there and have all consumers (desktop, CLI) import from one place. **Never duplicate the converter logic.**
+| Entry point | Used by | What it provides |
+|---|---|---|
+| `packages/jdf-pdf-import/src/browser.ts` | `apps/reader/` | DOM `<canvas>`, Tauri filesystem plugin for path inputs, modern `pdfjs-dist/build/pdf.mjs` with a real Web Worker. |
+| `packages/jdf-pdf-import/src/node.ts` | `tools/jdf-cli/` | `@napi-rs/canvas` (Rust-native, no system deps), `node:fs/promises` for path inputs, `pdfjs-dist/build/pdf.mjs` with `disableWorker: true` (the legacy build prints a one-line warning we suppress on init). |
+
+**Both entry points run the same `core.ts`** — same heuristics, same field outputs, same fonts, same colours. Reader and CLI must produce bit-identical JDF for the same PDF. If you tweak the algorithm, edit `core.ts` only; do not fork.
+
+The reader's `apps/reader/src/import/pdfToJdf.ts` is now a one-line re-export of the browser entry point — keep it that way.
 
 ### When you bump the JDF format version (`$jdf` field)
 
@@ -69,17 +83,24 @@ If you ever extract this into a shared package (`packages/jdf-pdf-import/`), kee
 
 ## CLI commands (`tools/jdf-cli`)
 
-The CLI must accept anything the desktop reader accepts:
+The CLI's two headline paths are **PDF → JDF** (for RAG / CI ingestion) and **JSON → JDF** (for AI / agent output wrapping). Markdown is a convenience.
 
 | Command | Status | Path |
 |---|---|---|
 | `jdf validate <file.jdf>` | ✓ done | `tools/jdf-cli/src/commands/validate.ts` |
+| `jdf import file.pdf` | ✓ done — uses `@jdf/pdf-import/node` | `tools/jdf-cli/src/commands/import-pdf.ts` |
+| `jdf import file.json` | ✓ done — full doc / element array / partial | `tools/jdf-cli/src/commands/import-json.ts` |
 | `jdf import file.md` | ✓ done | `tools/jdf-cli/src/commands/import-md.ts` |
-| `jdf import file.pdf` | ⏳ planned (currently placeholder) | `tools/jdf-cli/src/commands/import-pdf.ts` |
 
-When implementing PDF import in the CLI:
-- The frontend importer (`apps/reader/src/import/pdfToJdf.ts`) uses the browser DOM canvas. The CLI version needs `node-canvas` or a headless equivalent.
-- Extract the shared logic into `packages/jdf-pdf-import/` with two entry points: `browser.ts` (canvas-based) and `node.ts` (node-canvas-based). Don't fork the algorithm.
+Flags:
+- `-o, --output <path>` — explicit output path (extension picks `.jdf` vs `.jdfx`).
+- `--json` — force pure-JSON `.jdf` output even when the document carries images. Useful for RAG pipelines and CI gates that prefer one text file over a zip bundle.
+
+When you touch the CLI:
+
+- **Never fork the PDF algorithm.** The CLI imports `@jdf/pdf-import/node`. If you need a behavioural change, edit `packages/jdf-pdf-import/src/core.ts` so the reader inherits it.
+- **JSON imports must validate.** `import-json.ts` runs `validate()` after emit and exits non-zero on schema failure — that's how CI consumers gate model output. Don't remove that step.
+- **Exit cleanly.** PDF.js leaves fake-worker timers on the loop after `getDocument`. The `import` switch ends every branch with `process.exit(0)` so the CLI returns control instead of hanging.
 
 ## Web embed: `<jdf>` only
 
@@ -94,13 +115,15 @@ Do not add `<jdf-viewer>` or `data-jdf` variants — kullanıcı kararı, `<jdf>
 ## Build & test before any release
 
 ```bash
-pnpm typecheck          # TS across reader, jdfjs, jdf-cli
+pnpm typecheck          # TS across reader, jdfjs, jdf-cli, jdf-pdf-import
 cd apps/reader/src-tauri && cargo check
 pnpm --filter jdfjs build
-pnpm --filter @jdf/cli start validate spec/examples/hello-world.jdf
+pnpm --filter @uurtech/jdf-cli start validate spec/examples/hello-world.jdf
+pnpm --filter @uurtech/jdf-cli start import spec/examples/sample.pdf -o /tmp/sample.jdf --json
+pnpm --filter @uurtech/jdf-cli start validate /tmp/sample.jdf
 ```
 
-If any of these fail, do not push.
+The last two steps prove the PDF ingestion path is alive — sample.pdf must produce a schema-valid `.jdf`. If it doesn't, the reader will break on the same input. Do not push.
 
 ## Release pipeline (`scripts/`)
 
@@ -119,6 +142,8 @@ User talks Turkish. Replies in Turkish. Code comments, file paths, commit messag
 ## Memory of past mistakes
 
 - **Don't duplicate the renderer logic between SolidJS (`apps/reader/`) and vanilla DOM (`jdfjs/`).** They are intentionally separate codebases (different runtime constraints) but the JDF spec they implement is one. Diverging silently → render bugs only one platform sees.
+- **Don't fork the PDF importer.** The reader and CLI both import `@jdf/pdf-import` and that's the only place the algorithm lives. Forking once breaks parity forever — output will diverge between desktop and CLI for the same PDF.
+- **PDF.js callbacks can hang on node.** `commonObjs.get(name, cb)` and `objs.get(name, cb)` are fire-and-forget — if the resource isn't ready, the callback never fires. The core uses `setTimeout` fallbacks (~100ms for fonts, ~250ms for images) so a missing callback can't wedge a 1000-page document. Don't remove these without a replacement strategy.
 - **Don't put `unpkg.com/jdfjs` URLs in HTML before npm publish succeeded.** The CDN 404s, demos break.
 - **Don't commit `.env`.** It's gitignored along with `.env.example` (intentional — example contains placeholder secrets the user fills in locally).
 - **Don't rename `apps/reader/` lightly.** It will cascade through Cargo.toml, Tauri config, lib name, DMG asset name, and every script path.

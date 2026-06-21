@@ -21,7 +21,11 @@
     "validator",
     "ajv",
     "json-schema",
-    "pdf-alternative"
+    "pdf-alternative",
+    "pdf-to-json",
+    "rag",
+    "ai",
+    "ci-cd"
   ],
   "type": "module",
   "main": "./dist/index.js",
@@ -44,9 +48,12 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
+    "@jdf/pdf-import": "workspace:*",
+    "@napi-rs/canvas": "^0.1.65",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
-    "jszip": "^3.10.1"
+    "jszip": "^3.10.1",
+    "pdfjs-dist": "^4.10.38"
   },
   "devDependencies": {
     "@jdf/core": "workspace:*",

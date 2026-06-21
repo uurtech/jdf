@@ -13,6 +13,9 @@ importers:
       '@jdf/core':
         specifier: workspace:*
         version: link:../../packages/jdf-core
+      '@jdf/pdf-import':
+        specifier: workspace:*
+        version: link:../../packages/jdf-pdf-import
       '@tauri-apps/api':
         specifier: ^2.2.0
         version: 2.11.0
@@ -82,8 +85,30 @@ importers:
         specifier: ^5.5.0
         version: 5.9.3
 
+  packages/jdf-pdf-import:
+    devDependencies:
+      '@jdf/core':
+        specifier: workspace:*
+        version: link:../jdf-core
+      pdfjs-dist:
+        specifier: ^4.10.38
+        version: 4.10.38
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+    optionalDependencies:
+      '@napi-rs/canvas':
+        specifier: ^0.1.65
+        version: 0.1.100
+
   tools/jdf-cli:
     dependencies:
+      '@jdf/pdf-import':
+        specifier: workspace:*
+        version: link:../../packages/jdf-pdf-import
+      '@napi-rs/canvas':
+        specifier: ^0.1.65
+        version: 0.1.100
       ajv:
         specifier: ^8.17.1
         version: 8.20.0
@@ -93,6 +118,9 @@ importers:
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
+      pdfjs-dist:
+        specifier: ^4.10.38
+        version: 4.10.38
     devDependencies:
       '@jdf/core':
         specifier: workspace:*
@@ -2069,7 +2097,6 @@ snapshots:
       '@napi-rs/canvas-linux-x64-musl': 0.1.100
       '@napi-rs/canvas-win32-arm64-msvc': 0.1.100
       '@napi-rs/canvas-win32-x64-msvc': 0.1.100
-    optional: true
 
   '@rollup/rollup-android-arm-eabi@4.61.1':
     optional: true

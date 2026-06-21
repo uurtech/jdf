@@ -43,6 +43,7 @@
     <nav class="nav-links">
       <a href="#why">Why</a>
       <a href="#rag">RAG</a>
+      <a href="#cli">CLI</a>
       <a href="#vision">Vision</a>
       <a href="#features">Features</a>
       <a href="#install">Install</a>
@@ -88,8 +89,8 @@
         <a class="channel" href="docs/cli.html">
           <div class="channel-icon">$</div>
           <div>
-            <div class="channel-title">CLI</div>
-            <div class="channel-sub">Validate, convert from Markdown · <code>npx @uurtech/jdf-cli</code></div>
+            <div class="channel-title">CLI — PDF & JSON → JDF</div>
+            <div class="channel-sub">For RAG, CI, AI agents · <code>npx @uurtech/jdf-cli import paper.pdf</code></div>
           </div>
         </a>
       </div>
@@ -272,6 +273,45 @@ brew install jdf">
       </div>
 
       <p class="vision-endgame">The real endgame: <strong>documents stop being storage → they become interfaces.</strong></p>
+    </section>
+
+    <section id="cli" class="cli">
+      <h2>The CLI is how PDFs and AI plug in</h2>
+      <p class="section-lead">Two unattended workflows the desktop app can't cover: legacy PDFs entering a RAG pipeline, and LLM-emitted JSON becoming a renderable document. Both run in CI, both validate against the schema, both fail loudly on malformed input.</p>
+
+      <div class="cli-grid">
+        <div class="cli-card">
+          <div class="cli-tag">PDF → JDF</div>
+          <h3>Headless PDF ingestion</h3>
+          <p>Same algorithm the desktop reader uses, packaged as a node CLI. Run it on a build server, in a Lambda, in a CI step — output is the structured tree your retriever wants instead of `pdfplumber` heuristics.</p>
+          <pre class="cli-pre"><code><span class="cli-comment"># 1360-page AWS API spec → 60k structured elements in 90s</span>
+$ jdf import partner-api.pdf -o api.jdf <span class="cli-flag">--json</span>
+$ jdf validate api.jdf  <span class="cli-comment"># schema gate — exit 1 fails CI</span></code></pre>
+        </div>
+
+        <div class="cli-card">
+          <div class="cli-tag">JSON → JDF</div>
+          <h3>Wrap LLM output</h3>
+          <p>Models emit JSON. Hand them the JDF schema, drop the response into the CLI, and you get a validated `.jdf` you can render, ship, or audit. Three input shapes are accepted: a full document, a bare element array, or a partial.</p>
+          <pre class="cli-pre"><code><span class="cli-comment"># model output → validated, renderable document</span>
+$ openai-cli generate &gt; report.json
+$ jdf import report.json -o report.jdf
+<span class="cli-comment"># exit 1 if the model violated the schema</span></code></pre>
+        </div>
+      </div>
+
+      <div class="cli-pipeline">
+        <h3>Drop-in CI gate</h3>
+        <p>One step in your workflow rejects malformed JSON or PDFs with weird structure before they reach production:</p>
+        <pre class="cli-pre cli-pre-wide"><code><span class="cli-key">- name</span>: Convert &amp; validate generated document
+  <span class="cli-key">run</span>: |
+    npx @uurtech/jdf-cli import dist/output.json -o dist/output.jdf
+    npx @uurtech/jdf-cli validate dist/output.jdf</code></pre>
+      </div>
+
+      <p class="cli-foot">
+        <a class="btn-secondary" href="docs/cli.html">CLI reference →</a>
+      </p>
     </section>
 
     <section class="example">

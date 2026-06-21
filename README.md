@@ -14,7 +14,7 @@ JDF runs in three places:
 |---|---|---|
 | **JDF Reader** | Native macOS app — read, edit, import PDF/MD, export PDF | `brew tap uurtech/jdf && brew install jdf` |
 | **jdf.js** | JavaScript library — embed `.jdf` files on any web page | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf@0.1.11">` |
-| **`@uurtech/jdf-cli`** | CLI for validating documents and converting from Markdown | `npx @uurtech/jdf-cli validate file.jdf` |
+| **`@uurtech/jdf-cli`** | CLI — validate, convert PDF→JDF, wrap LLM JSON output into JDF | `npx @uurtech/jdf-cli import paper.pdf` |
 
 ## Why JDF
 
@@ -184,7 +184,8 @@ Editing lives in the desktop Reader only — jdf.js is a viewer, the CLI is non-
 |---|:---:|:---:|:---:|
 | Open `.jdf` from disk | ✓ | ✓ (via `<jdf src>` / `embed()`) | ✓ (`validate`) |
 | Import `.md` → `.jdf` | ✓ | — | ✓ (`jdf import file.md`) |
-| Import `.pdf` → `.jdf` (full fidelity: positions, fonts, colors, shapes, embedded images) | ✓ | — | ◐ (planned — currently delegates to the desktop importer) |
+| Import `.pdf` → `.jdf` (full fidelity: positions, fonts, colors, shapes, embedded images) | ✓ | — | ✓ (`jdf import file.pdf`) — same algorithm via `@jdf/pdf-import` |
+| Wrap raw / LLM JSON → validated `.jdf` | — | — | ✓ (`jdf import file.json`) — full doc, element array, or `{ pages: [...] }` partial |
 | JSON Schema validation | ✓ (live, in-app) | — | ✓ (`jdf validate file.jdf`) |
 | Markdown viewer (native render, no conversion) | ✓ | — | — |
 
@@ -214,6 +215,16 @@ Element-by-element capabilities are listed in the [Feature matrix](#feature-matr
 ## PDF import: full fidelity
 
 Drag a `.pdf` onto the viewer and you get an editable JDF copy that **looks identical to the original** — no "best effort", no placeholders.
+
+The same algorithm runs from the CLI for unattended pipelines:
+
+```bash
+# headless conversion — RAG ingestion, CI gate, build step
+jdf import contract.pdf -o contract.jdf --json
+jdf validate contract.jdf      # exit 1 on schema failure → CI fails the build
+```
+
+Both the desktop reader and the CLI import `@jdf/pdf-import` from `packages/jdf-pdf-import/` — there's a single algorithm. Reader uses the browser entry point (DOM canvas, real Web Worker); the CLI uses the node entry point (`@napi-rs/canvas`, in-process). Output is bit-identical for the same PDF.
 
 Per text run, the importer extracts:
 - **position** (mm) — via PDF.js `viewport.convertToViewportPoint`, accounting for rotation, CropBox, and MediaBox offset.
@@ -432,18 +443,52 @@ Full reference: [`jdfjs/README.md`](jdfjs/README.md) · [`docs/docs/embed/`](doc
 
 ## CLI
 
+The CLI is the bridge between **legacy documents** (PDFs everywhere) and **AI workflows** (LLMs emit JSON). Two paths matter:
+
 ```bash
 # run on demand (no install)
 npx @uurtech/jdf-cli validate doc.jdf
-npx @uurtech/jdf-cli import README.md          # → README.jdf
-npx @uurtech/jdf-cli import paper.pdf -o out.jdf
+
+# PDF → JDF — same algorithm the desktop reader uses, headless
+npx @uurtech/jdf-cli import paper.pdf -o paper.jdf --json
+
+# JSON → JDF — wrap raw JSON (LLM output, generated reports) into a validated doc
+npx @uurtech/jdf-cli import response.json -o response.jdf
+
+# Markdown → JDF (convenience)
+npx @uurtech/jdf-cli import README.md
 
 # or install globally
 npm install -g @uurtech/jdf-cli
 jdf validate doc.jdf
 ```
 
-`validate` runs Ajv against the JSON Schema and reports path-level errors plus warnings. `import` accepts `.md` (works) and `.pdf` (planned — currently delegates to the desktop importer).
+### Why this CLI exists
+
+- **PDF → JDF for RAG / CI ingestion.** Pipelines that want structured documents stop fighting `pdfplumber` / `pymupdf` heuristics — `jdf import file.pdf --json` produces a tree your retriever can chunk by element type. The algorithm is shared with the desktop reader (`@jdf/pdf-import` package), so the CLI's output and the reader's output are bit-identical for the same input.
+- **JSON → JDF for AI agents.** Models naturally emit JSON. `jdf import response.json` accepts three shapes: a full JDF document (validated and optionally re-emitted), a bare element array (wrapped into a single-page A4 doc), or a `{ elements: [...] }` / `{ pages: [...] }` partial. The output is always validated against `spec/jdf-schema.json` — a non-zero exit makes it safe to drop into CI as a gate on model output.
+- **One file in, one renderable file out.** `validate` runs after every `import`, so if the JSON is malformed, the build breaks — there is no "shipping a broken document" path.
+
+### Flags
+
+| Flag | What it does |
+|---|---|
+| `-o, --output <path>` | Explicit output path. Extension picks `.jdf` (single JSON file) vs `.jdfx` (zip bundle for documents with embedded assets). |
+| `--json` | Force pure-JSON `.jdf` output even when the document carries images. RAG pipelines and CI consumers that prefer one text file over a zip should turn this on. |
+
+### CI gate
+
+```yaml
+# .github/workflows/docs.yml
+- name: Validate model-emitted document
+  run: |
+    npx @uurtech/jdf-cli import dist/output.json -o dist/output.jdf
+    npx @uurtech/jdf-cli validate dist/output.jdf
+```
+
+If the model produces JSON that doesn't fit the schema, the workflow fails with the exact JSON path of the violation. Same shape for converted PDFs.
+
+### Dev entry point
 
 When working from a clone of this repo, the dev entry point is `pnpm --filter @uurtech/jdf-cli start <subcommand>` — same arguments, runs from source via `tsx`.
 
@@ -468,16 +513,17 @@ When working from a clone of this repo, the dev entry point is `pnpm --filter @u
 ## Project layout
 
 ```
-spec/                JSON Schema + examples
-packages/jdf-core/   TypeScript types + utils
-jdfjs/               jdf.js — web embed library (npm: @uurtech/jdf)
-apps/reader/         Tauri v2 app
+spec/                     JSON Schema + examples
+packages/jdf-core/        TypeScript types + utils
+packages/jdf-pdf-import/  PDF → JDF algorithm (browser + node entry points; shared)
+jdfjs/                    jdf.js — web embed library (npm: @uurtech/jdf)
+apps/reader/              Tauri v2 app
   src/
-    components/      element renderers, JSON view, MD view, sidebar, toolbar
-    edit/            mutation API + undo/redo history
-    import/          PDF.js → JDF converter
-  src-tauri/         Rust backend (MD parse, PDF export with image embed, search)
-tools/jdf-cli/       Ajv validate + MD→JDF importer
+    components/           element renderers, JSON view, MD view, sidebar, toolbar
+    edit/                 mutation API + undo/redo history
+    import/pdfToJdf.ts    one-line re-export of @jdf/pdf-import/browser
+  src-tauri/              Rust backend (MD parse, PDF export with image embed, search)
+tools/jdf-cli/            Ajv validate + PDF/JSON/MD → JDF importer (uses @jdf/pdf-import/node)
 Casks/               Homebrew cask formula
 .github/workflows/   CI (typecheck, schema validate, cargo check on 3 OSes)
                      + release (tag → multi-OS bundles)

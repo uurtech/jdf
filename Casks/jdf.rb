@@ -12,13 +12,6 @@ cask "jdf" do
 
   app "JDF Reader.app"
 
-  postflight do
-    system_command "/usr/bin/xattr",
-                   args:         ["-cr", "#{appdir}/JDF Reader.app"],
-                   sudo:         false,
-                   must_succeed: false
-  end
-
   zap trash: [
     "~/Library/Application Support/dev.jdf.viewer",
     "~/Library/Caches/dev.jdf.viewer",

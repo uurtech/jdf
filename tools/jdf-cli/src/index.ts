@@ -1,22 +1,38 @@
 import { validate } from "./commands/validate";
 import { importMarkdown } from "./commands/import-md";
-import { importPdfPlaceholder } from "./commands/import-pdf";
+import { importPdf } from "./commands/import-pdf";
+import { importJson } from "./commands/import-json";
 
 const HELP = `jdf — JSON Document Format CLI
 
+The CLI exists for two workflows:
+  • PDF → JDF        legacy documents become a structured JSON tree your
+                     RAG / agent / pipeline can read natively.
+  • JSON → JDF       LLMs and code emit JSON; this command wraps that JSON
+                     into a validated .jdf (or .jdfx) you can ship.
+
 Usage:
   jdf validate <file.jdf>
-  jdf import <file.{md,pdf}> [-o output.jdf]
+  jdf import <file.{pdf,json,md}> [-o output.{jdf,jdfx}] [--json]
   jdf --help
 
 Commands:
-  validate   Validate a .jdf file against the JDF schema
-  import     Convert a markdown or PDF file to JDF
+  validate   Validate a .jdf / .jdfx file against the JDF schema
+  import     Convert a PDF, JSON, or Markdown file into JDF
+
+Flags:
+  -o, --output <path>   Explicit output path (extension picks .jdf vs .jdfx)
+      --json            Force pure JSON .jdf output (documents with embedded
+                        images stay as a single base64-inlined .jdf instead
+                        of a .jdfx bundle). Useful for RAG / CI consumers
+                        that prefer one text file over a zip.
 
 Examples:
   jdf validate spec/examples/hello-world.jdf
+  jdf import paper.pdf                        # PDF → JDF (or .jdfx for images)
+  jdf import contract.pdf --json | jq .       # PDF → pure JSON, pipe-friendly
+  jdf import response.json -o response.jdf    # LLM JSON output → validated JDF
   jdf import README.md
-  jdf import paper.pdf -o paper.jdf
 `;
 
 function parseArgs(argv: string[]): { command?: string; positional: string[]; flags: Record<string, string | boolean> } {
@@ -51,18 +67,26 @@ async function main() {
       }
       case "import": {
         const input = positional[0];
-        if (!input) { console.error("Usage: jdf import <file.{md,pdf}> [-o output.jdf]"); process.exit(1); }
+        if (!input) { console.error("Usage: jdf import <file.{pdf,json,md}> [-o output.jdf] [--json]"); process.exit(1); }
         const output = typeof flags.output === "string" ? flags.output : undefined;
+        const forceJson = flags.json === true;
         const lower = input.toLowerCase();
         if (lower.endsWith(".md") || lower.endsWith(".markdown")) {
           await importMarkdown(input, output);
+          process.exit(0);
         } else if (lower.endsWith(".pdf")) {
-          await importPdfPlaceholder(input, output);
+          await importPdf(input, output, { forceJson });
+          // PDF.js leaves worker timers / fake-worker tasks on the loop after
+          // import resolves. Force a clean exit so the CLI returns control
+          // immediately instead of hanging on idle handles.
+          process.exit(0);
+        } else if (lower.endsWith(".json")) {
+          await importJson(input, output, { forceJson });
+          process.exit(0);
         } else {
           console.error(`Unsupported file type: ${input}`);
           process.exit(1);
         }
-        break;
       }
       default:
         console.error(`Unknown command: ${command}`);
