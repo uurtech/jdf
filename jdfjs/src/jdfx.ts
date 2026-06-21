@@ -2,9 +2,25 @@ import JSZip from "jszip";
 import {
   JDFX_DOCUMENT_PATH,
   JDFX_MANIFEST_PATH,
+  JDFX_ASSET_DIR,
   type JdfDocument,
   type JdfxManifest,
 } from "@jdf/core";
+
+/**
+ * Reject manifest asset paths that try to escape the bundle's asset
+ * directory. JSZip operates in-memory so this isn't a filesystem traversal
+ * — but a crafted manifest can still bind an image resource to
+ * `document.json` itself, or to any other zip entry, which produces
+ * confusing render output (the document's own JSON loaded as an image).
+ * Restrict to entries under `assets/` and reject anything with `..`.
+ */
+function isSafeAssetPath(p: string): boolean {
+  if (!p || typeof p !== "string") return false;
+  if (p.startsWith("/") || p.includes("\\")) return false;
+  if (p.includes("..")) return false;
+  return p.startsWith(`${JDFX_ASSET_DIR}/`);
+}
 
 /**
  * Open a `.jdfx` zip bundle and return the embedded JDF document with all
@@ -33,6 +49,10 @@ export async function unpackJdfxToDocument(bytes: ArrayBuffer | Uint8Array): Pro
   const idToBlobUrl = new Map<string, string>();
   if (manifest?.assets) {
     for (const entry of manifest.assets) {
+      if (!isSafeAssetPath(entry.path)) {
+        console.warn(`[jdfjs] dropping unsafe manifest asset path: ${entry.path}`);
+        continue;
+      }
       const file = zip.file(entry.path);
       if (!file) continue;
       const data = await file.async("uint8array");

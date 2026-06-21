@@ -22,8 +22,12 @@ export function ShapeElementView(props: ShapeElementViewProps) {
     if (typeof s === "object" && s?.width != null) return s.width;
     return props.element.strokeWidth ?? 0;
   };
-  const w = () => props.element.width ?? 100;
-  const h = () => props.element.height ?? 100;
+  // Min radius / extent so a degenerate 0-area shape (PDF importer can emit
+  // these for thin lines or 1-px borders) still draws a visible mark instead
+  // of silently disappearing. 0.05mm matches the importer's existing clamp
+  // for path widths.
+  const w = () => Math.max(0.05, props.element.width ?? 100);
+  const h = () => Math.max(0.05, props.element.height ?? 100);
 
   return (
     <div style={{ ...css(), width: "100%", height: "100%", display: "block" }}>

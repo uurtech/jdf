@@ -5,39 +5,48 @@ import { importPdfToJdf as coreImportPdfToJdf, type ImportPdfOptions } from "./c
 import type { PdfImportRuntime } from "./types";
 
 let pdfjsModule: any | null = null;
+let pdfjsLoadPromise: Promise<any> | null = null;
 
 /**
- * Load pdfjs-dist's legacy ESM build — the default build assumes a browser
- * worker context that node can't satisfy. The legacy build runs the worker
- * in the main thread, which is exactly what we want for a CLI.
+ * Load pdfjs-dist's modern ESM build — same one the desktop reader uses, so
+ * the algorithm and output are bit-identical between surfaces.
+ *
+ * Concurrency: two simultaneous importPdfToJdf() calls before this completes
+ * would each capture `console.warn` as `origWarn`. The second capture would
+ * be the first call's wrapper, and the second restore would put that wrapper
+ * back permanently. Guard with a single in-flight promise so the second
+ * caller awaits the first one's load.
  */
 async function loadNodePdfJs() {
   if (pdfjsModule) return pdfjsModule;
-  const { createRequire } = await import("node:module");
-  const require_ = createRequire(import.meta.url);
-  // Use the SAME build the reader uses (`pdfjs-dist/build/pdf.mjs`). pdfjs
-  // ships a separate `legacy` build for older runtimes and prints a console
-  // warning when we use the modern build on node — we suppress that single
-  // warning so it doesn't pollute CLI output. The algorithm is identical;
-  // running the same build keeps reader and CLI output bit-identical.
-  const origWarn = console.warn;
-  console.warn = (...args: any[]) => {
-    if (typeof args[0] === "string" && args[0].includes("legacy")) return;
-    origWarn.apply(console, args);
-  };
-  // @ts-ignore — pdfjs-dist subpath
-  const lib = await import("pdfjs-dist/build/pdf.mjs");
-  console.warn = origWarn;
-  // pdfjs-dist needs a `workerSrc` even when running with `disableWorker:
-  // true`, because the early init checks the value before deciding to spin
-  // up a fake worker. Point it at the worker bundle so the import resolution
-  // succeeds when needed.
-  const workerPath = require_.resolve("pdfjs-dist/build/pdf.worker.mjs");
-  if (lib.GlobalWorkerOptions) {
-    lib.GlobalWorkerOptions.workerSrc = workerPath;
-  }
-  pdfjsModule = lib;
-  return lib;
+  if (pdfjsLoadPromise) return pdfjsLoadPromise;
+  pdfjsLoadPromise = (async () => {
+    const { createRequire } = await import("node:module");
+    const require_ = createRequire(import.meta.url);
+    // pdfjs prints a "Please use the legacy build in Node.js" warning when we
+    // use the modern build on node. The output is identical, so suppress it
+    // for a single import via try/finally — losing this warning permanently
+    // because of a thrown import was the previous bug.
+    const origWarn = console.warn;
+    console.warn = (...args: any[]) => {
+      if (typeof args[0] === "string" && args[0].includes("legacy")) return;
+      origWarn.apply(console, args);
+    };
+    let lib: any;
+    try {
+      // @ts-ignore — pdfjs-dist subpath
+      lib = await import("pdfjs-dist/build/pdf.mjs");
+    } finally {
+      console.warn = origWarn;
+    }
+    const workerPath = require_.resolve("pdfjs-dist/build/pdf.worker.mjs");
+    if (lib.GlobalWorkerOptions) {
+      lib.GlobalWorkerOptions.workerSrc = workerPath;
+    }
+    pdfjsModule = lib;
+    return lib;
+  })();
+  return pdfjsLoadPromise;
 }
 
 let canvasModule: any | null = null;
@@ -105,6 +114,7 @@ export async function importPdfToJdf(
   const canvasMod = await loadCanvas();
   const runtime: PdfImportRuntime = {
     pdfjs,
+    disableWorker: true,
     createCanvas(width: number, height: number) {
       const canvas = canvasMod.createCanvas(width, height);
       const context = canvas.getContext("2d");

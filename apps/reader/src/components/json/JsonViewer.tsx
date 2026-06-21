@@ -12,19 +12,31 @@ export function JsonViewer(props: JsonViewerProps) {
   const [error, setError] = createSignal<string | null>(null);
   const [dirty, setDirty] = createSignal(false);
 
+  // Track the doc snapshot the current dirty draft was forked from. When the
+  // outer document changes (undo/redo, sidebar add page, action-bar move) the
+  // user's stale draft would otherwise overwrite the new state on blur. We
+  // drop the dirty draft and refresh the textarea — the alternative is silent
+  // state-corruption that's worse than losing a half-typed edit.
+  let baseSnapshot = JSON.stringify(props.document, null, 2);
+
   createEffect(() => {
-    if (!dirty()) {
-      setText(JSON.stringify(props.document, null, 2));
-    }
+    const incoming = JSON.stringify(props.document, null, 2);
+    if (incoming === baseSnapshot) return; // local commit just propagated back
+    baseSnapshot = incoming;
+    setText(incoming);
+    setDirty(false);
+    setError(null);
   });
 
   function commit() {
     if (!props.editable) return;
+    if (!dirty()) return; // nothing to do — avoid no-op round-trip
     try {
       const parsed = JSON.parse(text()) as JdfDocument;
       if (!parsed.$jdf || !parsed.pages) throw new Error("Missing $jdf or pages field");
       setError(null);
       setDirty(false);
+      baseSnapshot = JSON.stringify(parsed, null, 2);
       props.onCommit(parsed);
     } catch (e: any) {
       setError(e.message);

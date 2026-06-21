@@ -26,8 +26,11 @@ export function attachLinkBehaviour(
   el.href = resolved.href;
   if (resolved.internal) {
     el.addEventListener("click", (e) => {
+      // Always prevent default for internal anchors. If we have a real target
+      // page, navigate; otherwise just no-op so the host page's URL bar /
+      // history isn't polluted with hashes the embed couldn't resolve.
+      e.preventDefault();
       if (resolved.pageIndex != null && onNavigatePage) {
-        e.preventDefault();
         onNavigatePage(resolved.pageIndex);
       }
     });

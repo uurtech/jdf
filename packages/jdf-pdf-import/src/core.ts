@@ -212,7 +212,10 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
     } else if (fn === OPS.setStrokeGray) {
       gs.stroke = rgbToHex(args[0], args[0], args[0]);
     } else if (fn === OPS.setFillCMYKColor || fn === OPS.setStrokeCMYKColor) {
-      const c = args[0] / 255, m = args[1] / 255, y = args[2] / 255, k = args[3] / 255;
+      // PDF.js delivers CMYK args as floats in 0..1 — same range as the PDF
+      // operator. The previous version divided by 255 (treating them as bytes
+      // from the RGB path), which collapsed every CMYK colour to ~white.
+      const c = args[0], m = args[1], y = args[2], k = args[3];
       const r = (1 - c) * (1 - k) * 255;
       const g = (1 - m) * (1 - k) * 255;
       const b = (1 - y) * (1 - k) * 255;
@@ -474,10 +477,13 @@ export async function importPdfToJdf(
 
   const doc = await pdfjs.getDocument({
     data,
-    // Disable PDF.js worker — node has no `Worker`. The legacy build runs the
-    // worker logic in-process when this flag is set; on the browser entry the
-    // real worker is still wired up via GlobalWorkerOptions.workerSrc.
-    disableWorker: typeof Worker === "undefined",
+    // The runtime adapter declares whether it supports a real Web Worker.
+    // We don't sniff `typeof Worker` here because Node 22+ exposes a global
+    // `Worker` (worker_threads) that isn't compatible with PDF.js's worker
+    // protocol — the sniff would silently re-enable the broken path on
+    // newer Node. Browser entry leaves this unset (= false = real worker
+    // via GlobalWorkerOptions.workerSrc); node entry sets `true`.
+    disableWorker: runtime.disableWorker === true,
     isEvalSupported: false,
   }).promise;
   const pages: Page[] = [];
@@ -584,7 +590,12 @@ export async function importPdfToJdf(
         const currStartsSpace = /^\s/.test(r.text);
         const sep = (gapMm > emMm * 0.08 && !lastEndsSpace && !currStartsSpace) ? " " : "";
         last.text = last.text + sep + r.text;
-        last.width = (r.x - last.x) + r.width;
+        // Width is the running max of (existing extent, end of new run). The
+        // previous formula `r.x - last.x + r.width` ignored the prior width
+        // and could shrink when a 4+ run line had slight kerning, which then
+        // overestimated the gap to the next run and broke merges early.
+        const newExtent = (r.x - last.x) + r.width;
+        last.width = Math.max(last.width, newExtent);
       } else {
         lines.push({ ...r });
       }
@@ -657,7 +668,12 @@ export async function importPdfToJdf(
 
       const pageWmm = pageW * PT_TO_MM;
       const measured = Math.max(l.width + l.fontSize * PT_TO_MM * 0.4, l.fontSize * PT_TO_MM);
-      const elWidth = Math.min(measured, pageWmm - l.x);
+      // If l.x is past the page edge (CropBox-offset PDFs sometimes do this
+      // for trailing artifacts), `pageWmm - l.x` goes negative and clamps to
+      // a 2mm-wide invisible run. Clamp to a positive minimum so the run
+      // keeps its measured width and the renderer can still place it.
+      const remaining = Math.max(measured, pageWmm - l.x);
+      const elWidth = Math.min(measured, remaining);
       const text: TextElement = {
         type: "text",
         content: l.text,
@@ -665,9 +681,15 @@ export async function importPdfToJdf(
         width: Math.max(2, Math.round(elWidth * 100) / 100),
         style,
       };
-      if (l.fontSize >= 22) text.heading = 1;
-      else if (l.fontSize >= 17) text.heading = 2;
-      else if (l.fontSize >= 14 && cls.weight === "bold") text.heading = 3;
+      // Heading detection: large body text is common in marketing PDFs and
+      // shouldn't pollute the TOC. Require boldness for every heading level
+      // — if a paragraph happens to be 24pt regular, it's still body text.
+      // Larger threshold for H3 (16pt+ bold) avoids tagging emphasised words.
+      if (cls.weight === "bold") {
+        if (l.fontSize >= 22) text.heading = 1;
+        else if (l.fontSize >= 17) text.heading = 2;
+        else if (l.fontSize >= 16) text.heading = 3;
+      }
       if (text.heading) text.tocEntry = text.content;
       if (link) {
         if (link.url) text.link = link.url;

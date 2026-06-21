@@ -54,34 +54,60 @@ export interface JDFViewerInstance {
  * Embed a JDF document into a container by URL.
  * The simplest "PDF.js-like" usage.
  */
+// Per-container AbortController so a rapid `src` change cancels the previous
+// fetch and the slower (older) response can't overwrite the newer document.
+const FETCH_ABORTS = new WeakMap<HTMLElement, AbortController>();
+
 export async function embed(
   container: HTMLElement | string,
   url: string,
   options: JDFViewerOptions = {}
 ): Promise<JDFViewerInstance> {
   const el = resolveContainer(container);
+
+  // Abort any in-flight fetch for this element.
+  const previous = FETCH_ABORTS.get(el);
+  if (previous) previous.abort();
+  const controller = new AbortController();
+  FETCH_ABORTS.set(el, controller);
+
   el.classList.add("jdfjs-loading");
   try {
-    const isJdfx = /\.jdfx(\?|#|$)/i.test(url);
+    // Detect .jdfx by extension first; if the URL has no extension hint
+    // (signed URLs, ?download=...), fall back to Content-Type sniffing
+    // after the response arrives.
+    const extLooksJdfx = /\.jdfx(\?|#|$)/i.test(url);
     const res = await fetch(url, {
-      headers: isJdfx
+      signal: controller.signal,
+      headers: extLooksJdfx
         ? { Accept: "application/jdf+zip,application/zip" }
-        : { Accept: "application/json,application/jdf+json" },
+        : { Accept: "application/json,application/jdf+json,application/jdf+zip,application/zip" },
     });
     if (!res.ok) throw new Error(`Failed to fetch ${url} (${res.status})`);
 
+    const ctype = (res.headers.get("content-type") || "").toLowerCase();
+    const ctypeLooksJdfx = ctype.includes("zip") || ctype.includes("jdf+zip");
+
     let doc: JdfDocument;
-    if (isJdfx) {
+    if (extLooksJdfx || ctypeLooksJdfx) {
       const { unpackJdfxToDocument } = await import("./jdfx");
       doc = await unpackJdfxToDocument(await res.arrayBuffer());
     } else {
       doc = (await res.json()) as JdfDocument;
     }
     if (!doc?.$jdf) throw new Error("Not a valid JDF document (missing $jdf field)");
+
+    // Race guard: if another embed() started for this container while we were
+    // parsing, a different controller is now stored — bail without rendering.
+    if (FETCH_ABORTS.get(el) !== controller) {
+      throw new DOMException("Superseded by a newer src change", "AbortError");
+    }
+
     el.classList.remove("jdfjs-loading");
     return render(el, doc, options);
   } catch (err) {
     el.classList.remove("jdfjs-loading");
+    if ((err as Error).name === "AbortError") throw err; // silent abort
     el.classList.add("jdfjs-error");
     el.innerHTML = `<div class="jdfjs-error-msg">${escapeHtml((err as Error).message)}</div>`;
     options.onError?.(err as Error);
@@ -116,6 +142,14 @@ export class JDFViewer {
   private sidebarEl: HTMLDivElement | null = null;
   private root!: HTMLDivElement;
   private observer: IntersectionObserver | null = null;
+  // System dark-mode subscription — needs explicit cleanup so a SPA route
+  // change that destroys the viewer doesn't leave a listener attached to
+  // the matchMedia query.
+  private darkModeMql: MediaQueryList | null = null;
+  private darkModeListener: ((e: MediaQueryListEvent) => void) | null = null;
+  // Window resize fallback for fit-width / fit-page when the host element's
+  // own size doesn't change but the viewport's does (flex re-layout, etc).
+  private windowResizeListener: (() => void) | null = null;
 
   constructor(container: HTMLElement, doc: JdfDocument, options: JDFViewerOptions = {}) {
     this.container = container;
@@ -150,12 +184,7 @@ export class JDFViewer {
   private mount() {
     this.container.innerHTML = "";
     this.container.classList.add("jdfjs");
-    if (this.options.darkMode === "dark") this.container.classList.add("jdfjs-dark");
-    else if (this.options.darkMode === "auto") {
-      if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
-        this.container.classList.add("jdfjs-dark");
-      }
-    }
+    this.applyDarkMode();
 
     this.root = document.createElement("div");
     this.root.className = "jdfjs-root";
@@ -187,10 +216,56 @@ export class JDFViewer {
   }
 
   private setupResizeObserver() {
-    if (typeof ResizeObserver === "undefined") return;
-    this.resizeObs?.disconnect();
-    this.resizeObs = new ResizeObserver(() => this.applyFit());
-    this.resizeObs.observe(this.pagesEl);
+    if (typeof ResizeObserver !== "undefined") {
+      this.resizeObs?.disconnect();
+      this.resizeObs = new ResizeObserver(() => this.applyFit());
+      this.resizeObs.observe(this.pagesEl);
+      // Also observe the host container — flex re-layouts can change the
+      // host width without changing pagesEl's computed size synchronously.
+      this.resizeObs.observe(this.container);
+    }
+    // Window resize as a fallback for environments where the ResizeObserver
+    // doesn't fire (older Safari + nested flex). Subscribe once and remove
+    // on destroy.
+    if (this.windowResizeListener == null && typeof window !== "undefined") {
+      this.windowResizeListener = () => this.applyFit();
+      window.addEventListener("resize", this.windowResizeListener);
+    }
+  }
+
+  /**
+   * Apply the current `darkMode` option to the container. For `auto`, also
+   * subscribe to system colour-scheme changes so the embed flips when the
+   * user toggles their OS theme. Replaces a one-shot read at mount that
+   * froze the embed on its boot-time value.
+   */
+  private applyDarkMode() {
+    // Tear down any previous subscription first — used during setDocument
+    // and option changes.
+    if (this.darkModeMql && this.darkModeListener) {
+      this.darkModeMql.removeEventListener("change", this.darkModeListener);
+      this.darkModeMql = null;
+      this.darkModeListener = null;
+    }
+
+    const setDark = (on: boolean) => {
+      this.container.classList.toggle("jdfjs-dark", on);
+    };
+
+    const mode = this.options.darkMode;
+    if (mode === "dark") { setDark(true); return; }
+    if (mode === "light") { setDark(false); return; }
+    // mode === "auto"
+    if (typeof window === "undefined" || !window.matchMedia) {
+      setDark(false);
+      return;
+    }
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    setDark(mql.matches);
+    const listener = (e: MediaQueryListEvent) => setDark(e.matches);
+    mql.addEventListener("change", listener);
+    this.darkModeMql = mql;
+    this.darkModeListener = listener;
   }
 
   /** Auto-zoom for fit modes. */
@@ -443,6 +518,19 @@ export class JDFViewer {
   destroy() {
     this.observer?.disconnect();
     this.resizeObs?.disconnect();
+    if (this.darkModeMql && this.darkModeListener) {
+      this.darkModeMql.removeEventListener("change", this.darkModeListener);
+      this.darkModeMql = null;
+      this.darkModeListener = null;
+    }
+    if (this.windowResizeListener && typeof window !== "undefined") {
+      window.removeEventListener("resize", this.windowResizeListener);
+      this.windowResizeListener = null;
+    }
+    // Drop any in-flight fetch tied to this container so a late response
+    // doesn't try to render into a destroyed DOM.
+    const ctrl = FETCH_ABORTS.get(this.container);
+    if (ctrl) { ctrl.abort(); FETCH_ABORTS.delete(this.container); }
     this.container.innerHTML = "";
     this.container.classList.remove("jdfjs", "jdfjs-dark", "jdfjs-loading", "jdfjs-error");
     this.container.style.removeProperty("width");

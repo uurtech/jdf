@@ -185,12 +185,22 @@ function convertMarkdownToJdf(md: string, title: string, baseDir: string = proce
     // Code block
     if (line.startsWith("```")) {
       const codeLines: string[] = [];
+      const fenceLine = i;
       i++;
+      let closed = false;
       while (i < lines.length && !lines[i].startsWith("```")) {
         codeLines.push(lines[i]);
         i++;
       }
-      i++; // skip closing ```
+      if (i < lines.length) {
+        closed = true;
+        i++; // skip closing ```
+      }
+      if (!closed) {
+        // Unterminated fence — emit a one-line warning so authors notice
+        // (silent EOF-swallow used to lose any trailing markdown).
+        console.warn(`[jdf-cli] warning: unterminated code fence at line ${fenceLine + 1} — content to EOF treated as code`);
+      }
       const code = codeLines.join("\n");
       const height = codeLines.length * 4 + 8;
       if (y + height > maxY) {
@@ -217,9 +227,19 @@ function convertMarkdownToJdf(md: string, title: string, baseDir: string = proce
       continue;
     }
 
-    // Normal paragraph — collect consecutive non-empty lines
+    // Normal paragraph — collect consecutive non-empty lines that aren't
+    // the start of another block (heading, unordered list, ordered list,
+    // code fence). Without the ordered-list guard, "1. Step one" would be
+    // absorbed into the previous paragraph and the list would vanish.
     let para = "";
-    while (i < lines.length && lines[i].trim() !== "" && !lines[i].match(/^#{1,6}\s/) && !lines[i].match(/^\s*[-*+]\s/) && !lines[i].startsWith("```")) {
+    while (
+      i < lines.length &&
+      lines[i].trim() !== "" &&
+      !lines[i].match(/^#{1,6}\s/) &&
+      !lines[i].match(/^\s*[-*+]\s/) &&
+      !lines[i].match(/^\s*\d+\.\s/) &&
+      !lines[i].startsWith("```")
+    ) {
       para += (para ? " " : "") + lines[i].trim();
       i++;
     }

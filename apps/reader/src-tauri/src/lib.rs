@@ -82,14 +82,14 @@ pub fn run() {
                 if lower.ends_with(".jdf") || lower.ends_with(".jdfx") || lower.ends_with(".md") || lower.ends_with(".markdown") || lower.ends_with(".pdf") {
                     let path = file_path.clone();
                     let pending = app.state::<PendingFile>();
-                    *pending.0.lock().unwrap() = Some(path.clone());
+                    if let Ok(mut g) = pending.0.lock() { *g = Some(path.clone()); }
                     let handle = app.handle().clone();
                     tauri::async_runtime::spawn(async move {
                         for _ in 0..40 {
                             tokio::time::sleep(std::time::Duration::from_millis(150)).await;
                             if try_emit_open(&handle, &path) {
                                 if let Some(p) = handle.try_state::<PendingFile>() {
-                                    *p.0.lock().unwrap() = None;
+                                    if let Ok(mut g) = p.0.lock() { *g = None; }
                                 }
                                 break;
                             }
@@ -116,7 +116,7 @@ pub fn run() {
                 }
                 if !try_emit_open(app_handle, &path) {
                     if let Some(pending) = app_handle.try_state::<PendingFile>() {
-                        *pending.0.lock().unwrap() = Some(path.clone());
+                        if let Ok(mut g) = pending.0.lock() { *g = Some(path.clone()); }
                     }
                     let path_clone = path.clone();
                     let handle = app_handle.clone();

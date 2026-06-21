@@ -81,24 +81,45 @@ export async function importJson(
 }
 
 function normaliseToJdf(input: any, title: string): JdfDocument {
-  // Shape 1: already a full JDF doc.
+  // Shape 1: already a full JDF doc. Build a fresh object so we never
+  // mutate the caller's parsed input — earlier the meta merge ran in-place
+  // on `input`, which surprised programmatic callers passing a shared
+  // reference.
   if (input && typeof input === "object" && typeof input.$jdf === "string" && Array.isArray(input.pages)) {
-    if (!input.meta || typeof input.meta !== "object") {
-      input.meta = { title, pageSize: "A4", unit: "mm" };
-    } else if (!input.meta.title) {
-      input.meta.title = title;
+    if (input.pages.length === 0) {
+      console.error("✗ JDF document has zero pages — `pages` must contain at least one page");
+      process.exit(1);
     }
-    return input as JdfDocument;
+    const meta = input.meta && typeof input.meta === "object"
+      ? { title: input.meta.title ?? title, pageSize: "A4", unit: "mm", ...input.meta }
+      : { title, pageSize: "A4", unit: "mm" };
+    return {
+      $jdf: input.$jdf,
+      meta,
+      ...(input.styles ? { styles: input.styles } : {}),
+      ...(input.resources ? { resources: input.resources } : {}),
+      ...(input.header ? { header: input.header } : {}),
+      ...(input.footer ? { footer: input.footer } : {}),
+      pages: input.pages as Page[],
+    };
   }
 
   // Shape 2: bare element array.
   if (Array.isArray(input)) {
+    if (input.length === 0) {
+      console.error("✗ Element array is empty — wrap at least one element");
+      process.exit(1);
+    }
     return wrapElements(input as Element[], title);
   }
 
   // Shape 3: partials.
   if (input && typeof input === "object") {
     if (Array.isArray(input.pages)) {
+      if (input.pages.length === 0) {
+        console.error("✗ `pages` is empty — provide at least one page");
+        process.exit(1);
+      }
       return {
         $jdf: input.$jdf || "1.0.0",
         meta: { title, pageSize: "A4", unit: "mm", ...(input.meta || {}) },
@@ -110,6 +131,10 @@ function normaliseToJdf(input: any, title: string): JdfDocument {
       };
     }
     if (Array.isArray(input.elements)) {
+      if (input.elements.length === 0) {
+        console.error("✗ `elements` is empty — provide at least one element");
+        process.exit(1);
+      }
       return wrapElements(input.elements as Element[], title, input.meta);
     }
   }

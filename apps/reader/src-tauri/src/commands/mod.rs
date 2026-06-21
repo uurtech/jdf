@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::BufWriter;
+use std::path::{Path, PathBuf};
 use pulldown_cmark::{Parser, Event, Tag, TagEnd, HeadingLevel, Options};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -9,9 +10,60 @@ pub struct SearchHit { pub page_index: usize, pub element_index: usize, pub text
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ValidationResult { pub valid: bool, pub errors: Vec<String>, pub warnings: Vec<String> }
 
+/// Reject path arguments that point outside the user-document zones the
+/// fs capabilities allow. The IPC layer doesn't enforce capability scope on
+/// raw `String` args (capabilities only apply to `@tauri-apps/plugin-fs`),
+/// so a malicious frontend / compromised .jdfx could otherwise call
+/// `invoke("open_document", { path: "/etc/passwd" })` and read it.
+///
+/// Allowed roots: $HOME/{Downloads,Documents,Desktop} and /tmp. Anything
+/// else, including `..` traversal, is rejected before fs::read.
+fn ensure_path_in_user_zone(path: &str) -> Result<PathBuf, String> {
+    let p = Path::new(path);
+    let canon = match p.canonicalize() {
+        Ok(c) => c,
+        Err(_) => {
+            // Path may not exist yet (save_document creating a new file). Walk
+            // up to the first existing ancestor and canonicalize that, then
+            // re-attach the unresolved tail.
+            let mut anc = p.to_path_buf();
+            let mut tail = PathBuf::new();
+            loop {
+                if anc.exists() {
+                    let base = anc.canonicalize().map_err(|e| format!("Path resolve failed: {}", e))?;
+                    return validate_canonical(&base.join(tail), path);
+                }
+                let name = anc.file_name().ok_or_else(|| format!("Bad path: {}", path))?.to_owned();
+                tail = Path::new(&name).join(&tail);
+                if !anc.pop() { return Err(format!("Bad path: {}", path)); }
+            }
+        }
+    };
+    validate_canonical(&canon, path)
+}
+
+fn validate_canonical(canon: &Path, original: &str) -> Result<PathBuf, String> {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let allowed: Vec<PathBuf> = vec![
+        format!("{}/Downloads", home).into(),
+        format!("{}/Documents", home).into(),
+        format!("{}/Desktop", home).into(),
+        PathBuf::from("/tmp"),
+        PathBuf::from("/private/tmp"), // macOS canonicalises /tmp to /private/tmp
+    ];
+    for root in &allowed {
+        if canon.starts_with(root) { return Ok(canon.to_path_buf()); }
+    }
+    Err(format!(
+        "Path is outside the allowed user zones (Downloads / Documents / Desktop / tmp): {}",
+        original
+    ))
+}
+
 #[tauri::command]
 pub fn open_document(path: String) -> Result<serde_json::Value, String> {
-    let content = fs::read_to_string(&path).map_err(|e| format!("Failed to read: {}", e))?;
+    let safe = ensure_path_in_user_zone(&path)?;
+    let content = fs::read_to_string(&safe).map_err(|e| format!("Failed to read: {}", e))?;
     let doc: serde_json::Value = serde_json::from_str(&content).map_err(|e| format!("Invalid JSON: {}", e))?;
     if doc.get("$jdf").is_none() { return Err("Not a JDF document".to_string()); }
     Ok(doc)
@@ -19,8 +71,9 @@ pub fn open_document(path: String) -> Result<serde_json::Value, String> {
 
 #[tauri::command]
 pub fn save_document(path: String, document: serde_json::Value) -> Result<(), String> {
+    let safe = ensure_path_in_user_zone(&path)?;
     let content = serde_json::to_string_pretty(&document).map_err(|e| format!("{}", e))?;
-    fs::write(&path, content).map_err(|e| format!("{}", e))?;
+    fs::write(&safe, content).map_err(|e| format!("{}", e))?;
     Ok(())
 }
 
@@ -76,11 +129,13 @@ pub fn search_document(document: serde_json::Value, query: String) -> Result<Vec
             if let Some(elements) = page.get("elements").and_then(|e| e.as_array()) {
                 for (ei, el) in elements.iter().enumerate() {
                     let text = extract_text(el);
-                    let lower = text.to_lowercase();
-                    if let Some(pos) = lower.find(&q) {
-                        let s = pos.saturating_sub(20);
-                        let e = (pos + query.len() + 20).min(text.len());
-                        hits.push(SearchHit { page_index: pi, element_index: ei, text: query.clone(), context: text[s..e].to_string() });
+                    if let Some((ctx_start, ctx_end)) = find_context_bounds(&text, &q) {
+                        hits.push(SearchHit {
+                            page_index: pi,
+                            element_index: ei,
+                            text: query.clone(),
+                            context: text[ctx_start..ctx_end].to_string(),
+                        });
                     }
                 }
             }
@@ -89,9 +144,58 @@ pub fn search_document(document: serde_json::Value, query: String) -> Result<Vec
     Ok(hits)
 }
 
+/// Case-insensitive substring search that returns char-boundary-safe context
+/// bounds in the *original* text. Naively `lower.find(&q)` then slicing the
+/// original string can panic on Turkish "İ" (lowercases to two-byte "i̇") or
+/// German "ß" (→"ss") because byte positions diverge after case folding.
+///
+/// We walk char-by-char, tracking how each char maps to its lowercase
+/// expansion, then translate match offsets in the lower string back to byte
+/// offsets in the original. The 20-byte context window is then snapped to
+/// the nearest char boundaries.
+fn find_context_bounds(text: &str, query_lower: &str) -> Option<(usize, usize)> {
+    if query_lower.is_empty() { return None; }
+    // Build (byte_in_text, byte_in_lower) checkpoints for every original char.
+    let mut lower = String::with_capacity(text.len());
+    let mut map: Vec<(usize, usize)> = Vec::with_capacity(text.len());
+    for (b, ch) in text.char_indices() {
+        map.push((b, lower.len()));
+        for low_ch in ch.to_lowercase() {
+            lower.push(low_ch);
+        }
+    }
+    // Sentinel — points one past the end so we can resolve the trailing edge.
+    map.push((text.len(), lower.len()));
+
+    let lower_pos = lower.find(query_lower)?;
+    let lower_end = lower_pos + query_lower.len();
+
+    // Walk the checkpoint table to find char-aligned slice bounds in the original.
+    let match_start_byte = map.iter().find(|(_, lp)| *lp >= lower_pos)
+        .map(|(tb, _)| *tb)
+        .unwrap_or(text.len());
+    let match_end_byte = map.iter().find(|(_, lp)| *lp >= lower_end)
+        .map(|(tb, _)| *tb)
+        .unwrap_or(text.len());
+
+    let ctx_start = snap_to_char_boundary(text, match_start_byte.saturating_sub(20), false);
+    let ctx_end = snap_to_char_boundary(text, (match_end_byte + 20).min(text.len()), true);
+    Some((ctx_start, ctx_end))
+}
+
+fn snap_to_char_boundary(s: &str, mut idx: usize, forward: bool) -> usize {
+    if idx >= s.len() { return s.len(); }
+    while idx > 0 && !s.is_char_boundary(idx) {
+        if forward { idx += 1; if idx >= s.len() { return s.len(); } }
+        else { idx -= 1; }
+    }
+    idx
+}
+
 #[tauri::command]
 pub async fn import_pdf(path: String) -> Result<serde_json::Value, String> {
-    let bytes = fs::read(&path).map_err(|e| format!("Failed to read: {}", e))?;
+    let safe = ensure_path_in_user_zone(&path)?;
+    let bytes = fs::read(&safe).map_err(|e| format!("Failed to read: {}", e))?;
     let text = tokio::task::spawn_blocking(move || {
         let _g = suppress_stderr();
         std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| pdf_extract::extract_text_from_mem(&bytes)))
@@ -103,7 +207,8 @@ pub async fn import_pdf(path: String) -> Result<serde_json::Value, String> {
 
 #[tauri::command]
 pub fn import_markdown(path: String) -> Result<serde_json::Value, String> {
-    let content = fs::read_to_string(&path).map_err(|e| format!("{}", e))?;
+    let safe = ensure_path_in_user_zone(&path)?;
+    let content = fs::read_to_string(&safe).map_err(|e| format!("{}", e))?;
     let title = std::path::Path::new(&path).file_stem().and_then(|s| s.to_str()).unwrap_or("Document").to_string();
     Ok(markdown_to_jdf(&content, &title))
 }
@@ -217,7 +322,15 @@ fn draw_element(
     let italic = is_italic(el, document);
     let f = if bold { font_bold } else if italic { font_italic } else { font };
 
-    let to_pdf_y = |y: f32, line: f32| Mm(page_h - margin_top - y - line * fs * 0.4);
+    // page_h, margin_top, y are mm. `fs` is in pt; convert to mm before
+    // multiplying by line spacing. 1pt ≈ 0.3528mm; default line-height 1.2.
+    // The previous formula (`line * fs * 0.4`) treated pt-as-mm and produced
+    // line spacing roughly 6× too tight on small text and 2.83× too loose
+    // on large text after compounding with the page conversion.
+    const PT_TO_MM: f32 = 0.3528;
+    const LINE_HEIGHT: f32 = 1.2;
+    let line_mm = fs * PT_TO_MM * LINE_HEIGHT;
+    let to_pdf_y = |y: f32, line: f32| Mm(page_h - margin_top - y - line * line_mm);
 
     if let Some(c) = get_color(el, document) {
         layer.set_fill_color(Color::Rgb(c));
@@ -284,8 +397,16 @@ fn draw_element(
         }
         "collapsible" => {
             let title = el.get("title").and_then(|t| t.as_str()).unwrap_or("");
-            layer.use_text(format!("▶ {}", title), fs, Mm(margin_left + px), to_pdf_y(py, 0.0), font_bold);
-            if el.get("expanded").and_then(|e| e.as_bool()).unwrap_or(false) {
+            // Default to expanded=true when the field is missing. The previous
+            // default-false behaviour silently dropped children from PDF
+            // export whenever a generated document didn't explicitly set the
+            // flag (most LLM-emitted JSON, every `jdf import file.json` path).
+            // Authors who want a closed export must set `expanded: false`
+            // deliberately.
+            let expanded = el.get("expanded").and_then(|e| e.as_bool()).unwrap_or(true);
+            let glyph = if expanded { "▼" } else { "▶" };
+            layer.use_text(format!("{} {}", glyph, title), fs, Mm(margin_left + px), to_pdf_y(py, 0.0), font_bold);
+            if expanded {
                 if let Some(children) = el.get("elements").and_then(|e| e.as_array()) {
                     for child in children {
                         draw_element(layer, child, document, font, font_bold, font_italic, font_mono, margin_left, margin_top, page_h);
@@ -296,22 +417,96 @@ fn draw_element(
         "shape" => {
             let shape = el.get("shape").and_then(|s| s.as_str()).unwrap_or("rect");
             let h = el.get("height").and_then(|v| v.as_f64()).unwrap_or(1.0) as f32;
-            if shape == "rect" {
-                let line = printpdf::Line {
-                    points: vec![
-                        (printpdf::Point::new(Mm(margin_left + px), Mm(page_h - margin_top - py)), false),
-                        (printpdf::Point::new(Mm(margin_left + px + width), Mm(page_h - margin_top - py)), false),
-                        (printpdf::Point::new(Mm(margin_left + px + width), Mm(page_h - margin_top - py - h)), false),
-                        (printpdf::Point::new(Mm(margin_left + px), Mm(page_h - margin_top - py - h)), false),
-                    ],
-                    is_closed: true,
-                };
-                if let Some(fill) = el.get("fill").and_then(|f| f.as_str()) {
-                    if let Some(c) = parse_color(fill) {
-                        layer.set_fill_color(printpdf::Color::Rgb(c));
-                        layer.add_polygon(printpdf::Polygon { rings: vec![line.points.clone()], mode: printpdf::path::PaintMode::Fill, winding_order: printpdf::path::WindingOrder::NonZero });
+            let fill = el.get("fill").and_then(|f| f.as_str()).and_then(parse_color);
+            let stroke_obj = el.get("stroke");
+            let stroke_color = stroke_obj
+                .and_then(|s| s.get("color").and_then(|c| c.as_str()))
+                .and_then(parse_color);
+            let stroke_width = stroke_obj
+                .and_then(|s| s.get("width").and_then(|w| w.as_f64()))
+                .unwrap_or(0.3) as f32;
+            let mode = match (fill.is_some(), stroke_color.is_some()) {
+                (true, true) => printpdf::path::PaintMode::FillStroke,
+                (true, false) => printpdf::path::PaintMode::Fill,
+                (false, true) => printpdf::path::PaintMode::Stroke,
+                (false, false) => printpdf::path::PaintMode::Fill,
+            };
+            if let Some(c) = fill {
+                layer.set_fill_color(printpdf::Color::Rgb(c));
+            }
+            if let Some(c) = stroke_color {
+                layer.set_outline_color(printpdf::Color::Rgb(c));
+                layer.set_outline_thickness(stroke_width.max(0.05) as f32);
+            }
+            let xa = margin_left + px;
+            let ya = page_h - margin_top - py;
+            let xb = xa + width;
+            let yb = ya - h;
+            match shape {
+                "rect" => {
+                    let pts = vec![
+                        (printpdf::Point::new(Mm(xa), Mm(ya)), false),
+                        (printpdf::Point::new(Mm(xb), Mm(ya)), false),
+                        (printpdf::Point::new(Mm(xb), Mm(yb)), false),
+                        (printpdf::Point::new(Mm(xa), Mm(yb)), false),
+                    ];
+                    layer.add_polygon(printpdf::Polygon {
+                        rings: vec![pts],
+                        mode,
+                        winding_order: printpdf::path::WindingOrder::NonZero,
+                    });
+                }
+                "line" => {
+                    let pts = vec![
+                        (printpdf::Point::new(Mm(xa), Mm(ya)), false),
+                        (printpdf::Point::new(Mm(xb), Mm(yb)), false),
+                    ];
+                    layer.add_line(printpdf::Line { points: pts, is_closed: false });
+                }
+                "circle" | "ellipse" => {
+                    // Approximate circle/ellipse with a 16-segment cubic Bezier ring.
+                    // printpdf doesn't expose a native ellipse primitive, so we
+                    // emit a polygon with quadratic-ish points; good enough for export.
+                    let cx = xa + width / 2.0;
+                    let cy = ya - h / 2.0;
+                    let rx = width / 2.0;
+                    let ry = if shape == "circle" { rx } else { h / 2.0 };
+                    let n = 32;
+                    let mut pts = Vec::with_capacity(n);
+                    for i in 0..n {
+                        let theta = (i as f32) * 2.0 * std::f32::consts::PI / (n as f32);
+                        let x = cx + rx * theta.cos();
+                        let y = cy + ry * theta.sin();
+                        pts.push((printpdf::Point::new(Mm(x), Mm(y)), false));
+                    }
+                    layer.add_polygon(printpdf::Polygon {
+                        rings: vec![pts],
+                        mode,
+                        winding_order: printpdf::path::WindingOrder::NonZero,
+                    });
+                }
+                "path" => {
+                    // Element-local SVG path. Parse M/L commands into a polyline;
+                    // C/Q segments are flattened to their end-point (printpdf doesn't
+                    // expose Bezier curves at this layer). Loses curvature but keeps
+                    // the path's overall trajectory and bounding shape.
+                    if let Some(d) = el.get("path").and_then(|p| p.as_str()) {
+                        let pts = svg_path_to_points(d, xa, ya, h);
+                        if pts.len() >= 2 {
+                            let is_closed = d.trim_end().ends_with('Z') || d.trim_end().ends_with('z');
+                            if is_closed {
+                                layer.add_polygon(printpdf::Polygon {
+                                    rings: vec![pts],
+                                    mode,
+                                    winding_order: printpdf::path::WindingOrder::NonZero,
+                                });
+                            } else {
+                                layer.add_line(printpdf::Line { points: pts, is_closed: false });
+                            }
+                        }
                     }
                 }
+                _ => {}
             }
         }
         "toc" => {
@@ -321,16 +516,44 @@ fn draw_element(
                 for (pi, page) in pages.iter().enumerate() {
                     if let Some(elements) = page.get("elements").and_then(|e| e.as_array()) {
                         for ce in elements {
-                            if ce.get("type").and_then(|t| t.as_str()) != Some("text") { continue; }
+                            // Accept both `text` (with content) and `richtext`
+                            // (with runs) headings — the previous version
+                            // skipped richtext entirely, dropping any heading
+                            // that had bold/italic emphasis from the TOC.
+                            let kind = ce.get("type").and_then(|t| t.as_str()).unwrap_or("");
+                            if kind != "text" && kind != "richtext" { continue; }
+                            let heading_node = ce.get("heading");
+                            let has_heading = heading_node.is_some()
+                                && !matches!(heading_node, Some(serde_json::Value::Null))
+                                && !matches!(heading_node, Some(serde_json::Value::Bool(false)));
+                            if !has_heading && ce.get("tocEntry").is_none() { continue; }
+                            // tocLevel takes precedence; otherwise pull level
+                            // from the heading field — supports both number
+                            // (1..6) and bool true (treat as level 1).
                             let level = ce.get("tocLevel").and_then(|l| l.as_u64())
-                                .or_else(|| ce.get("heading").and_then(|h| h.as_u64()))
+                                .or_else(|| heading_node.and_then(|h| h.as_u64()))
+                                .or_else(|| match heading_node { Some(serde_json::Value::Bool(true)) => Some(1u64), _ => None })
                                 .unwrap_or(1) as u8;
-                            if level > depth { continue; }
-                            let title = ce.get("tocEntry").and_then(|t| t.as_str())
-                                .or_else(|| if ce.get("heading").is_some() { ce.get("content").and_then(|c| c.as_str()) } else { None });
-                            if let Some(t) = title {
+                            if level == 0 || level > depth { continue; }
+                            // Title: tocEntry overrides; for text fall back to
+                            // content, for richtext concatenate run.text.
+                            let runs_title: Option<String> = if kind == "richtext" {
+                                ce.get("runs").and_then(|r| r.as_array()).map(|runs| {
+                                    runs.iter()
+                                        .filter_map(|r| r.get("text").and_then(|t| t.as_str()))
+                                        .collect::<Vec<_>>()
+                                        .concat()
+                                })
+                            } else { None };
+                            let title_owned: Option<String> = ce.get("tocEntry").and_then(|t| t.as_str()).map(|s| s.to_string())
+                                .or_else(|| if kind == "text" {
+                                    ce.get("content").and_then(|c| c.as_str()).map(|s| s.to_string())
+                                } else {
+                                    runs_title
+                                });
+                            if let Some(t) = title_owned {
                                 let indent = (level as f32 - 1.0) * 4.0;
-                                layer.use_text(t.to_string(), fs, Mm(margin_left + px + indent), to_pdf_y(py, row), f);
+                                layer.use_text(t.clone(), fs, Mm(margin_left + px + indent), to_pdf_y(py, row), f);
                                 layer.use_text(format!("{}", pi + 1), fs, Mm(margin_left + px + width - 8.0), to_pdf_y(py, row), f);
                                 row += 1.4;
                             }
@@ -389,22 +612,12 @@ fn try_embed_image(
     let bytes = base64::engine::general_purpose::STANDARD
         .decode(b64.trim())
         .map_err(|e| format!("base64 decode: {}", e))?;
-    // Decode using `image` crate, convert to RGBA8
-    let img: image_crate::DynamicImage = if bytes.starts_with(b"\x89PNG") {
-        let dec = image_crate::codecs::png::PngDecoder::new(std::io::Cursor::new(&bytes))
-            .map_err(|e| format!("png: {}", e))?;
-        image_crate::DynamicImage::from_decoder(dec).map_err(|e| format!("png decode: {}", e))?
-    } else if bytes.starts_with(b"\xFF\xD8\xFF") {
-        let dec = image_crate::codecs::jpeg::JpegDecoder::new(std::io::Cursor::new(&bytes))
-            .map_err(|e| format!("jpg: {}", e))?;
-        image_crate::DynamicImage::from_decoder(dec).map_err(|e| format!("jpg decode: {}", e))?
-    } else if bytes.starts_with(b"BM") {
-        let dec = image_crate::codecs::bmp::BmpDecoder::new(std::io::Cursor::new(&bytes))
-            .map_err(|e| format!("bmp: {}", e))?;
-        image_crate::DynamicImage::from_decoder(dec).map_err(|e| format!("bmp decode: {}", e))?
-    } else {
-        return Err("unsupported image format".into());
-    };
+    // Decode using `image` crate's generic loader — covers PNG, JPEG, BMP,
+    // GIF, WebP, TIFF, AVIF, ICO without us hand-rolling a magic-byte switch.
+    // The crate sniffs the format from the bytes themselves; an unknown blob
+    // returns an Err that we surface unchanged.
+    let img: image_crate::DynamicImage = image_crate::load_from_memory(&bytes)
+        .map_err(|e| format!("image decode: {}", e))?;
     let rgba = img.to_rgba8();
     let (w, h) = rgba.dimensions();
     if w == 0 || h == 0 { return Err("zero-size image".into()); }
@@ -454,14 +667,121 @@ fn try_embed_image(
 }
 
 fn parse_color(s: &str) -> Option<printpdf::Rgb> {
-    let s = s.trim_start_matches('#');
-    if s.len() == 6 {
-        let r = u8::from_str_radix(&s[0..2], 16).ok()? as f32 / 255.0;
-        let g = u8::from_str_radix(&s[2..4], 16).ok()? as f32 / 255.0;
-        let b = u8::from_str_radix(&s[4..6], 16).ok()? as f32 / 255.0;
-        return Some(printpdf::Rgb::new(r, g, b, None));
+    let s = s.trim();
+    // #rrggbb / #rgb
+    if let Some(hex) = s.strip_prefix('#') {
+        if hex.len() == 6 {
+            let r = u8::from_str_radix(&hex[0..2], 16).ok()? as f32 / 255.0;
+            let g = u8::from_str_radix(&hex[2..4], 16).ok()? as f32 / 255.0;
+            let b = u8::from_str_radix(&hex[4..6], 16).ok()? as f32 / 255.0;
+            return Some(printpdf::Rgb::new(r, g, b, None));
+        }
+        if hex.len() == 3 {
+            let r = u8::from_str_radix(&hex[0..1].repeat(2), 16).ok()? as f32 / 255.0;
+            let g = u8::from_str_radix(&hex[1..2].repeat(2), 16).ok()? as f32 / 255.0;
+            let b = u8::from_str_radix(&hex[2..3].repeat(2), 16).ok()? as f32 / 255.0;
+            return Some(printpdf::Rgb::new(r, g, b, None));
+        }
     }
-    None
+    // rgb(r, g, b) / rgb(r g b) — accepts 0..255 ints
+    if let Some(inner) = s.strip_prefix("rgb(").and_then(|x| x.strip_suffix(')')) {
+        let parts: Vec<&str> = inner.split(|c: char| c == ',' || c.is_whitespace()).filter(|s| !s.is_empty()).collect();
+        if parts.len() == 3 {
+            let r = parts[0].trim().parse::<f32>().ok()? / 255.0;
+            let g = parts[1].trim().parse::<f32>().ok()? / 255.0;
+            let b = parts[2].trim().parse::<f32>().ok()? / 255.0;
+            return Some(printpdf::Rgb::new(r, g, b, None));
+        }
+    }
+    // Named colors — common subset
+    let (r, g, b) = match s.to_lowercase().as_str() {
+        "black" => (0.0, 0.0, 0.0),
+        "white" => (1.0, 1.0, 1.0),
+        "red" => (1.0, 0.0, 0.0),
+        "green" => (0.0, 0.5, 0.0),
+        "blue" => (0.0, 0.0, 1.0),
+        "yellow" => (1.0, 1.0, 0.0),
+        "cyan" => (0.0, 1.0, 1.0),
+        "magenta" => (1.0, 0.0, 1.0),
+        "gray" | "grey" => (0.5, 0.5, 0.5),
+        "lightgray" | "lightgrey" => (0.83, 0.83, 0.83),
+        "darkgray" | "darkgrey" => (0.66, 0.66, 0.66),
+        "orange" => (1.0, 0.65, 0.0),
+        "purple" => (0.5, 0.0, 0.5),
+        "transparent" | "none" => return None,
+        _ => return None,
+    };
+    Some(printpdf::Rgb::new(r, g, b, None))
+}
+
+/// Parse an SVG-ish `path` attribute — emitted by the PDF importer for
+/// arbitrary vector paths — into a list of printpdf points relative to the
+/// shape's origin (xa, ya, h). M/L become real points; C/Q segments are
+/// flattened to their endpoint (printpdf has no Bezier primitive at this
+/// layer). Z is handled by the caller via the closed-path flag.
+fn svg_path_to_points(d: &str, xa: f32, ya: f32, _h: f32) -> Vec<(printpdf::Point, bool)> {
+    use printpdf::{Point, Mm};
+    // Collect tokens up front into a Vec so we can index without fighting
+    // closure lifetimes over a borrowed Split iterator.
+    let toks: Vec<&str> = d
+        .split(|c: char| c.is_whitespace() || c == ',')
+        .filter(|s| !s.is_empty())
+        .collect();
+    let mut pts: Vec<(Point, bool)> = Vec::new();
+    let mut i: usize = 0;
+    let mut cmd: char = 'M';
+    while i < toks.len() {
+        let tok = toks[i];
+        let first = tok.chars().next().unwrap_or(' ');
+        let mut first_num: Option<f32> = None;
+        if first.is_alphabetic() {
+            cmd = first;
+            if let Some(rest) = tok.get(1..).filter(|s| !s.is_empty()) {
+                first_num = rest.parse::<f32>().ok();
+            }
+            i += 1;
+        }
+        if cmd == 'Z' || cmd == 'z' {
+            // No coordinate consumption — closing handled by the polygon flag.
+            continue;
+        }
+        let x_local = match first_num {
+            Some(v) => v,
+            None => {
+                if i >= toks.len() { break; }
+                match toks[i].parse::<f32>() { Ok(v) => { i += 1; v } Err(_) => { i += 1; continue; } }
+            }
+        };
+        if i >= toks.len() { break; }
+        let y_local = match toks[i].parse::<f32>() { Ok(v) => { i += 1; v } Err(_) => { i += 1; continue; } };
+        match cmd {
+            'M' | 'L' | 'm' | 'l' => {
+                pts.push((Point::new(Mm(xa + x_local), Mm(ya - y_local)), false));
+            }
+            'C' | 'c' => {
+                // x_local/y_local were cp1; advance past cp2 and take endpoint.
+                if i + 4 > toks.len() { break; }
+                let _cp2x = toks[i].parse::<f32>().ok(); i += 1;
+                let _cp2y = toks[i].parse::<f32>().ok(); i += 1;
+                let ex = toks[i].parse::<f32>().ok(); i += 1;
+                let ey = toks[i].parse::<f32>().ok(); i += 1;
+                if let (Some(ex), Some(ey)) = (ex, ey) {
+                    pts.push((Point::new(Mm(xa + ex), Mm(ya - ey)), false));
+                }
+            }
+            'Q' | 'q' => {
+                // x_local/y_local were the control point; the next pair is the endpoint.
+                if i + 2 > toks.len() { break; }
+                let ex = toks[i].parse::<f32>().ok(); i += 1;
+                let ey = toks[i].parse::<f32>().ok(); i += 1;
+                if let (Some(ex), Some(ey)) = (ex, ey) {
+                    pts.push((Point::new(Mm(xa + ex), Mm(ya - ey)), false));
+                }
+            }
+            _ => {}
+        }
+    }
+    pts
 }
 
 // --- Helpers ---
@@ -818,25 +1138,63 @@ fn flush_paragraph(
 }
 
 fn extract_text(el: &serde_json::Value) -> String {
-    if let Some(c) = el.get("content").and_then(|c| c.as_str()) { return c.to_string(); }
+    let mut out = String::new();
+    if let Some(c) = el.get("content").and_then(|c| c.as_str()) {
+        out.push_str(c);
+    }
     if let Some(runs) = el.get("runs").and_then(|r| r.as_array()) {
-        return runs.iter().filter_map(|r| r.get("text").and_then(|t| t.as_str())).collect::<Vec<_>>().concat();
+        for r in runs {
+            if let Some(t) = r.get("text").and_then(|t| t.as_str()) { out.push_str(t); }
+        }
     }
     if let Some(items) = el.get("items").and_then(|i| i.as_array()) {
-        return items.iter().filter_map(|i| i.get("content").and_then(|c| c.as_str())).collect::<Vec<_>>().join(" ");
-    }
-    if let Some(rows) = el.get("rows").and_then(|r| r.as_array()) {
-        let mut all = String::new();
-        for row in rows.iter().filter_map(|r| r.as_array()) {
-            for cell in row {
-                if let Some(s) = cell.as_str() { all.push_str(s); all.push(' '); }
-                else if let Some(s) = cell.get("content").and_then(|c| c.as_str()) { all.push_str(s); all.push(' '); }
+        for it in items {
+            if let Some(c) = it.get("content").and_then(|c| c.as_str()) {
+                if !out.is_empty() { out.push(' '); }
+                out.push_str(c);
+            }
+            // Nested list items can carry sub-items.
+            if let Some(sub) = it.get("items").and_then(|i| i.as_array()) {
+                for sit in sub {
+                    if let Some(c) = sit.get("content").and_then(|c| c.as_str()) {
+                        if !out.is_empty() { out.push(' '); }
+                        out.push_str(c);
+                    }
+                }
             }
         }
-        return all;
     }
-    if let Some(t) = el.get("title").and_then(|t| t.as_str()) { return t.to_string(); }
-    String::new()
+    if let Some(rows) = el.get("rows").and_then(|r| r.as_array()) {
+        for row in rows.iter().filter_map(|r| r.as_array()) {
+            for cell in row {
+                if let Some(s) = cell.as_str() {
+                    if !out.is_empty() { out.push(' '); }
+                    out.push_str(s);
+                } else if let Some(s) = cell.get("content").and_then(|c| c.as_str()) {
+                    if !out.is_empty() { out.push(' '); }
+                    out.push_str(s);
+                }
+            }
+        }
+    }
+    if let Some(t) = el.get("title").and_then(|t| t.as_str()) {
+        if !out.is_empty() { out.push(' '); }
+        out.push_str(t);
+    }
+    // Recurse into collapsible.elements so search finds nested content even
+    // when the section is closed in the UI. Search is cross-cutting; the
+    // user's mental model is "find this text in this document," not "find
+    // this text only inside currently-expanded sections."
+    if let Some(children) = el.get("elements").and_then(|c| c.as_array()) {
+        for child in children {
+            let sub = extract_text(child);
+            if !sub.is_empty() {
+                if !out.is_empty() { out.push(' '); }
+                out.push_str(&sub);
+            }
+        }
+    }
+    out
 }
 
 fn get_font_size(el: &serde_json::Value, doc: &serde_json::Value) -> f64 {

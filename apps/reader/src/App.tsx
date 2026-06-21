@@ -157,19 +157,20 @@ export default function App() {
 
   function commitFullDoc(next: JdfDocument) { commit(next); }
 
+  function maybeAutoSaveAfterHistoryStep() {
+    // Both .jdf and .jdfx are editable on disk — undo/redo must persist for
+    // both, otherwise the file silently diverges from what the user sees.
+    if (isEditableFile()) scheduleAutoSave();
+    else setDirty(true);
+  }
+
   function performUndo() {
     const r = history.undo();
-    if (r) {
-      if (loaded()?.type === "jdf") scheduleAutoSave();
-      else setDirty(true);
-    }
+    if (r) maybeAutoSaveAfterHistoryStep();
   }
   function performRedo() {
     const r = history.redo();
-    if (r) {
-      if (loaded()?.type === "jdf") scheduleAutoSave();
-      else setDirty(true);
-    }
+    if (r) maybeAutoSaveAfterHistoryStep();
   }
 
   async function loadJdf(path: string) {
@@ -282,13 +283,26 @@ export default function App() {
     }
   }
 
+  function normaliseDroppedPath(p: string): string {
+    // Some drop sources (Finder via Tauri's drag-drop event in older builds,
+    // browser drag-drop with file picker, custom IPC) deliver paths as
+    // `file:///…` URLs with percent-encoding. Strip the prefix and decode
+    // before extension matching so the openByExtension dispatch and the
+    // downstream Tauri fs read both succeed.
+    let out = p;
+    if (out.startsWith("file://")) out = out.slice(7);
+    try { out = decodeURIComponent(out); } catch { /* leave as-is */ }
+    return out;
+  }
+
   function openByExtension(filePath: string) {
-    const lower = filePath.toLowerCase();
-    if (lower.endsWith(".jdfx")) loadJdfx(filePath);
-    else if (lower.endsWith(".jdf")) loadJdf(filePath);
-    else if (lower.endsWith(".pdf")) importPdfFile(filePath);
-    else if (lower.endsWith(".md") || lower.endsWith(".markdown")) importMarkdownFile(filePath);
-    else setError5s(`Unsupported file type: ${filePath}`);
+    const norm = normaliseDroppedPath(filePath);
+    const lower = norm.toLowerCase();
+    if (lower.endsWith(".jdfx")) loadJdfx(norm);
+    else if (lower.endsWith(".jdf")) loadJdf(norm);
+    else if (lower.endsWith(".pdf")) importPdfFile(norm);
+    else if (lower.endsWith(".md") || lower.endsWith(".markdown")) importMarkdownFile(norm);
+    else setError5s(`Unsupported file type: ${norm}`);
   }
 
   async function openInNewWindow(filePath?: string) {

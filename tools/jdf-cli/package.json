@@ -48,7 +48,6 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
-    "@jdf/pdf-import": "workspace:*",
     "@napi-rs/canvas": "^0.1.65",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
@@ -57,6 +56,7 @@
   },
   "devDependencies": {
     "@jdf/core": "workspace:*",
+    "@jdf/pdf-import": "workspace:*",
     "@types/node": "^22.10.0",
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",

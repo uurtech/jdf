@@ -26,7 +26,10 @@ export function ImageElementView(props: ImageElementViewProps) {
 
   const src = (): string => {
     const el = props.element;
-    if (el.src?.startsWith("data:") || el.src?.startsWith("http")) return el.src;
+    // Tighten the http check so `httpfoo://` and `httpsx` are not mistaken
+    // for URLs.
+    const looksHttp = (s?: string) => !!s && /^https?:\/\//i.test(s);
+    if (el.src && (el.src.startsWith("data:") || looksHttp(el.src))) return el.src;
     if (el.resource) {
       const res = lookupResource(props.resources, el.resource);
       if (res?.data) {
@@ -34,7 +37,18 @@ export function ImageElementView(props: ImageElementViewProps) {
         if (res.data.startsWith("data:")) return res.data;
         return `data:${mime};base64,${res.data}`;
       }
-      if (res?.path) return res.path;
+      if (res?.path) {
+        // Filesystem paths can't load via plain <img src> in a Tauri webview
+        // — they need the asset:// protocol via convertFileSrc. Fall back to
+        // returning the raw path if the API isn't available (e.g. preview
+        // outside Tauri).
+        try {
+          // @ts-ignore — runtime Tauri API
+          const { convertFileSrc } = (window as any).__TAURI__?.core || {};
+          if (typeof convertFileSrc === "function") return convertFileSrc(res.path);
+        } catch { /* swallow */ }
+        return res.path;
+      }
     }
     return el.src || "";
   };

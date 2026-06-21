@@ -47,7 +47,16 @@ export async function unpackJdfx(bytes: Uint8Array | ArrayBuffer): Promise<Unpac
   }
 
   const assetUrls = new Map<string, string>();
+  const assetPrefix = `${JDFX_ASSET_DIR}/`;
   for (const entry of manifest.assets) {
+    // Path-traversal guard — manifest paths are user-controlled (a hostile
+    // .jdfx could put `..` or absolute paths). Restrict to entries under
+    // assets/ so a manifest can't bind a resource to document.json or
+    // anything outside the bundle's asset zone.
+    if (!entry.path || entry.path.startsWith("/") || entry.path.includes("..") || !entry.path.startsWith(assetPrefix)) {
+      console.warn(`[jdfx] dropping unsafe manifest asset path: ${entry.path}`);
+      continue;
+    }
     const file = zip.file(entry.path);
     if (!file) continue;
     const blob = new Blob([await file.async("uint8array") as BlobPart], { type: entry.mimeType });

@@ -35,6 +35,11 @@ Examples:
   jdf import README.md
 `;
 
+// Flags that NEVER take a value, so the parser knows not to swallow the next
+// token (otherwise `--json -o foo.jdf` would attach `-o` as the json value
+// and mean the wrong thing).
+const BOOLEAN_FLAGS = new Set(["help", "h", "json", "verbose", "skip-validate"]);
+
 function parseArgs(argv: string[]): { command?: string; positional: string[]; flags: Record<string, string | boolean> } {
   const positional: string[] = [];
   const flags: Record<string, string | boolean> = {};
@@ -43,8 +48,32 @@ function parseArgs(argv: string[]): { command?: string; positional: string[]; fl
     const a = argv[i];
     if (i === 0 && !a.startsWith("-")) { command = a; continue; }
     if (a === "--help" || a === "-h") { flags["help"] = true; continue; }
-    if (a.startsWith("--")) { const k = a.slice(2); const next = argv[i + 1]; if (next && !next.startsWith("-")) { flags[k] = next; i++; } else flags[k] = true; continue; }
-    if (a === "-o" || a === "--output") { const next = argv[i + 1]; if (next) { flags["output"] = next; i++; } continue; }
+    if (a.startsWith("--")) {
+      const eq = a.indexOf("=");
+      const k = eq > 0 ? a.slice(2, eq) : a.slice(2);
+      const inlineVal = eq > 0 ? a.slice(eq + 1) : undefined;
+      if (inlineVal !== undefined) {
+        flags[k] = inlineVal;
+        continue;
+      }
+      if (BOOLEAN_FLAGS.has(k)) { flags[k] = true; continue; }
+      const next = argv[i + 1];
+      if (next && !next.startsWith("-")) { flags[k] = next; i++; }
+      else flags[k] = true;
+      continue;
+    }
+    if (a === "-o" || a === "--output") {
+      const next = argv[i + 1];
+      // Reject flag tokens after -o so `jdf import f.json -o --json` doesn't
+      // produce a file literally named "--json" and silently drop --json.
+      if (next === undefined || next.startsWith("-")) {
+        console.error(`Error: ${a} requires a path argument`);
+        process.exit(1);
+      }
+      flags["output"] = next;
+      i++;
+      continue;
+    }
     positional.push(a);
   }
   return { command, positional, flags };

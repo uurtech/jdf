@@ -25,7 +25,27 @@ function decodeBase64(s: string): Buffer {
 function extractAssets(doc: JdfDocument): { doc: JdfDocument; assets: ExtractedAsset[] } {
   const assets: ExtractedAsset[] = [];
   const cloned: JdfDocument = JSON.parse(JSON.stringify(doc));
-  let counter = 0;
+  const usedIds = new Set<string>();
+  let inlineCounter = 0;
+
+  // Reserve ids that resources.images already uses so the page-walk counter
+  // can't collide with them.
+  if (cloned.resources?.images) {
+    for (const key of Object.keys(cloned.resources.images)) {
+      usedIds.add(key);
+    }
+  }
+
+  function nextInlineId(): string {
+    while (true) {
+      inlineCounter++;
+      const id = `asset-${inlineCounter}`;
+      if (!usedIds.has(id)) {
+        usedIds.add(id);
+        return id;
+      }
+    }
+  }
 
   function walk(els: any[] | undefined) {
     if (!els) return;
@@ -33,8 +53,7 @@ function extractAssets(doc: JdfDocument): { doc: JdfDocument; assets: ExtractedA
       if (el?.type === "image" && typeof el.src === "string" && el.src.startsWith("data:")) {
         const m = el.src.match(/^data:([^;]+);base64,(.*)$/);
         if (m) {
-          counter++;
-          const id = `asset-${counter}`;
+          const id = nextInlineId();
           const mimeType = m[1];
           const ext = mimeType.split("/")[1]?.replace("jpeg", "jpg") || "bin";
           assets.push({ id, bytes: decodeBase64(m[2]), mimeType, ext });
@@ -48,7 +67,11 @@ function extractAssets(doc: JdfDocument): { doc: JdfDocument; assets: ExtractedA
   }
   for (const page of cloned.pages || []) walk(page.elements as any[]);
 
-  // Drain inline-base64 entries inside resources.images too
+  // Drain inline-base64 entries inside resources.images. Preserve the
+  // entry's other fields (mimeType, width, height, alt, etc.) — only the
+  // base64 `data` itself is moved to the zip's assets/ directory. Renderers
+  // still look up the resource by key and find the same metadata, just
+  // without the inlined bytes (the asset is loaded from the zip).
   if (cloned.resources?.images) {
     for (const [key, res] of Object.entries(cloned.resources.images)) {
       if (!res || typeof res !== "object" || !("data" in res) || !res.data) continue;
@@ -57,11 +80,15 @@ function extractAssets(doc: JdfDocument): { doc: JdfDocument; assets: ExtractedA
       const b64 = m ? m[2] : data;
       const mimeType = m ? m[1] : (res as any).mimeType || "image/png";
       const ext = mimeType.split("/")[1]?.replace("jpeg", "jpg") || "bin";
-      counter++;
-      const id = key || `asset-${counter}`;
-      assets.push({ id, bytes: decodeBase64(b64), mimeType, ext });
+      assets.push({ id: key, bytes: decodeBase64(b64), mimeType, ext });
+      // Strip only the bytes — the renderer can still read other fields.
+      const updated: Record<string, unknown> = { ...(res as Record<string, unknown>) };
+      delete updated.data;
+      // Keep `src: "embedded"` semantics — the asset still lives in this
+      // bundle, just under assets/ instead of inlined.
+      updated.src = "embedded";
+      (cloned.resources.images as any)[key] = updated;
     }
-    cloned.resources.images = {};
   }
 
   return { doc: cloned, assets };

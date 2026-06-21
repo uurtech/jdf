@@ -16,14 +16,21 @@ interface CollapsibleElementViewProps {
 
 export function CollapsibleElementView(props: CollapsibleElementViewProps) {
   const edit = useEdit();
-  const [expanded, setExpanded] = createSignal(props.element.expanded ?? false);
+  // The collapsible's open/closed state is part of the document. The previous
+  // implementation kept it in a local signal only, so the user's expand
+  // action never made it back into the doc — PDF export rendered the
+  // collapsed version even when the user was looking at the expanded one.
+  // Default to true (consistent with the Rust PDF exporter) when the field
+  // is missing.
+  const expanded = () => props.element.expanded ?? true;
+  const toggle = () => edit.updateField(props.path, "expanded", !expanded());
   const css = () => resolveStyle(props.element.style, props.styles);
 
   return (
     <div style={css()} class="border border-gray-200 rounded-lg overflow-hidden bg-white">
       <div class="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-50">
         <button
-          onClick={() => setExpanded(!expanded())}
+          onClick={toggle}
           type="button"
           class="text-xs transition-transform inline-block hover:text-gray-900"
           style={{ transform: expanded() ? "rotate(90deg)" : "rotate(0deg)" }}
@@ -38,7 +45,7 @@ export function CollapsibleElementView(props: CollapsibleElementViewProps) {
               placeholder="Section title"
             />
           ) : (
-            <button class="text-left w-full" onClick={() => setExpanded(!expanded())} type="button">
+            <button class="text-left w-full" onClick={toggle} type="button">
               {props.element.title || "Section"}
             </button>
           )}

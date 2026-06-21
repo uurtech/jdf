@@ -30,4 +30,14 @@ export interface PdfImportRuntime {
    * the default browser/node build itself.
    */
   pdfjs?: any;
+
+  /**
+   * If true, getDocument() runs without a worker (PDF.js falls back to its
+   * fake in-process worker). Browser entry points leave this unset to use
+   * the real Web Worker. Node entry must set this to true — Node's global
+   * `Worker` (worker_threads, in Node 22+) is not the Web Worker PDF.js
+   * expects, so PDF.js's own `typeof Worker` sniff would otherwise try to
+   * spawn a real worker against the .mjs path and fail.
+   */
+  disableWorker?: boolean;
 }

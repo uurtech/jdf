@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import JSZip from "jszip";
-import { JDFX_DOCUMENT_PATH, JDFX_MANIFEST_PATH } from "@jdf/core";
+import { JDFX_DOCUMENT_PATH, JDFX_MANIFEST_PATH, JDFX_ASSET_DIR } from "@jdf/core";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,7 +33,18 @@ async function loadDocument(filePath: string): Promise<{ doc: unknown; bundle?: 
     if (mf) {
       try { manifest = JSON.parse(await mf.async("string")); } catch { /* tolerate missing */ }
     }
-    const assetCount = Object.values(zip.files).filter((f) => !f.dir && f.name.startsWith("assets/")).length;
+    const assetPrefix = `${JDFX_ASSET_DIR}/`;
+    const assetCount = Object.values(zip.files).filter((f) => !f.dir && f.name.startsWith(assetPrefix)).length;
+    // Reject zips whose entries try to escape the bundle root via `..`. JSZip
+    // doesn't write to disk so this isn't a filesystem traversal, but a
+    // crafted manifest with `path: "../whatever"` could shadow document.json
+    // or feed a renderer an asset binding it never declared.
+    for (const fname of Object.keys(zip.files)) {
+      if (fname.includes("..") || fname.startsWith("/")) {
+        console.error(`✗ Refusing zip entry with traversal: ${fname}`);
+        return null;
+      }
+    }
     return { doc, bundle: { manifest, assetCount } };
   }
   return { doc: JSON.parse(fs.readFileSync(filePath, "utf-8")) };

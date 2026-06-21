@@ -13,9 +13,15 @@
  *   window.JDFjsAutoInit = false   // before loading the script
  */
 
-import { embed, type JDFViewerOptions } from "./viewer";
+import { embed, type JDFViewerOptions, type JDFViewerInstance } from "./viewer";
 
 const PROCESSED = new WeakSet<Element>();
+// Track per-element resources so we can dispose them when the element leaves
+// the DOM (SPA route changes, frameworks that re-render). Without this, every
+// route mount adds a fresh JDFViewer instance and a MutationObserver while
+// the previous ones are kept alive by the observer references.
+const VIEWER_INSTANCES = new WeakMap<Element, JDFViewerInstance>();
+const ATTR_OBSERVERS = new WeakMap<Element, MutationObserver>();
 
 function readOptions(el: Element): JDFViewerOptions {
   const opts: JDFViewerOptions = {};
@@ -35,7 +41,11 @@ function readOptions(el: Element): JDFViewerOptions {
   const page = attr("page");
   if (page != null) {
     const n = Number(page);
-    if (!isNaN(n)) opts.initialPage = n;
+    // The `page` attribute is 1-based for users (matches the toolbar
+    // indicator); JDFViewer's internal initialPage is 0-based. Convert
+    // here so <jdf page="1"> opens on page 1, not page 2. Clamp to >= 0
+    // so a typo'd `page="0"` doesn't crash navigation later.
+    if (!isNaN(n)) opts.initialPage = Math.max(0, Math.floor(n) - 1);
   }
   const w = attr("width");
   if (w != null) {
@@ -62,15 +72,33 @@ function processElement(el: Element) {
   const container = el as HTMLElement;
   applySizeAttrs(container);
   const opts = readOptions(el);
-  embed(container, src, opts).catch((err) => {
-    console.error("[jdf.js] failed to embed", src, err);
-    container.dispatchEvent(new CustomEvent("jdf-error", { detail: err, bubbles: true }));
-  });
+  embed(container, src, opts)
+    .then((inst) => { VIEWER_INSTANCES.set(el, inst); })
+    .catch((err) => {
+      if ((err as Error)?.name === "AbortError") return; // src changed mid-fetch
+      console.error("[jdf.js] failed to embed", src, err);
+      container.dispatchEvent(new CustomEvent("jdf-error", { detail: err, bubbles: true }));
+    });
   // Watch for attribute changes — re-render when src changes,
   // resize when width/height changes. Replaces the custom element
   // attributeChangedCallback (which we can't use because <jdf> isn't
   // a valid custom element name per the Web Components spec).
   observeAttributes(container);
+}
+
+function disposeElement(el: Element) {
+  const inst = VIEWER_INSTANCES.get(el);
+  if (inst) {
+    try { inst.destroy(); } catch { /* swallow */ }
+    VIEWER_INSTANCES.delete(el);
+  }
+  const aobs = ATTR_OBSERVERS.get(el);
+  if (aobs) {
+    aobs.disconnect();
+    ATTR_OBSERVERS.delete(el);
+  }
+  PROCESSED.delete(el);
+  ATTR_OBSERVED.delete(el);
 }
 
 function applySizeAttrs(el: HTMLElement) {
@@ -96,8 +124,9 @@ function observeAttributes(el: Element) {
       if (m.type !== "attributes" || !m.attributeName) continue;
       const name = m.attributeName;
       if (name === "src") {
-        // Re-render with the new src
-        PROCESSED.delete(el);
+        // Re-render with the new src — dispose the previous viewer first so
+        // its observers/listeners are torn down before the next one mounts.
+        disposeElement(el);
         processElement(el);
       } else if (name === "width" || name === "height") {
         applySizeAttrs(el as HTMLElement);
@@ -105,6 +134,7 @@ function observeAttributes(el: Element) {
     }
   });
   obs.observe(el, { attributes: true, attributeFilter: ["src", "width", "height"] });
+  ATTR_OBSERVERS.set(el, obs);
 }
 
 function scan(root: ParentNode = document) {
@@ -118,7 +148,19 @@ function watchForNewTargets() {
       m.addedNodes.forEach((n) => {
         if (n instanceof Element) {
           if (n.tagName.toLowerCase() === "jdf") processElement(n);
-          else scan(n);
+          else if (typeof n.querySelectorAll === "function") {
+            // Limit to elements that look like roots, not viewer-internal
+            // children — those are added by us and have no <jdf> tag inside.
+            n.querySelectorAll("jdf").forEach(processElement);
+          }
+        }
+      });
+      m.removedNodes.forEach((n) => {
+        if (n instanceof Element) {
+          if (n.tagName.toLowerCase() === "jdf") disposeElement(n);
+          else if (typeof n.querySelectorAll === "function") {
+            n.querySelectorAll("jdf").forEach(disposeElement);
+          }
         }
       });
     }
