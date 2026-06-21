@@ -595,6 +595,47 @@ When adding a new JDF element type or attribute, update **all five** locations: 
 
 Bug reports, feature requests, and design discussions all welcome in [GitHub Issues](https://github.com/uurtech/jdf/issues).
 
+## Project founder
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/uurtech">
+        <img src="https://avatars.githubusercontent.com/u/5675890?v=4" width="80" height="80" alt="uurtech" style="border-radius: 50%;" /><br />
+        <sub><b>uurtech</b></sub>
+      </a><br />
+      <sub>Founder · Ugur Kazdal</sub>
+    </td>
+  </tr>
+</table>
+
+## Contributors
+
+Thanks to everyone who has contributed code, design, docs, or feedback to JDF.
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/rcpzen">
+        <img src="https://avatars.githubusercontent.com/u/24500147?v=4" width="64" height="64" alt="rcpzen" style="border-radius: 50%;" /><br />
+        <sub><b>rcpzen</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/uguracikgoz">
+        <img src="https://avatars.githubusercontent.com/u/17970755?v=4" width="64" height="64" alt="uguracikgoz" style="border-radius: 50%;" /><br />
+        <sub><b>uguracikgoz</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/EienMosu">
+        <img src="https://avatars.githubusercontent.com/u/82905592?v=4" width="64" height="64" alt="EienMosu" style="border-radius: 50%;" /><br />
+        <sub><b>EienMosu</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
 ## License
 
 MIT — [`LICENSE`](LICENSE).
