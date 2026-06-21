@@ -2,6 +2,25 @@
 
 This file is project-specific guidance for Claude (or any maintainer) when working on this repo. Follow the parity rules below or you will silently break the rest of the ecosystem.
 
+## ⚠️ THE THREE-SURFACE RULE — READ THIS FIRST
+
+**Every new feature must ship in all three surfaces, in the same change set: CLI (`tools/jdf-cli`), jdf.js web embed (`jdfjs/`), and the desktop reader (`apps/reader/`). No exceptions.**
+
+If a feature only lives in one surface, the JDF promise breaks: a `.jdf` produced by the CLI won't render in jdfjs, a form filled in jdfjs won't open correctly in the reader, a reader-only feature can't enter a CI pipeline. The format is the contract; every surface honors it identically.
+
+When you add or change a feature, walk this checklist before declaring done:
+
+1. **Schema + types** — `packages/jdf-core/src/types.ts` + `spec/jdf-schema.json` carry the new field.
+2. **CLI** (`tools/jdf-cli`) — import, validate, and export paths all handle it. PDF/JSON/MD importers emit it where applicable.
+3. **jdf.js** (`jdfjs/src/renderers/element.ts` + `viewer.ts`) — renders it in the browser; if it has user interaction, the in-memory document is mutated and `exportJdf()` reflects it.
+4. **Desktop reader** (`apps/reader/src/components/viewer/` + `apps/reader/src/edit/`) — SolidJS renderer with the same DOM/look as jdf.js; user interaction routes through the edit/undo/autosave pipeline.
+5. **Rust backend** (`apps/reader/src-tauri/src/commands/mod.rs`) — `validate_document.valid_types`, `extract_text` (search), and `draw_element` (PDF export) all handle the new type.
+6. **Editor mutations** (`apps/reader/src/edit/mutations.ts`) — `makeBlankElement` arm so the user can insert one from the toolbar.
+7. **Sample** — at least one fixture in `spec/examples/` exercises the change; copy to `docs/examples/` if it powers a landing demo.
+8. **Docs** — `docs/docs/forms.html`-style page or section update; landing page mention if it's a headline feature.
+
+If you add it to one surface and skip another, the assistant has failed the user. Code review for any change must verify every checklist item — silent omissions are the #1 source of bugs in this repo.
+
 ## The repo is a 4-arm thing
 
 JDF lives in **four runnable surfaces** that all consume the same JSON format. They MUST stay in feature parity. PDF→JDF conversion lives in a fifth, shared package — both the desktop reader and the CLI import it.

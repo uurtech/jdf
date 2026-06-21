@@ -2,8 +2,9 @@
   "$jdf": "1.0.0",
   "meta": {
     "title": "Customer Onboarding Form",
-    "pageSize": "A4",
-    "unit": "mm"
+    "pageSize": { "width": 210, "height": 240 },
+    "unit": "mm",
+    "margins": { "top": 12, "right": 16, "bottom": 12, "left": 16 }
   },
   "pages": [
     {
@@ -13,30 +14,18 @@
           "type": "text",
           "content": "Customer Onboarding",
           "heading": 1,
-          "position": {
-            "x": 20,
-            "y": 15
-          },
-          "width": 170,
-          "style": {
-            "fontSize": 22,
-            "fontWeight": "bold",
-            "color": "#0f172a"
-          }
+          "position": { "x": 0, "y": 0 },
+          "width": 178,
+          "style": { "fontSize": 22, "fontWeight": "bold", "color": "#0f172a" }
         },
         {
           "type": "text",
-          "content": "Fill the form, save when done.",
-          "position": {
-            "x": 20,
-            "y": 28
-          },
-          "width": 170,
-          "style": {
-            "fontSize": 11,
-            "color": "#475569"
-          }
+          "content": "Type into any field — your input lives in the document. Click Save form to download a .jdf with your answers baked in.",
+          "position": { "x": 0, "y": 12 },
+          "width": 178,
+          "style": { "fontSize": 11, "color": "#475569", "lineHeight": 1.4 }
         },
+
         {
           "type": "input",
           "name": "fullName",
@@ -45,27 +34,21 @@
           "value": "",
           "placeholder": "Jane Doe",
           "required": true,
-          "position": {
-            "x": 20,
-            "y": 45
-          },
-          "width": 170,
-          "height": 12
+          "position": { "x": 0, "y": 30 },
+          "width": 178,
+          "height": 16
         },
         {
           "type": "input",
           "name": "email",
-          "label": "Email",
+          "label": "Email address",
           "inputType": "email",
           "value": "",
-          "placeholder": "you@example.com",
+          "placeholder": "jane@example.com",
           "required": true,
-          "position": {
-            "x": 20,
-            "y": 65
-          },
-          "width": 170,
-          "height": 12
+          "position": { "x": 0, "y": 52 },
+          "width": 178,
+          "height": 16
         },
         {
           "type": "input",
@@ -73,12 +56,9 @@
           "label": "Date of birth",
           "inputType": "date",
           "value": "",
-          "position": {
-            "x": 20,
-            "y": 85
-          },
-          "width": 80,
-          "height": 12
+          "position": { "x": 0, "y": 74 },
+          "width": 86,
+          "height": 16
         },
         {
           "type": "select",
@@ -86,63 +66,53 @@
           "label": "Country",
           "value": "tr",
           "options": [
-            {
-              "value": "tr",
-              "label": "Turkey"
-            },
-            {
-              "value": "us",
-              "label": "United States"
-            },
-            {
-              "value": "de",
-              "label": "Germany"
-            }
+            { "value": "tr", "label": "Turkey" },
+            { "value": "us", "label": "United States" },
+            { "value": "de", "label": "Germany" },
+            { "value": "gb", "label": "United Kingdom" }
           ],
-          "position": {
-            "x": 110,
-            "y": 85
-          },
-          "width": 80,
-          "height": 12
+          "position": { "x": 92, "y": 74 },
+          "width": 86,
+          "height": 16
         },
         {
           "type": "textarea",
           "name": "notes",
-          "label": "Notes",
+          "label": "Anything we should know?",
           "value": "",
-          "placeholder": "Anything we should know?",
-          "rows": 4,
-          "position": {
-            "x": 20,
-            "y": 105
-          },
-          "width": 170,
-          "height": 40
+          "placeholder": "Tell us about your team, use case, anything…",
+          "rows": 3,
+          "position": { "x": 0, "y": 96 },
+          "width": 178,
+          "height": 36
         },
         {
           "type": "checkbox",
           "name": "newsletter",
-          "label": "Subscribe me to the newsletter",
+          "label": "Email me product updates (about once a month)",
           "checked": false,
-          "position": {
-            "x": 20,
-            "y": 155
-          },
-          "width": 170,
+          "position": { "x": 0, "y": 138 },
+          "width": 178,
+          "height": 8
+        },
+        {
+          "type": "checkbox",
+          "name": "terms",
+          "label": "I agree to the terms and conditions",
+          "checked": false,
+          "required": true,
+          "position": { "x": 0, "y": 148 },
+          "width": 178,
           "height": 8
         },
         {
           "type": "signature",
           "name": "signature",
-          "label": "Signature",
+          "label": "Sign here",
           "value": "",
-          "position": {
-            "x": 20,
-            "y": 175
-          },
-          "width": 100,
-          "height": 30
+          "position": { "x": 0, "y": 162 },
+          "width": 178,
+          "height": 32
         }
       ]
     }

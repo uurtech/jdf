@@ -21,9 +21,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 
-  <!-- jdf.js — powers the live <jdf> embed lower on this page -->
-  <link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf@0.1.11/dist/jdfjs.css" />
-  <script type="module" src="https://unpkg.com/@uurtech/jdf@0.1.11"></script>
+  <!-- jdf.js — powers the live <jdf> embeds lower on the page. Build is
+       served from /jdfjs-local so the demo always reflects the current
+       repo (unpkg lags behind on form support and any unreleased fixes). -->
+  <link rel="stylesheet" href="jdfjs-local/jdfjs.css" />
+  <script type="module" src="jdfjs-local/jdfjs.js"></script>
 </head>
 <body>
   <header class="nav">

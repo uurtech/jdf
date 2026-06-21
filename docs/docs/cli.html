@@ -127,9 +127,19 @@ done</code></pre>
     npx @uurtech/jdf-cli import dist/output.json -o dist/output.jdf
     <span class="com"># exit 1 here means the model violated the JDF schema</span></code></pre>
 
+      <h2>PDF AcroForm → JDF Forms</h2>
+      <p>The CLI's PDF importer also walks <code>AcroForm</code> widget annotations and emits matching JDF form elements. Filled values in the source PDF survive the conversion — the resulting <code>.jdf</code> renders in jdf.js with the same fields pre-populated, and the user can keep editing in any browser without an Acrobat install.</p>
+<pre><code><span class="com"># Convert an existing fillable PDF to JDF (values + structure preserved)</span>
+$ jdf import w9-form.pdf -o w9-form.jdf
+$ jdf validate w9-form.jdf
+
+<span class="com"># Now host it; users fill the rest in their browser:</span>
+<span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"w9-form.jdf"</span> <span class="key">save-button</span><span class="punc">=</span><span class="str">"Save"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+      <p>Full mapping table (single-line vs multi-line text, checkbox, combo / list dropdowns, signatures) is on the <a href="forms.html"><strong>JDF Forms</strong></a> page.</p>
+
       <div class="next-prev">
         <a href="desktop.html" class="prev"><span class="label">← Previous</span><span class="title">Desktop Reader</span></a>
-        <a href="format/" class="next"><span class="label">Next →</span><span class="title">Format overview</span></a>
+        <a href="forms.html" class="next"><span class="label">Next →</span><span class="title">JDF Forms ★</span></a>
       </div>
     </main>
   </div>

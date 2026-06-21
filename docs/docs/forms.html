@@ -7,8 +7,11 @@
   <meta name="description" content="JDF documents can carry interactive form fields. Users fill the form in any browser, click Save, and download the same .jdf with their values inline. Something PDFs can't do without server-side AcroForm tooling." />
   <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
   <link rel="stylesheet" href="../docs.css" />
-  <link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf@0.1.11/dist/jdfjs.css" />
-  <script type="module" src="https://unpkg.com/@uurtech/jdf@0.1.11"></script>
+  <!-- Use the locally-built jdf.js so the page reflects current form support.
+       unpkg may still serve an older version that doesn't render input/
+       textarea/checkbox/select/signature elements. -->
+  <link rel="stylesheet" href="../jdfjs-local/jdfjs.css" />
+  <script type="module" src="../jdfjs-local/jdfjs.js"></script>
   <script defer src="../docs.js"></script>
   <style>
     /* Forms-page-only flourishes — kept inline so the global docs.css stays
@@ -453,7 +456,7 @@ $ jq -s <span class="str">'map(.. | select(.type=="input" or .type=="select") | 
       <p>The same five element types render in the desktop reader. A form filled in jdf.js opens in the desktop reader with the same values; a form filled in the desktop reader exports to PDF (via <code>Cmd+Shift+E</code>) with the user's values flattened to printable text and an underline for blank fields. Round-tripping is intentional — the document is the source of truth, the runtime is interchangeable.</p>
 
       <div class="next-prev">
-        <a href="embed/api.html" class="prev"><span class="label">← Previous</span><span class="title">jdf.js API reference</span></a>
+        <a href="embed/frameworks.html" class="prev"><span class="label">← Previous</span><span class="title">React · Vue · Svelte</span></a>
         <a href="format/elements.html" class="next"><span class="label">Next →</span><span class="title">Element reference</span></a>
       </div>
     </main>
