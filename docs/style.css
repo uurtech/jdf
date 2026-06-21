@@ -1167,3 +1167,22 @@ footer ul li a:hover { color: var(--brand); }
   font-weight: 700;
 }
 
+/* Nav "new" pill — same warm gradient as the hero flag, smaller scale. */
+.nav-links a.nav-new {
+  position: relative;
+  color: #ec4899;
+  font-weight: 600;
+}
+.nav-links a.nav-new:hover { color: #c026d3; }
+.nav-new-dot {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+  color: #f97316;
+  animation: nav-new-pulse 1.6s ease-in-out infinite;
+}
+@keyframes nav-new-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
