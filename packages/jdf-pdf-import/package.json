@@ -33,7 +33,8 @@
     "pdfjs-dist": "^4.0.0"
   },
   "optionalDependencies": {
-    "@napi-rs/canvas": "^0.1.65"
+    "@napi-rs/canvas": "^0.1.65",
+    "@tauri-apps/plugin-fs": "^2.2.0"
   },
   "devDependencies": {
     "@jdf/core": "workspace:*",

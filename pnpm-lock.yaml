@@ -106,6 +106,9 @@ importers:
       '@napi-rs/canvas':
         specifier: ^0.1.65
         version: 0.1.100
+      '@tauri-apps/plugin-fs':
+        specifier: ^2.2.0
+        version: 2.5.1
 
   tools/jdf-cli:
     dependencies:
