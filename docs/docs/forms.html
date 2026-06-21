@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JDF Forms — fillable, downloadable, machine-readable</title>
+  <meta name="description" content="JDF documents can carry interactive form fields. Users fill the form in any browser, click Save, and download the same .jdf with their values inline. Something PDFs can't do without server-side AcroForm tooling." />
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+  <link rel="stylesheet" href="../docs.css" />
+  <link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf@0.1.11/dist/jdfjs.css" />
+  <script type="module" src="https://unpkg.com/@uurtech/jdf@0.1.11"></script>
+  <script defer src="../docs.js"></script>
+  <style>
+    /* Forms-page-only flourishes — kept inline so the global docs.css stays
+       focused on shared docs primitives. */
+    .forms-hero {
+      padding: 36px 32px;
+      margin-bottom: 32px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(236, 72, 153, 0.06));
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .forms-hero::before {
+      content: "";
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.18), transparent 70%);
+      pointer-events: none;
+    }
+    .forms-flag {
+      display: inline-block;
+      background: linear-gradient(120deg, #f97316, #ec4899);
+      color: #fff;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .forms-hero h1 {
+      font-size: clamp(28px, 4vw, 38px);
+      line-height: 1.15;
+      margin: 0 0 14px;
+      letter-spacing: -0.02em;
+    }
+    .forms-hero h1 .grad {
+      background: linear-gradient(120deg, #2563eb, #ec4899);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .forms-hero p {
+      font-size: 17px;
+      line-height: 1.6;
+      color: var(--text-soft);
+      margin: 0;
+      max-width: 60ch;
+    }
+    .pdf-vs-jdf {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 28px 0 36px;
+    }
+    @media (max-width: 720px) { .pdf-vs-jdf { grid-template-columns: 1fr; } }
+    .pdf-vs-jdf .col {
+      padding: 20px 22px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .pdf-vs-jdf .col h3 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 0 0 12px;
+    }
+    .pdf-vs-jdf .col.pdf {
+      background: var(--bg-soft);
+    }
+    .pdf-vs-jdf .col.pdf h3 { color: #94a3b8; }
+    .pdf-vs-jdf .col.jdf {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.06), rgba(99, 102, 241, 0.04));
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+    .pdf-vs-jdf .col.jdf h3 { color: var(--brand); }
+    .pdf-vs-jdf ul { margin: 0; padding-left: 18px; line-height: 1.65; font-size: 14.5px; }
+    .pdf-vs-jdf .pdf li { color: var(--text-soft); }
+
+    .live-form-shell {
+      margin: 32px 0;
+      padding: 0;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .live-form-shell .live-form-label {
+      padding: 12px 18px;
+      background: linear-gradient(120deg, rgba(59, 130, 246, 0.08), rgba(236, 72, 153, 0.06));
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .live-form-shell jdf {
+      display: block;
+      min-height: 640px;
+      background: #fff;
+    }
+
+    .field-table { font-size: 13.5px; }
+    .field-table code { font-size: 0.92em; }
+
+    .api-block {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 18px 22px;
+      border-radius: 10px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+    .api-block .com { color: #64748b; }
+    .api-block .key { color: #60a5fa; }
+    .api-block .str { color: #fde68a; }
+
+    .three-step {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin: 24px 0 32px;
+    }
+    .three-step .step {
+      padding: 20px;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      position: relative;
+    }
+    .three-step .step .num {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--brand);
+      letter-spacing: 0.06em;
+    }
+    .three-step .step h4 {
+      font-size: 14px;
+      margin: 0 0 8px;
+      color: var(--text);
+      padding-right: 30px;
+    }
+    .three-step .step p {
+      margin: 0;
+      font-size: 13.5px;
+      color: var(--text-soft);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <header class="docs-nav">
+    <a class="brand" href="../"><svg viewBox="0 0 1024 1024" width="26" height="26"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs><rect width="1024" height="1024" rx="225" fill="url(#g)"/><text x="512" y="512" font-family="Inter,sans-serif" font-size="380" font-weight="900" fill="#fff" text-anchor="middle" dominant-baseline="central" letter-spacing="-12">JDF</text></svg><span>JDF</span><span style="color:var(--muted);font-weight:500">/ docs</span></a>
+    <nav class="nav-links"><a href="../">Home</a><a href="https://github.com/uurtech/jdf" target="_blank" rel="noopener">GitHub ↗</a></nav>
+  </header>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" data-base="./"></aside>
+
+    <main class="docs-content">
+      <div class="forms-hero">
+        <span class="forms-flag">★ New · only in JDF</span>
+        <h1>Forms that <span class="grad">fill in the browser, save as JSON</span>.</h1>
+        <p>Embed a <code>.jdf</code> form on any web page. The user types, ticks, picks, signs. Click <strong>Save</strong> — they download the same <code>.jdf</code> with their answers baked in. No backend, no PDF tooling, no server-side AcroForm pipeline. Just one tag and one file.</p>
+      </div>
+
+      <div class="callout">
+        <strong>Why this is different from PDF forms:</strong> a PDF AcroForm needs a viewer that supports interactive widgets (most browsers don't, mobile Safari barely does), and saving the filled form usually requires Adobe Acrobat or a server pipeline. JDF Forms run in <em>any</em> browser — the viewer is 25 kB of plain JavaScript, the file format is JSON, and the "save" is a regular file download.
+      </div>
+
+      <h2>What's wrong with PDF forms</h2>
+
+      <div class="pdf-vs-jdf">
+        <div class="col pdf">
+          <h3>PDF AcroForm</h3>
+          <ul>
+            <li>Browsers' built-in PDF viewers handle widgets inconsistently — fill fields, hit refresh, lose everything.</li>
+            <li>"Save filled PDF" usually requires Acrobat Reader or a server with iText / pdftk / qpdf.</li>
+            <li>The filled PDF is still a binary blob — your RAG re-parses every form to extract one new value.</li>
+            <li>Generating the form is a binary-format job. Most stacks reach for a service.</li>
+            <li>Validating user input is on you — the format has no schema for it.</li>
+          </ul>
+        </div>
+        <div class="col jdf">
+          <h3>JDF Forms</h3>
+          <ul>
+            <li>Renders identically everywhere jdf.js loads — Chrome, Safari, Firefox, mobile, embedded webviews.</li>
+            <li>Save is a one-click browser download. No backend, no Acrobat, no plugin.</li>
+            <li>Filled form is plain JSON. Your RAG indexes <code>name → value</code> directly. <code>jq</code> reads it. <code>git diff</code> shows what changed.</li>
+            <li>Generating the form is <code>JSON.stringify(doc)</code>. LLMs and code-gen pipelines emit forms natively.</li>
+            <li>JSON Schema validates structure. <code>required</code>, <code>pattern</code>, <code>readonly</code> are first-class.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>How it works in three pieces</h2>
+
+      <div class="three-step">
+        <div class="step">
+          <div class="num">01</div>
+          <h4>Author the form</h4>
+          <p>One JSON document. Five element types: <code>input</code>, <code>textarea</code>, <code>checkbox</code>, <code>select</code>, <code>signature</code>. Each has a stable <code>name</code> — that's the value lookup key.</p>
+        </div>
+        <div class="step">
+          <div class="num">02</div>
+          <h4>Embed on your page</h4>
+          <p>One <code>&lt;jdf&gt;</code> tag. Add <code>save-button</code> to drop a button in the corner. jdf.js renders real <code>&lt;input&gt;</code> / <code>&lt;textarea&gt;</code> / <code>&lt;canvas&gt;</code> elements and tracks the user's input live.</p>
+        </div>
+        <div class="step">
+          <div class="num">03</div>
+          <h4>User saves the filled JDF</h4>
+          <p>Browser downloads <code>customer-form.jdf</code>. Open in a text editor — values are right there. Re-open in jdf.js and the form resumes pre-filled. Export to PDF with <code>jdf export</code>; pipe to RAG with <code>jdf validate</code>.</p>
+        </div>
+      </div>
+
+      <h2>Try it — fill the form, click Save</h2>
+
+      <div class="live-form-shell">
+        <div class="live-form-label">↓ Live demo — type, tick, sign, then click Save form</div>
+        <jdf src="../examples/customer-form.jdf"
+             save-button="Save form"
+             save-filename="filled-customer-form.jdf"
+             height="640"
+             fit="fit-width"
+             dark-mode="light"></jdf>
+      </div>
+
+      <p>Open the downloaded file in any text editor. Every value you typed is right there next to its field declaration — no binary parsing required.</p>
+
+      <h2>Element types</h2>
+
+      <table class="field-table">
+        <thead>
+          <tr><th>Type</th><th>Renders as</th><th>Value field</th><th>Use for</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>input</code></td>
+            <td><code>&lt;input&gt;</code></td>
+            <td><code>value: string</code></td>
+            <td>Single-line text. <code>inputType</code> picks the variant — text / number / email / url / tel / date / time / datetime-local / password / color.</td>
+          </tr>
+          <tr>
+            <td><code>textarea</code></td>
+            <td><code>&lt;textarea&gt;</code></td>
+            <td><code>value: string</code></td>
+            <td>Multi-line text. <code>rows</code> sets initial height; users can drag-resize.</td>
+          </tr>
+          <tr>
+            <td><code>checkbox</code></td>
+            <td><code>&lt;input type="checkbox"&gt;</code></td>
+            <td><code>checked: boolean</code></td>
+            <td>Boolean toggles, agreement boxes, "subscribe to newsletter".</td>
+          </tr>
+          <tr>
+            <td><code>select</code></td>
+            <td><code>&lt;select&gt;</code></td>
+            <td><code>value: string</code> or <code>values: string[]</code> when <code>multiple: true</code></td>
+            <td>Dropdowns, country pickers, multi-tag selectors.</td>
+          </tr>
+          <tr>
+            <td><code>signature</code></td>
+            <td><code>&lt;canvas&gt;</code> with pointer drawing</td>
+            <td><code>value: string</code> (base64 PNG)</td>
+            <td>Drawn signatures. The PNG bytes live inline in the JDF — no external upload, no third-party signature service.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Common field properties</h3>
+      <p>Every form element shares these attributes — encoded the same way as the underlying HTML so authors don't have to learn a new shape:</p>
+      <ul>
+        <li><code>name</code> <strong>(required)</strong> — stable key for value lookup. Required by the schema.</li>
+        <li><code>label</code> — text rendered above / next to the field.</li>
+        <li><code>required</code> — boolean validation hint.</li>
+        <li><code>readonly</code> — disable editing while still showing the current value.</li>
+        <li><code>position</code> / <code>width</code> / <code>height</code> — same layout fields as every other element type.</li>
+        <li><code>style</code> — inline style or named style ref.</li>
+      </ul>
+
+      <h2>Hello, JDF Form</h2>
+
+      <p>A complete fillable form, copy-pasteable:</p>
+
+<pre><code><span class="punc">{</span>
+  <span class="key">"$jdf"</span><span class="punc">:</span> <span class="str">"1.0.0"</span><span class="punc">,</span>
+  <span class="key">"meta"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"title"</span><span class="punc">:</span> <span class="str">"Customer onboarding"</span><span class="punc">,</span> <span class="key">"pageSize"</span><span class="punc">:</span> <span class="str">"A4"</span><span class="punc">,</span> <span class="key">"unit"</span><span class="punc">:</span> <span class="str">"mm"</span> <span class="punc">},</span>
+  <span class="key">"pages"</span><span class="punc">:</span> <span class="punc">[{</span>
+    <span class="key">"id"</span><span class="punc">:</span> <span class="str">"page-1"</span><span class="punc">,</span>
+    <span class="key">"elements"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Onboarding"</span><span class="punc">,</span> <span class="key">"heading"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span>
+        <span class="key">"position"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"x"</span><span class="punc">:</span> <span class="num">20</span><span class="punc">,</span> <span class="key">"y"</span><span class="punc">:</span> <span class="num">15</span> <span class="punc">},</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">170</span> <span class="punc">},</span>
+
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"input"</span><span class="punc">,</span> <span class="key">"name"</span><span class="punc">:</span> <span class="str">"fullName"</span><span class="punc">,</span> <span class="key">"label"</span><span class="punc">:</span> <span class="str">"Full name"</span><span class="punc">,</span>
+        <span class="key">"inputType"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"required"</span><span class="punc">:</span> <span class="key">true</span><span class="punc">,</span>
+        <span class="key">"position"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"x"</span><span class="punc">:</span> <span class="num">20</span><span class="punc">,</span> <span class="key">"y"</span><span class="punc">:</span> <span class="num">40</span> <span class="punc">},</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">170</span><span class="punc">,</span> <span class="key">"height"</span><span class="punc">:</span> <span class="num">12</span> <span class="punc">},</span>
+
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"input"</span><span class="punc">,</span> <span class="key">"name"</span><span class="punc">:</span> <span class="str">"email"</span><span class="punc">,</span> <span class="key">"label"</span><span class="punc">:</span> <span class="str">"Email"</span><span class="punc">,</span>
+        <span class="key">"inputType"</span><span class="punc">:</span> <span class="str">"email"</span><span class="punc">,</span> <span class="key">"required"</span><span class="punc">:</span> <span class="key">true</span><span class="punc">,</span>
+        <span class="key">"position"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"x"</span><span class="punc">:</span> <span class="num">20</span><span class="punc">,</span> <span class="key">"y"</span><span class="punc">:</span> <span class="num">60</span> <span class="punc">},</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">170</span><span class="punc">,</span> <span class="key">"height"</span><span class="punc">:</span> <span class="num">12</span> <span class="punc">},</span>
+
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"select"</span><span class="punc">,</span> <span class="key">"name"</span><span class="punc">:</span> <span class="str">"country"</span><span class="punc">,</span> <span class="key">"label"</span><span class="punc">:</span> <span class="str">"Country"</span><span class="punc">,</span>
+        <span class="key">"options"</span><span class="punc">:</span> <span class="punc">[{</span><span class="key">"value"</span><span class="punc">:</span><span class="str">"tr"</span><span class="punc">,</span> <span class="key">"label"</span><span class="punc">:</span><span class="str">"Turkey"</span><span class="punc">},</span> <span class="punc">{</span><span class="key">"value"</span><span class="punc">:</span><span class="str">"us"</span><span class="punc">,</span> <span class="key">"label"</span><span class="punc">:</span><span class="str">"USA"</span><span class="punc">}],</span>
+        <span class="key">"position"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"x"</span><span class="punc">:</span> <span class="num">20</span><span class="punc">,</span> <span class="key">"y"</span><span class="punc">:</span> <span class="num">80</span> <span class="punc">},</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">80</span> <span class="punc">},</span>
+
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"checkbox"</span><span class="punc">,</span> <span class="key">"name"</span><span class="punc">:</span> <span class="str">"newsletter"</span><span class="punc">,</span>
+        <span class="key">"label"</span><span class="punc">:</span> <span class="str">"Subscribe to the newsletter"</span><span class="punc">,</span>
+        <span class="key">"position"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"x"</span><span class="punc">:</span> <span class="num">20</span><span class="punc">,</span> <span class="key">"y"</span><span class="punc">:</span> <span class="num">100</span> <span class="punc">},</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">170</span> <span class="punc">},</span>
+
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"signature"</span><span class="punc">,</span> <span class="key">"name"</span><span class="punc">:</span> <span class="str">"signature"</span><span class="punc">,</span> <span class="key">"label"</span><span class="punc">:</span> <span class="str">"Signature"</span><span class="punc">,</span>
+        <span class="key">"position"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"x"</span><span class="punc">:</span> <span class="num">20</span><span class="punc">,</span> <span class="key">"y"</span><span class="punc">:</span> <span class="num">120</span> <span class="punc">},</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">100</span><span class="punc">,</span> <span class="key">"height"</span><span class="punc">:</span> <span class="num">30</span> <span class="punc">}</span>
+    <span class="punc">]</span>
+  <span class="punc">}]</span>
+<span class="punc">}</span></code></pre>
+
+      <h2>Embed it</h2>
+
+<pre><code><span class="punc">&lt;</span><span class="key">link</span> <span class="key">rel</span><span class="punc">=</span><span class="str">"stylesheet"</span> <span class="key">href</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf@latest/dist/jdfjs.css"</span><span class="punc">&gt;</span>
+<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf@latest"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
+
+<span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"customer-form.jdf"</span>
+     <span class="key">save-button</span><span class="punc">=</span><span class="str">"Save form"</span>
+     <span class="key">save-filename</span><span class="punc">=</span><span class="str">"filled-form.jdf"</span>
+     <span class="key">height</span><span class="punc">=</span><span class="str">"640"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+
+      <h3>Embed attributes</h3>
+      <ul>
+        <li><code>save-button</code> — adds a Save button in the embed's corner. Set to a string to override the label (<code>save-button="Download"</code>).</li>
+        <li><code>save-filename</code> — explicit download filename. Defaults to <code>&lt;meta.title&gt;.jdf</code>.</li>
+        <li>Standard <code>&lt;jdf&gt;</code> attributes still apply: <code>height</code>, <code>width</code>, <code>zoom</code>, <code>fit</code>, <code>dark-mode</code>.</li>
+      </ul>
+
+      <h2>Programmatic API</h2>
+
+      <p>The class form gives you direct access to form values without involving the Save button:</p>
+
+<pre class="api-block"><code><span class="com">// import the embed factory</span>
+<span class="key">import</span> <span class="punc">{</span> embed <span class="punc">}</span> <span class="key">from</span> <span class="str">"@uurtech/jdf"</span><span class="punc">;</span>
+
+<span class="key">const</span> viewer <span class="punc">=</span> <span class="key">await</span> embed<span class="punc">(</span><span class="str">"#form"</span><span class="punc">,</span> <span class="str">"/customer-form.jdf"</span><span class="punc">);</span>
+
+<span class="com">// One-shot read</span>
+viewer<span class="punc">.</span>getFormValues<span class="punc">();</span>
+<span class="com">// → { fullName: "Jane Doe", email: "jane@x.com", country: "tr",</span>
+<span class="com">//    newsletter: true, signature: "data:image/png;base64,iVBOR..." }</span>
+
+viewer<span class="punc">.</span>getFormValue<span class="punc">(</span><span class="str">"fullName"</span><span class="punc">);</span>     <span class="com">// "Jane Doe"</span>
+
+<span class="com">// Live subscription — auto-save, dirty tracking, validation hooks</span>
+<span class="key">const</span> v2 <span class="punc">=</span> <span class="key">await</span> embed<span class="punc">(</span><span class="str">"#form"</span><span class="punc">,</span> <span class="str">"/customer-form.jdf"</span><span class="punc">,</span> <span class="punc">{</span>
+  onFormChange<span class="punc">:</span> <span class="punc">(</span>doc<span class="punc">,</span> change<span class="punc">)</span> <span class="punc">=&gt;</span> <span class="punc">{</span>
+    fetch<span class="punc">(</span><span class="str">"/api/draft"</span><span class="punc">,</span> <span class="punc">{</span> method<span class="punc">:</span> <span class="str">"POST"</span><span class="punc">,</span> body<span class="punc">:</span> JSON<span class="punc">.</span>stringify<span class="punc">(</span>doc<span class="punc">)</span> <span class="punc">});</span>
+  <span class="punc">},</span>
+<span class="punc">});</span>
+
+<span class="com">// Manual download — wire it to your own button</span>
+viewer<span class="punc">.</span>downloadJdf<span class="punc">(</span><span class="str">"my-form.jdf"</span><span class="punc">);</span>
+
+<span class="com">// Or grab the blob — upload it, store it in IndexedDB, do whatever</span>
+<span class="key">const</span> blob <span class="punc">=</span> viewer<span class="punc">.</span>exportJdf<span class="punc">();</span>
+<span class="key">await</span> fetch<span class="punc">(</span><span class="str">"/api/submit"</span><span class="punc">,</span> <span class="punc">{</span>
+  method<span class="punc">:</span> <span class="str">"POST"</span><span class="punc">,</span>
+  body<span class="punc">:</span> blob<span class="punc">,</span>
+  headers<span class="punc">:</span> <span class="punc">{</span> <span class="str">"Content-Type"</span><span class="punc">:</span> <span class="str">"application/jdf+json"</span> <span class="punc">},</span>
+<span class="punc">});</span></code></pre>
+
+      <h3>Method reference</h3>
+      <table>
+        <thead><tr><th>Method</th><th>Returns</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>getFormValue(name)</code></td><td><code>string | boolean | string[]</code></td><td>Reads one field by its <code>name</code>. Checkboxes return <code>boolean</code>, multi-selects return <code>string[]</code>, everything else returns <code>string</code>.</td></tr>
+          <tr><td><code>getFormValues()</code></td><td><code>{ [name]: value }</code></td><td>Flat map of every form field's current value.</td></tr>
+          <tr><td><code>exportJdf({ pretty? })</code></td><td><code>Blob</code></td><td>Current document as a Blob with mime <code>application/jdf+json</code>. Default is pretty-printed.</td></tr>
+          <tr><td><code>toJSON({ pretty? })</code></td><td><code>string</code></td><td>Same content as <code>exportJdf()</code> but as a string — for direct fetch bodies, console logs, etc.</td></tr>
+          <tr><td><code>downloadJdf(filename?)</code></td><td><code>void</code></td><td>Trigger a browser download. Without a name, uses <code>&lt;meta.title&gt;.jdf</code>.</td></tr>
+          <tr><td><code>document</code> (getter)</td><td><code>JdfDocument</code></td><td>Live reference to the current document. Reading it after the user typed reflects the latest values.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>PDF AcroForm import</h2>
+
+      <p>Existing PDFs with form fields convert one-to-one. The CLI walks the PDF's widget annotations and emits matching JDF form elements with their current values intact:</p>
+
+<pre><code><span class="com"># PDF AcroForm → JDF with form elements + filled values</span>
+$ jdf import w9-form.pdf -o w9-form.jdf
+$ jdf validate w9-form.jdf
+✓ Valid: w9-form.jdf
+  Format:    1.0.0
+  Pages:     1
+  Elements:  18
+
+<span class="com"># Open in jdf.js — fields are pre-filled with whatever the PDF had</span>
+<span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"w9-form.jdf"</span> <span class="key">save-button</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+
+      <table class="field-table">
+        <thead><tr><th>PDF widget type</th><th>JDF element</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><code>Tx</code> (text), single-line</td><td><code>input</code></td><td><code>inputType: "text"</code>; <code>fieldValue</code> → <code>value</code>.</td></tr>
+          <tr><td><code>Tx</code> with multi-line flag</td><td><code>textarea</code></td><td>Detected via field flags bit 13.</td></tr>
+          <tr><td><code>Btn</code> (checkbox)</td><td><code>checkbox</code></td><td><code>checked</code> = true when <code>fieldValue ≠ "Off"</code>.</td></tr>
+          <tr><td><code>Btn</code> (radio)</td><td>(currently dropped)</td><td>JDF 1.0 doesn't have a native radio element type yet — radio groups are flattened away on import.</td></tr>
+          <tr><td><code>Btn</code> (pushbutton)</td><td>(skipped)</td><td>No form-value semantics, ignored.</td></tr>
+          <tr><td><code>Ch</code> (combo / list)</td><td><code>select</code></td><td><code>combo</code> flag → dropdown; <code>multiSelect</code> flag → <code>multiple: true</code> with <code>values[]</code>.</td></tr>
+          <tr><td><code>Sig</code> (signature)</td><td><code>signature</code></td><td>Existing signature appearance is dropped; the user re-signs in the embed.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>RAG / pipeline ingestion</h2>
+
+      <p>A filled JDF form is structured data your retriever can chunk per field. No more parsing PDF widget streams or running OCR on filled pages:</p>
+
+<pre><code><span class="com"># CI gate: every submitted form must pass schema validation</span>
+$ jdf validate inbox/*.jdf || exit 1
+
+<span class="com"># Then jq the responses straight into your retriever</span>
+$ jq -s <span class="str">'map(.. | select(.type=="input" or .type=="select") | {name, value})'</span> \
+       inbox/*.jdf
+[
+  { "name": "fullName", "value": "Jane Doe" },
+  { "name": "email", "value": "jane@example.com" },
+  { "name": "country", "value": "tr" }
+]</code></pre>
+
+      <p>The same query works on every form in your corpus, regardless of who authored it. There is no per-document parser to write, no font-extraction step, no OCR fallback.</p>
+
+      <div class="callout callout-ai">
+        <strong>The AI angle:</strong> models emit JSON natively, and a JDF form is JSON. So an LLM can <em>generate</em> a fillable form, an agent can <em>fill</em> it programmatically (mutate <code>value</code> fields, write the JSON back to disk), and the same file flows through a viewer for human review or final signature. PDF requires a different tool at every stage.
+      </div>
+
+      <h2>Reader / desktop parity</h2>
+
+      <p>The same five element types render in the desktop reader. A form filled in jdf.js opens in the desktop reader with the same values; a form filled in the desktop reader exports to PDF (via <code>Cmd+Shift+E</code>) with the user's values flattened to printable text and an underline for blank fields. Round-tripping is intentional — the document is the source of truth, the runtime is interchangeable.</p>
+
+      <div class="next-prev">
+        <a href="embed/api.html" class="prev"><span class="label">← Previous</span><span class="title">jdf.js API reference</span></a>
+        <a href="format/elements.html" class="next"><span class="label">Next →</span><span class="title">Element reference</span></a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

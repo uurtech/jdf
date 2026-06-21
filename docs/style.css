@@ -1127,3 +1127,43 @@ footer ul li a:hover { color: var(--brand); }
   margin-top: 8px;
 }
 
+/* === Hero "what's new" flag — points to the JDF Forms section ========= */
+.hero-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px 10px 14px;
+  margin: 28px auto 0;
+  background: linear-gradient(120deg, rgba(249, 115, 22, 0.1), rgba(236, 72, 153, 0.1));
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--text);
+  font-size: 14px;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+.hero-flag:hover {
+  transform: translateY(-2px);
+  border-color: #ec4899;
+  background: linear-gradient(120deg, rgba(249, 115, 22, 0.18), rgba(236, 72, 153, 0.18));
+  color: var(--text);
+}
+.hero-flag-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  background: linear-gradient(120deg, #f97316, #ec4899);
+  color: #fff;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+.hero-flag-title {
+  font-weight: 600;
+  color: var(--text);
+}
+.hero-flag-arrow {
+  color: #ec4899;
+  font-weight: 700;
+}
+
