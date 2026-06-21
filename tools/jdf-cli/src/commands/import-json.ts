@@ -12,9 +12,25 @@ export interface ImportJsonOptions {
 }
 
 /**
+ * Error thrown by importJson when the input is malformed or schema-invalid.
+ * Programmatic callers (long-lived ingestion workers, batch wrappers) catch
+ * this; the CLI's `index.ts` translates it into a non-zero exit code.
+ *
+ * The previous version called `process.exit(1)` directly from this module,
+ * which killed the host process on the first bad file — a bug for any
+ * pipeline that imports more than one document per run.
+ */
+export class ImportJsonError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ImportJsonError";
+  }
+}
+
+/**
  * JSON → JDF.
  *
- * The CLI's JSON path is for the AI / RAG / CI workflow:  models and
+ * The CLI's JSON path is for the AI / RAG / CI workflow: models and
  * pipelines emit JSON, and we want to wrap that JSON into a real `.jdf`
  * (or `.jdfx`) without anyone hand-writing the envelope.
  *
@@ -25,8 +41,9 @@ export interface ImportJsonOptions {
  *   3. A `{ elements: [...] }` or `{ pages: [...] }` partial — filled in
  *      with sensible defaults (A4, no margins, format 1.0.0).
  *
- * Schema validation runs at the end (skip with `skipValidate: true`); a
- * non-zero exit on invalid JSON keeps this safe to drop into CI as a gate.
+ * Validation runs at the end (skip with `skipValidate: true`); the function
+ * throws `ImportJsonError` on schema failure so callers can decide whether
+ * to halt the pipeline or skip the bad doc.
  */
 export async function importJson(
   inputPath: string,
@@ -35,8 +52,7 @@ export async function importJson(
 ): Promise<void> {
   const input = path.resolve(inputPath);
   if (!fs.existsSync(input)) {
-    console.error(`File not found: ${input}`);
-    process.exit(1);
+    throw new ImportJsonError(`File not found: ${input}`);
   }
 
   console.log(`Importing: ${input}`);
@@ -45,8 +61,7 @@ export async function importJson(
   try {
     parsed = JSON.parse(raw);
   } catch (e: any) {
-    console.error(`✗ Not valid JSON: ${e.message}`);
-    process.exit(1);
+    throw new ImportJsonError(`Not valid JSON: ${e.message}`);
   }
 
   const title = path.basename(input, path.extname(input));
@@ -74,7 +89,7 @@ export async function importJson(
   if (!options.skipValidate) {
     console.log("");
     const ok = await validateDoc(output);
-    if (!ok) process.exit(1);
+    if (!ok) throw new ImportJsonError(`Schema validation failed for ${output}`);
   }
 
   console.log(`Open with: open -a "JDF Reader" "${output}"`);
@@ -87,8 +102,7 @@ function normaliseToJdf(input: any, title: string): JdfDocument {
   // reference.
   if (input && typeof input === "object" && typeof input.$jdf === "string" && Array.isArray(input.pages)) {
     if (input.pages.length === 0) {
-      console.error("✗ JDF document has zero pages — `pages` must contain at least one page");
-      process.exit(1);
+      throw new ImportJsonError("JDF document has zero pages — `pages` must contain at least one page");
     }
     const meta = input.meta && typeof input.meta === "object"
       ? { title: input.meta.title ?? title, pageSize: "A4", unit: "mm", ...input.meta }
@@ -107,8 +121,7 @@ function normaliseToJdf(input: any, title: string): JdfDocument {
   // Shape 2: bare element array.
   if (Array.isArray(input)) {
     if (input.length === 0) {
-      console.error("✗ Element array is empty — wrap at least one element");
-      process.exit(1);
+      throw new ImportJsonError("Element array is empty — wrap at least one element");
     }
     return wrapElements(input as Element[], title);
   }
@@ -117,8 +130,7 @@ function normaliseToJdf(input: any, title: string): JdfDocument {
   if (input && typeof input === "object") {
     if (Array.isArray(input.pages)) {
       if (input.pages.length === 0) {
-        console.error("✗ `pages` is empty — provide at least one page");
-        process.exit(1);
+        throw new ImportJsonError("`pages` is empty — provide at least one page");
       }
       return {
         $jdf: input.$jdf || "1.0.0",
@@ -132,15 +144,15 @@ function normaliseToJdf(input: any, title: string): JdfDocument {
     }
     if (Array.isArray(input.elements)) {
       if (input.elements.length === 0) {
-        console.error("✗ `elements` is empty — provide at least one element");
-        process.exit(1);
+        throw new ImportJsonError("`elements` is empty — provide at least one element");
       }
       return wrapElements(input.elements as Element[], title, input.meta);
     }
   }
 
-  console.error("✗ Unrecognised JSON shape — expected a JDF document, an element array, or { pages: [...] } / { elements: [...] }");
-  process.exit(1);
+  throw new ImportJsonError(
+    "Unrecognised JSON shape — expected a JDF document, an element array, or { pages: [...] } / { elements: [...] }",
+  );
 }
 
 function wrapElements(elements: Element[], title: string, meta?: any): JdfDocument {

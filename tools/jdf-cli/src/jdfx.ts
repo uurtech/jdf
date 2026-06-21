@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { createHash } from "node:crypto";
 import {
   JDFX_DOCUMENT_PATH,
   JDFX_MANIFEST_PATH,
@@ -22,10 +23,33 @@ function decodeBase64(s: string): Buffer {
   return Buffer.from(s, "base64");
 }
 
+function hashBytes(bytes: Buffer): string {
+  return createHash("sha1").update(bytes).digest("hex").slice(0, 16);
+}
+
+/** Walk every element and rewrite `el.resource === oldKey` to point at `newKey`. */
+function rewriteResourceRefs(doc: JdfDocument, oldKey: string, newKey: string): void {
+  function walk(els: any[] | undefined) {
+    if (!els) return;
+    for (const el of els) {
+      if (el?.resource === oldKey) el.resource = newKey;
+      if (el?.elements) walk(el.elements);
+      if (el?.children) walk(el.children);
+    }
+  }
+  for (const page of doc.pages || []) walk(page.elements as any[]);
+}
+
 function extractAssets(doc: JdfDocument): { doc: JdfDocument; assets: ExtractedAsset[] } {
   const assets: ExtractedAsset[] = [];
   const cloned: JdfDocument = JSON.parse(JSON.stringify(doc));
   const usedIds = new Set<string>();
+  // Content-hash → existing asset id. Two elements that reference the same
+  // bytes (the same logo on every page of a PDF, the same icon used in 50
+  // table cells, etc.) get one shared `resources.images` entry instead of
+  // N copies. This keeps the .jdfx zip from inflating linearly with usage
+  // count and gives RAG ingestion one image chunk per logical asset.
+  const hashToId = new Map<string, string>();
   let inlineCounter = 0;
 
   // Reserve ids that resources.images already uses so the page-walk counter
@@ -47,16 +71,25 @@ function extractAssets(doc: JdfDocument): { doc: JdfDocument; assets: ExtractedA
     }
   }
 
+  function intern(bytes: Buffer, mimeType: string, ext: string): string {
+    const h = hashBytes(bytes);
+    const existing = hashToId.get(h);
+    if (existing) return existing;
+    const id = nextInlineId();
+    hashToId.set(h, id);
+    assets.push({ id, bytes, mimeType, ext });
+    return id;
+  }
+
   function walk(els: any[] | undefined) {
     if (!els) return;
     for (const el of els) {
       if (el?.type === "image" && typeof el.src === "string" && el.src.startsWith("data:")) {
         const m = el.src.match(/^data:([^;]+);base64,(.*)$/);
         if (m) {
-          const id = nextInlineId();
           const mimeType = m[1];
           const ext = mimeType.split("/")[1]?.replace("jpeg", "jpg") || "bin";
-          assets.push({ id, bytes: decodeBase64(m[2]), mimeType, ext });
+          const id = intern(decodeBase64(m[2]), mimeType, ext);
           delete el.src;
           el.resource = id;
         }
@@ -72,6 +105,11 @@ function extractAssets(doc: JdfDocument): { doc: JdfDocument; assets: ExtractedA
   // base64 `data` itself is moved to the zip's assets/ directory. Renderers
   // still look up the resource by key and find the same metadata, just
   // without the inlined bytes (the asset is loaded from the zip).
+  //
+  // Hash here too so resources.images entries that share bytes with each
+  // other (or with the inline-image walk above) collapse to one zipped
+  // file. The original key is preserved for backwards compatibility — the
+  // zip's asset path is named after the content hash, not the key.
   if (cloned.resources?.images) {
     for (const [key, res] of Object.entries(cloned.resources.images)) {
       if (!res || typeof res !== "object" || !("data" in res) || !res.data) continue;
@@ -80,14 +118,29 @@ function extractAssets(doc: JdfDocument): { doc: JdfDocument; assets: ExtractedA
       const b64 = m ? m[2] : data;
       const mimeType = m ? m[1] : (res as any).mimeType || "image/png";
       const ext = mimeType.split("/")[1]?.replace("jpeg", "jpg") || "bin";
-      assets.push({ id: key, bytes: decodeBase64(b64), mimeType, ext });
-      // Strip only the bytes — the renderer can still read other fields.
+      const bytes = decodeBase64(b64);
+      const h = hashBytes(bytes);
+      let canonicalId = hashToId.get(h);
+      if (!canonicalId) {
+        // Use the original key as the canonical id when possible — keeps
+        // existing renderers that look up resources by name working.
+        canonicalId = key;
+        hashToId.set(h, canonicalId);
+        usedIds.add(canonicalId);
+        assets.push({ id: canonicalId, bytes, mimeType, ext });
+      }
+      // Update the document to point at the canonical id (may be the same
+      // as `key`, may be a previously-interned hash hit).
       const updated: Record<string, unknown> = { ...(res as Record<string, unknown>) };
       delete updated.data;
-      // Keep `src: "embedded"` semantics — the asset still lives in this
-      // bundle, just under assets/ instead of inlined.
       updated.src = "embedded";
-      (cloned.resources.images as any)[key] = updated;
+      if (canonicalId !== key) {
+        // Drop the duplicate key and rewrite element references.
+        delete (cloned.resources.images as any)[key];
+        rewriteResourceRefs(cloned, key, canonicalId);
+      } else {
+        (cloned.resources.images as any)[key] = updated;
+      }
     }
   }
 

@@ -327,14 +327,30 @@ async function extractImages(
   page: any,
   positions: ImagePos[],
   runtime: PdfImportRuntime,
+  /** Cross-page cache keyed by PDF XObject `name`. Same logo on 1000 pages
+   *  resolves once and produces one shared resource entry instead of 1000. */
+  dataUrlCache: Map<string, string>,
 ): Promise<{ pos: ImagePos; dataUrl: string }[]> {
-  const out: { pos: ImagePos; dataUrl: string }[] = [];
-  for (const pos of positions) {
+  // Resolve every image position in parallel — for image-heavy pages
+  // (presentations, marketing PDFs) the previous serial loop turned into a
+  // multi-second wait per page. Each lookup still races a 250ms fallback in
+  // case the PDF.js callback never fires; the timer is cleared as soon as
+  // the real callback resolves so it doesn't pile up timers across pages.
+  const tasks = positions.map(async (pos) => {
+    if (dataUrlCache.has(pos.name)) {
+      return { pos, dataUrl: dataUrlCache.get(pos.name)! };
+    }
     let imgObj: any = null;
     try {
       imgObj = await new Promise<any>((resolve) => {
         let settled = false;
-        const done = (v: any) => { if (!settled) { settled = true; resolve(v); } };
+        const timer = setTimeout(() => done(null), 250);
+        const done = (v: any) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          resolve(v);
+        };
         try {
           page.objs.get(pos.name, (img: any) => done(img));
         } catch {
@@ -344,20 +360,18 @@ async function extractImages(
             done(null);
           }
         }
-        // If the image XObject isn't realised yet (page.render didn't reach
-        // it, or commonObjs callback never fires), bail after a short wait
-        // instead of wedging the whole import.
-        setTimeout(() => done(null), 250);
       });
     } catch {
       imgObj = null;
     }
-    if (!imgObj || !imgObj.data || !imgObj.width || !imgObj.height) continue;
+    if (!imgObj || !imgObj.data || !imgObj.width || !imgObj.height) return null;
     const dataUrl = runtime.encodePng(imgObj.width, imgObj.height, imgObj.kind || 0, imgObj.data);
-    if (!dataUrl) continue;
-    out.push({ pos, dataUrl });
-  }
-  return out;
+    if (!dataUrl) return null;
+    dataUrlCache.set(pos.name, dataUrl);
+    return { pos, dataUrl };
+  });
+  const settled = await Promise.all(tasks);
+  return settled.filter((x): x is { pos: ImagePos; dataUrl: string } => x !== null);
 }
 
 interface TextRun {
@@ -489,6 +503,12 @@ export async function importPdfToJdf(
   const pages: Page[] = [];
   const imageResources: Record<string, ImageResource> = {};
   let imgCounter = 0;
+  // Two caches — `dataUrlCache` keeps the encoded PNG so we don't re-encode
+  // the same XObject on every page; `resourceKeyByName` re-uses a single
+  // resource id across all elements that point at the same PDF image. Same
+  // logo on 1000 pages → one entry in `resources.images`, not 1000 copies.
+  const dataUrlCache = new Map<string, string>();
+  const resourceKeyByName = new Map<string, string>();
 
   const outline = await doc.getOutline().catch(() => null);
   await flattenOutline(doc, outline); // currently informational
@@ -543,27 +563,43 @@ export async function importPdfToJdf(
     }
 
     const runs: TextRun[] = [];
+    // Sanitiser used on every numeric field that lands in the JSON output.
+    // PDF.js can produce NaN here when a font is broken or the transform
+    // matrix has zero determinant — without this clamp, NaN propagates
+    // through Math.round/Math.max and `JSON.stringify` writes `null`,
+    // which fails downstream schema validation OR (worse, with --json and
+    // no validate) feeds `null` into a numeric field that the embedder
+    // doesn't expect.
+    const safeNum = (v: any, fallback: number): number => {
+      const n = typeof v === "number" ? v : Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    };
+
     items.forEach((it, idx) => {
       if (!it.str || !it.str.length) return;
       if ((ops.textRenderingModes[idx] ?? 0) === 3) return;
       const tr = it.transform as number[];
-      const fontSize = Math.hypot(tr[2], tr[3]) || it.height || 10;
-      const baseX = tr[4];
-      const baseY = tr[5];
-      const [vx, vy] = viewport.convertToViewportPoint(baseX, baseY) as [number, number];
-      const ascent = it.height ? it.height * 0.78 : fontSize * 0.78;
+      const fontSize = safeNum(Math.hypot(safeNum(tr?.[2], 0), safeNum(tr?.[3], 0)), 0)
+        || safeNum(it.height, 0)
+        || 10;
+      const baseX = safeNum(tr?.[4], 0);
+      const baseY = safeNum(tr?.[5], 0);
+      const conv = viewport.convertToViewportPoint(baseX, baseY) as [number, number];
+      const vx = safeNum(conv?.[0], 0);
+      const vy = safeNum(conv?.[1], 0);
+      const ascent = it.height ? safeNum(it.height, fontSize) * 0.78 : fontSize * 0.78;
       const yTop = vy - ascent;
-      const w = (it.width || 0);
+      const w = safeNum(it.width, 0);
       runs.push({
         text: it.str,
-        x: vx * PT_TO_MM,
-        y: yTop * PT_TO_MM,
-        fontSize,
+        x: safeNum(vx * PT_TO_MM, 0),
+        y: safeNum(yTop * PT_TO_MM, 0),
+        fontSize: safeNum(fontSize, 10),
         fontName: it.fontName,
-        width: w * PT_TO_MM,
-        height: (it.height || fontSize) * PT_TO_MM,
+        width: safeNum(w * PT_TO_MM, 0),
+        height: safeNum((it.height || fontSize) * PT_TO_MM, fontSize * PT_TO_MM),
         color: ops.textColors[idx] || "#000000",
-        opacity: ops.textOpacities[idx] ?? 1,
+        opacity: safeNum(ops.textOpacities[idx], 1),
       });
     });
 
@@ -634,15 +670,23 @@ export async function importPdfToJdf(
       elements.push(shape);
     }
 
-    const imgs = await extractImages(page, ops.imagePositions, runtime);
+    const imgs = await extractImages(page, ops.imagePositions, runtime, dataUrlCache);
     for (const { pos, dataUrl } of imgs) {
-      const resourceKey = `img${imgCounter++}`;
-      const base64 = dataUrl.replace(/^data:image\/[a-zA-Z+]+;base64,/, "");
-      imageResources[resourceKey] = {
-        src: "embedded",
-        mimeType: "image/png",
-        data: base64,
-      };
+      // Re-use a single resources.images entry per PDF XObject. Without
+      // this, a 1000-page PDF with the same logo on every page produces
+      // 1000 copies of identical base64 data — multi-GB output that OOMs
+      // JSON.stringify and inflates RAG embedding cost.
+      let resourceKey = resourceKeyByName.get(pos.name);
+      if (!resourceKey) {
+        resourceKey = `img${imgCounter++}`;
+        resourceKeyByName.set(pos.name, resourceKey);
+        const base64 = dataUrl.replace(/^data:image\/[a-zA-Z+]+;base64,/, "");
+        imageResources[resourceKey] = {
+          src: "embedded",
+          mimeType: "image/png",
+          data: base64,
+        };
+      }
       elements.push({
         type: "image",
         resource: resourceKey,

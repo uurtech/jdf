@@ -595,21 +595,15 @@ When adding a new JDF element type or attribute, update **all five** locations: 
 
 Bug reports, feature requests, and design discussions all welcome in [GitHub Issues](https://github.com/uurtech/jdf/issues).
 
-## Project founder
-
-<p>
-  <a href="https://github.com/uurtech">
-    <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/5675890&w=96&h=96&mask=circle&fit=cover" width="96" height="96" alt="uurtech" />
-  </a>
-</p>
-
-**[Ugur Kazdal (@uurtech)](https://github.com/uurtech)** — creator and maintainer of JDF.
-
 ## Contributors
 
 Thanks to everyone who has helped shape JDF — code, design, docs, feedback.
 
 <p>
+  <a href="https://github.com/uurtech" title="uurtech">
+    <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/5675890&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="uurtech" />
+  </a>
+  &nbsp;
   <a href="https://github.com/rcpzen" title="rcpzen">
     <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/24500147&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="rcpzen" />
   </a>
@@ -623,7 +617,7 @@ Thanks to everyone who has helped shape JDF — code, design, docs, feedback.
   </a>
 </p>
 
-[@rcpzen](https://github.com/rcpzen) · [@uguracikgoz](https://github.com/uguracikgoz) · [@EienMosu](https://github.com/EienMosu)
+[@uurtech](https://github.com/uurtech) · [@rcpzen](https://github.com/rcpzen) · [@uguracikgoz](https://github.com/uguracikgoz) · [@EienMosu](https://github.com/EienMosu)
 
 ## License
 

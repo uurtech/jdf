@@ -95,8 +95,12 @@ function convertMarkdownToJdf(md: string, title: string, baseDir: string = proce
         content: text,
         position: { x: 0, y },
         width: contentWidth,
-        heading: true,
+        // Emit the actual H1..H6 level instead of `heading: true`. RAG
+        // chunkers and the JDF TOC builder both key on the numeric level for
+        // hierarchy; the boolean form collapsed every heading to one bucket.
+        heading: level as 1 | 2 | 3 | 4 | 5 | 6,
         tocEntry: text,
+        tocLevel: level,
         style: { fontFamily: "Inter", fontSize, fontWeight: "bold", color: level <= 2 ? "#0f172a" : "#1e293b" },
       });
       y += height + 4;

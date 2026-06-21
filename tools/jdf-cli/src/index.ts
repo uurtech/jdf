@@ -123,7 +123,13 @@ async function main() {
         process.exit(1);
     }
   } catch (e: any) {
-    console.error(`Error: ${e.message || e}`);
+    // ImportJsonError already prefixes a sensible "what went wrong" message;
+    // don't double-prefix with "Error:" so CI logs stay clean.
+    if (e?.name === "ImportJsonError") {
+      console.error(`✗ ${e.message}`);
+    } else {
+      console.error(`Error: ${e?.message || e}`);
+    }
     process.exit(1);
   }
 }
