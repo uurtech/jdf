@@ -1093,3 +1093,37 @@ footer ul li a:hover { color: var(--brand); }
   margin-top: 28px;
 }
 
+/* === FORMS === */
+.forms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.forms-card {
+  padding: 24px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+.forms-card:hover {
+  border-color: var(--brand);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.forms-card h3 {
+  font-size: 15px;
+  margin: 0 0 10px;
+  color: var(--text);
+}
+.forms-card p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+.forms-demo {
+  margin-top: 8px;
+}
+

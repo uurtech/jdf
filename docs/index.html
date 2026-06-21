@@ -44,6 +44,7 @@
       <a href="#why">Why</a>
       <a href="#rag">RAG</a>
       <a href="#cli">CLI</a>
+      <a href="#forms">Forms</a>
       <a href="#vision">Vision</a>
       <a href="#features">Features</a>
       <a href="#install">Install</a>
@@ -311,6 +312,47 @@ $ jdf import report.json -o report.jdf
 
       <p class="cli-foot">
         <a class="btn-secondary" href="docs/cli.html">CLI reference →</a>
+      </p>
+    </section>
+
+    <section id="forms" class="forms">
+      <h2>JDF Forms — fillable, downloadable, machine-readable</h2>
+      <p class="section-lead">Embed a `.jdf` form on any web page, let users fill it, click Save, and they get the same `.jdf` back with their answers baked in. The downloaded file is still pure JSON — your backend, your RAG, your audit log all read the same tree.</p>
+
+      <div class="forms-grid">
+        <div class="forms-card">
+          <h3>1 · Author the form</h3>
+          <p>One JSON document. <code>type: "input" | "textarea" | "checkbox" | "select" | "signature"</code>. Each field has a stable <code>name</code> — the value lookup key. Same schema validates, same CLI imports, same TOC and search work.</p>
+        </div>
+        <div class="forms-card">
+          <h3>2 · Embed it on your site</h3>
+          <p>One tag. <code>save-button</code> attribute drops a button in the corner. The user fills the form right in the browser; jdf.js mutates the in-memory document on every keystroke.</p>
+        </div>
+        <div class="forms-card">
+          <h3>3 · User clicks Save</h3>
+          <p>Browser downloads <code>customer-form.jdf</code>. Open it in any text editor — values are inline. Re-open it in jdf.js and the form starts pre-filled. Convert it to PDF with <code>jdf export</code>; pipe it to your RAG with <code>jdf validate</code>.</p>
+        </div>
+      </div>
+
+      <div class="embed-demo forms-demo">
+        <div class="embed-demo-code">
+<pre><code><span class="punc">&lt;</span><span class="key">link</span> <span class="key">rel</span><span class="punc">=</span><span class="str">"stylesheet"</span> <span class="key">href</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf@latest/dist/jdfjs.css"</span><span class="punc">&gt;</span>
+<span class="punc">&lt;</span><span class="key">script</span> <span class="key">type</span><span class="punc">=</span><span class="str">"module"</span> <span class="key">src</span><span class="punc">=</span><span class="str">"https://unpkg.com/@uurtech/jdf@latest"</span><span class="punc">&gt;&lt;/</span><span class="key">script</span><span class="punc">&gt;</span>
+
+<span class="punc">&lt;</span><span class="key">jdf</span> <span class="key">src</span><span class="punc">=</span><span class="str">"customer-form.jdf"</span>
+     <span class="key">save-button</span><span class="punc">=</span><span class="str">"Save form"</span>
+     <span class="key">save-filename</span><span class="punc">=</span><span class="str">"filled-form.jdf"</span>
+     <span class="key">height</span><span class="punc">=</span><span class="str">"640"</span><span class="punc">&gt;&lt;/</span><span class="key">jdf</span><span class="punc">&gt;</span></code></pre>
+        </div>
+
+        <div class="embed-demo-render">
+          <div class="embed-demo-label">↓ Live form — fill and click Save to download</div>
+          <jdf src="examples/customer-form.jdf" save-button="Save form" save-filename="filled-form.jdf" height="640" fit="fit-width" dark-mode="light"></jdf>
+        </div>
+      </div>
+
+      <p class="cli-foot">
+        <a class="btn-secondary" href="docs/embed/api.html#forms">Forms API →</a>
       </p>
     </section>
 

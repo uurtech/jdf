@@ -287,3 +287,94 @@ html, body {
 .dark .md-search-hit {
   background: rgba(234, 179, 8, 0.45);
 }
+
+/* === JDF Forms — reader parity with jdfjs ============================= */
+.jdfjs-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  width: 100%;
+  height: 100%;
+}
+.jdfjs-form-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  letter-spacing: 0.02em;
+}
+.jdfjs-form-control {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  font: inherit;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  box-sizing: border-box;
+}
+.jdfjs-form-control:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+}
+.jdfjs-form-control[readonly],
+.jdfjs-form-control:disabled {
+  background: #f3f4f6;
+  color: #64748b;
+  cursor: not-allowed;
+}
+textarea.jdfjs-form-control {
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.4;
+}
+.jdfjs-form-checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.jdfjs-form-checkbox input[type="checkbox"] {
+  width: 16px; height: 16px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #2563eb;
+}
+.jdfjs-form-checkbox-label {
+  font-size: 13px;
+  user-select: none;
+}
+.jdfjs-form-signature-canvas {
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: crosshair;
+  touch-action: none;
+}
+.jdfjs-form-signature-clear {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 2px 10px;
+  font-size: 11px;
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.dark .jdfjs-form-control {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-color: #334155;
+}
+.dark .jdfjs-form-control[readonly],
+.dark .jdfjs-form-control:disabled {
+  background: #1e293b;
+  color: #94a3b8;
+}
+.dark .jdfjs-form-label {
+  color: #94a3b8;
+}

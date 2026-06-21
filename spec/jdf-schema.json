@@ -162,8 +162,111 @@
         { "$ref": "#/definitions/ListElement" },
         { "$ref": "#/definitions/ShapeElement" },
         { "$ref": "#/definitions/CollapsibleElement" },
-        { "$ref": "#/definitions/TocElement" }
+        { "$ref": "#/definitions/TocElement" },
+        { "$ref": "#/definitions/FormInputElement" },
+        { "$ref": "#/definitions/FormTextareaElement" },
+        { "$ref": "#/definitions/FormCheckboxElement" },
+        { "$ref": "#/definitions/FormSelectElement" },
+        { "$ref": "#/definitions/FormSignatureElement" }
       ]
+    },
+    "FormInputElement": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "const": "input" },
+        "name": { "type": "string", "minLength": 1 },
+        "inputType": { "type": "string", "enum": ["text","number","email","url","tel","date","time","datetime-local","password","color"] },
+        "value": { "type": "string" },
+        "placeholder": { "type": "string" },
+        "readonly": { "type": "boolean" },
+        "required": { "type": "boolean" },
+        "pattern": { "type": "string" },
+        "label": { "type": "string" },
+        "position": { "$ref": "#/definitions/Position" },
+        "width": { "type": "number" },
+        "height": { "type": "number" },
+        "style": { "$ref": "#/definitions/StyleRef" }
+      }
+    },
+    "FormTextareaElement": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "const": "textarea" },
+        "name": { "type": "string", "minLength": 1 },
+        "value": { "type": "string" },
+        "placeholder": { "type": "string" },
+        "readonly": { "type": "boolean" },
+        "required": { "type": "boolean" },
+        "rows": { "type": "integer", "minimum": 1 },
+        "label": { "type": "string" },
+        "position": { "$ref": "#/definitions/Position" },
+        "width": { "type": "number" },
+        "height": { "type": "number" },
+        "style": { "$ref": "#/definitions/StyleRef" }
+      }
+    },
+    "FormCheckboxElement": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "const": "checkbox" },
+        "name": { "type": "string", "minLength": 1 },
+        "checked": { "type": "boolean" },
+        "label": { "type": "string" },
+        "readonly": { "type": "boolean" },
+        "required": { "type": "boolean" },
+        "position": { "$ref": "#/definitions/Position" },
+        "width": { "type": "number" },
+        "height": { "type": "number" },
+        "style": { "$ref": "#/definitions/StyleRef" }
+      }
+    },
+    "FormSelectElement": {
+      "type": "object",
+      "required": ["type", "name", "options"],
+      "properties": {
+        "type": { "const": "select" },
+        "name": { "type": "string", "minLength": 1 },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["value"],
+            "properties": {
+              "value": { "type": "string" },
+              "label": { "type": "string" }
+            }
+          }
+        },
+        "value": { "type": "string" },
+        "values": { "type": "array", "items": { "type": "string" } },
+        "multiple": { "type": "boolean" },
+        "label": { "type": "string" },
+        "readonly": { "type": "boolean" },
+        "required": { "type": "boolean" },
+        "position": { "$ref": "#/definitions/Position" },
+        "width": { "type": "number" },
+        "height": { "type": "number" },
+        "style": { "$ref": "#/definitions/StyleRef" }
+      }
+    },
+    "FormSignatureElement": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "const": "signature" },
+        "name": { "type": "string", "minLength": 1 },
+        "value": { "type": "string" },
+        "label": { "type": "string" },
+        "readonly": { "type": "boolean" },
+        "required": { "type": "boolean" },
+        "position": { "$ref": "#/definitions/Position" },
+        "width": { "type": "number" },
+        "height": { "type": "number" },
+        "style": { "$ref": "#/definitions/StyleRef" }
+      }
     },
     "TextElement": {
       "type": "object",

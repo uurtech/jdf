@@ -73,7 +73,10 @@ function processElement(el: Element) {
   applySizeAttrs(container);
   const opts = readOptions(el);
   embed(container, src, opts)
-    .then((inst) => { VIEWER_INSTANCES.set(el, inst); })
+    .then((inst) => {
+      VIEWER_INSTANCES.set(el, inst);
+      maybeAttachSaveButton(container, inst);
+    })
     .catch((err) => {
       if ((err as Error)?.name === "AbortError") return; // src changed mid-fetch
       console.error("[jdf.js] failed to embed", src, err);
@@ -84,6 +87,34 @@ function processElement(el: Element) {
   // attributeChangedCallback (which we can't use because <jdf> isn't
   // a valid custom element name per the Web Components spec).
   observeAttributes(container);
+}
+
+/**
+ * Wire up the optional save button. Two attributes opt in:
+ *   <jdf src="form.jdf" save-button>                — adds a "Save" button
+ *   <jdf src="form.jdf" save-button="Download form"> — custom label
+ *   <jdf src="form.jdf" save-filename="filled.jdf"> — explicit filename
+ *
+ * The button is positioned in the embed's bottom-right corner via the
+ * `jdfjs-save-button` class (themable from the host page). Clicking it
+ * downloads the current document — including any form values the user
+ * has typed — to the user's filesystem.
+ */
+function maybeAttachSaveButton(container: HTMLElement, inst: JDFViewerInstance) {
+  if (!container.hasAttribute("save-button")) return;
+  const labelAttr = container.getAttribute("save-button");
+  const label = labelAttr && labelAttr.length > 0 && labelAttr !== "true" ? labelAttr : "Save";
+  const filename = container.getAttribute("save-filename") || undefined;
+  const btn = window.document.createElement("button");
+  btn.type = "button";
+  btn.className = "jdfjs-save-button";
+  btn.textContent = label;
+  btn.addEventListener("click", () => inst.downloadJdf(filename));
+  // Make sure the host has positioning context for the absolutely-placed button.
+  if (getComputedStyle(container).position === "static") {
+    container.style.position = "relative";
+  }
+  container.appendChild(btn);
 }
 
 function disposeElement(el: Element) {

@@ -31,12 +31,18 @@ export interface JDFViewerOptions {
   onLoad?: (doc: JdfDocument) => void;
   /** Called on any rendering error */
   onError?: (err: Error) => void;
+  /**
+   * Called when a form field's value changes. Useful for live previews,
+   * dirty-state tracking, or auto-saving filled forms to a backend instead
+   * of triggering a manual download.
+   */
+  onFormChange?: (doc: JdfDocument, change: { path: (string | number)[]; field: string; value: unknown }) => void;
 }
 
 export interface JDFViewerInstance {
   /** The container element */
   container: HTMLElement;
-  /** The current document */
+  /** The current document — reflects user form input as the user types. */
   document: JdfDocument;
   /** Get / set zoom (1 = 100%) */
   setZoom: (zoom: number) => void;
@@ -48,6 +54,25 @@ export interface JDFViewerInstance {
   setDocument: (doc: JdfDocument) => void;
   /** Tear down — removes DOM and event listeners */
   destroy: () => void;
+  /**
+   * Return the current document as a Blob — ready to attach to a form-data
+   * upload, save through `URL.createObjectURL`, or hand to a Worker. The
+   * blob reflects user form input (whatever the user has typed / ticked /
+   * selected). Pass `{ pretty: false }` for a compact JSON.
+   */
+  exportJdf: (options?: { pretty?: boolean }) => Blob;
+  /** Return the current document as a JSON string (form-filled state). */
+  toJSON: (options?: { pretty?: boolean }) => string;
+  /**
+   * Trigger a browser download of the current document. The host page's
+   * "Save" button can call this directly: `viewer.downloadJdf("form.jdf")`.
+   * Default filename is `<title>.jdf` from `meta.title`.
+   */
+  downloadJdf: (filename?: string) => void;
+  /** Read the value of a single form field by `name`. */
+  getFormValue: (name: string) => unknown;
+  /** Read every form field's value as a flat `{ [name]: value }` map. */
+  getFormValues: () => Record<string, unknown>;
 }
 
 /**
@@ -406,6 +431,7 @@ export class JDFViewer {
         document: this.doc,
         path: ["pages", pageIndex, "elements", elIdx],
         onNavigatePage: (idx) => this.goToPage(idx),
+        onFormChange: (path, field, value) => this.handleFormChange(path, field, value),
       });
       if (node) content.appendChild(node);
     });
@@ -515,6 +541,83 @@ export class JDFViewer {
     this.options.onLoad?.(doc);
   }
 
+  /**
+   * Apply a form-field value mutation to the in-memory document. Called by
+   * every form renderer on every keystroke / toggle / selection — the
+   * document carries the user's current state so `exportJdf()` returns a
+   * filled JDF that's identical in shape to the source, just with values.
+   *
+   * No re-render: the DOM input already shows what the user typed, and a
+   * full re-render mid-typing would lose focus. The mutation only matters
+   * at export time.
+   */
+  private handleFormChange(path: (string | number)[], field: string, value: unknown) {
+    const target = path.reduce<any>((acc, key) => (acc == null ? acc : acc[key]), this.doc as any);
+    if (target == null) return;
+    target[field] = value;
+    this.options.onFormChange?.(this.doc, { path, field, value });
+  }
+
+  /**
+   * Walk every page's elements and yield each form element with its
+   * resolved name. Used by getFormValues / downloadJdf consumers.
+   */
+  private *iterFormFields(): Generator<{ name: string; field: any }> {
+    for (const page of this.doc.pages || []) {
+      for (const el of (page.elements || []) as any[]) {
+        if (!el || typeof el !== "object") continue;
+        if (el.type === "input" || el.type === "textarea" || el.type === "checkbox" || el.type === "select" || el.type === "signature") {
+          if (typeof el.name === "string" && el.name.length > 0) yield { name: el.name, field: el };
+        }
+      }
+    }
+  }
+
+  toJSON(options: { pretty?: boolean } = {}): string {
+    return options.pretty === false
+      ? JSON.stringify(this.doc)
+      : JSON.stringify(this.doc, null, 2);
+  }
+
+  exportJdf(options: { pretty?: boolean } = {}): Blob {
+    return new Blob([this.toJSON(options)], { type: "application/jdf+json" });
+  }
+
+  downloadJdf(filename?: string): void {
+    const name = filename
+      || (this.doc.meta?.title ? `${this.doc.meta.title.replace(/[^\w\s.-]+/g, "_")}.jdf` : "document.jdf");
+    const blob = this.exportJdf();
+    const url = URL.createObjectURL(blob);
+    const a = window.document.createElement("a");
+    a.href = url;
+    a.download = name;
+    window.document.body.appendChild(a);
+    a.click();
+    window.document.body.removeChild(a);
+    // Revoke after the click handler returns the file to the browser.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  getFormValue(name: string): unknown {
+    for (const f of this.iterFormFields()) {
+      if (f.name !== name) continue;
+      if (f.field.type === "checkbox") return f.field.checked === true;
+      if (f.field.type === "select" && f.field.multiple) return f.field.values || [];
+      return f.field.value ?? "";
+    }
+    return undefined;
+  }
+
+  getFormValues(): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const f of this.iterFormFields()) {
+      if (f.field.type === "checkbox") out[f.name] = f.field.checked === true;
+      else if (f.field.type === "select" && f.field.multiple) out[f.name] = f.field.values || [];
+      else out[f.name] = f.field.value ?? "";
+    }
+    return out;
+  }
+
   destroy() {
     this.observer?.disconnect();
     this.resizeObs?.disconnect();
@@ -538,16 +641,27 @@ export class JDFViewer {
   }
 
   getInstance(): JDFViewerInstance {
-    return {
+    const self = this;
+    // `document` is a getter so callers always see the up-to-date document
+    // (including form values typed after the instance was returned), not a
+    // snapshot from when getInstance() ran. The previous version used
+    // `document: this.doc` which froze the reference at instance time.
+    const inst = {
       container: this.container,
-      document: this.doc,
-      setZoom: (z) => this.setZoom(z),
+      get document() { return self.doc; },
+      setZoom: (z: number) => this.setZoom(z),
       getZoom: () => this.getZoom(),
-      goToPage: (i) => this.goToPage(i),
+      goToPage: (i: number) => this.goToPage(i),
       getCurrentPage: () => this.getCurrentPage(),
-      setDocument: (d) => this.setDocument(d),
+      setDocument: (d: JdfDocument) => this.setDocument(d),
       destroy: () => this.destroy(),
+      exportJdf: (opts?: { pretty?: boolean }) => this.exportJdf(opts),
+      toJSON: (opts?: { pretty?: boolean }) => this.toJSON(opts),
+      downloadJdf: (n?: string) => this.downloadJdf(n),
+      getFormValue: (n: string) => this.getFormValue(n),
+      getFormValues: () => this.getFormValues(),
     };
+    return inst as JDFViewerInstance;
   }
 }
 

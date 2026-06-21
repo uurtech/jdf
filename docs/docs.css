@@ -76,6 +76,24 @@ code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.92em
 .docs-sidebar li a:hover { background: var(--bg-soft); color: var(--text); text-decoration: none; }
 .docs-sidebar li a.active { background: var(--brand-soft); color: var(--brand); font-weight: 600; }
 
+.docs-sidebar h4.sidebar-flag {
+  color: #1d4ed8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sidebar-new {
+  display: inline-block;
+  background: linear-gradient(120deg, #f97316, #ec4899);
+  color: #fff;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .docs-content {
   padding: 48px 60px 120px;
   max-width: 860px;

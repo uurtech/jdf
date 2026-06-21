@@ -492,6 +492,87 @@ If the model produces JSON that doesn't fit the schema, the workflow fails with 
 
 When working from a clone of this repo, the dev entry point is `pnpm --filter @uurtech/jdf-cli start <subcommand>` — same arguments, runs from source via `tsx`.
 
+## JDF Forms — fillable, downloadable, machine-readable
+
+JDF documents can carry **interactive form fields**. Embed a `.jdf` form on a web page with `jdf.js`, the user fills it in the browser, clicks Save, and gets the same `.jdf` back with all values inline. The downloaded file is plain JSON — your backend stores it, your RAG indexes it, your auditor diffs it the same way as any other JDF.
+
+### Element types
+
+| Type | Use for | Schema fields |
+|---|---|---|
+| `input` | single-line text, email, number, date, etc. | `name`, `inputType`, `value`, `placeholder`, `pattern`, `label`, `required`, `readonly` |
+| `textarea` | multi-line text | `name`, `value`, `placeholder`, `rows`, `label`, `required`, `readonly` |
+| `checkbox` | boolean toggle | `name`, `checked`, `label`, `required`, `readonly` |
+| `select` | single or multi-select dropdown | `name`, `options[]`, `value` (single) or `values[]` (multi), `multiple`, `label`, `required`, `readonly` |
+| `signature` | drawn signature pad | `name`, `value` (base64 PNG), `label`, `required`, `readonly` |
+
+Every field has a stable `name` — that's the key both code and RAG pipelines use to look the value up. Open a partly-filled form in any text editor; the values are right there next to the field declarations.
+
+### Embed a fillable form
+
+```html
+<link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf@latest/dist/jdfjs.css">
+<script type="module" src="https://unpkg.com/@uurtech/jdf@latest"></script>
+
+<jdf src="customer-form.jdf"
+     save-button="Save form"
+     save-filename="filled.jdf"
+     height="640"></jdf>
+```
+
+`save-button` adds a one-click download in the corner. `save-filename` overrides the default (`<title>.jdf`).
+
+### Programmatic API
+
+```js
+import { embed } from "@uurtech/jdf";
+
+const viewer = await embed("#form", "/customer-form.jdf");
+
+// Live read of the user's current input
+console.log(viewer.getFormValues());
+// → { fullName: "Jane Doe", email: "jane@example.com", newsletter: true }
+
+// Subscribe to every change (auto-save to your backend, dirty tracking, etc.)
+const v = await embed("#form", "/customer-form.jdf", {
+  onFormChange: (doc, change) => {
+    fetch("/api/draft", { method: "POST", body: JSON.stringify(doc) });
+  },
+});
+
+// Trigger a download programmatically
+viewer.downloadJdf("filled-form.jdf");
+
+// Or hand the blob to anything else (file upload, IndexedDB, etc.)
+const blob = viewer.exportJdf();
+```
+
+### PDF AcroForm import
+
+`jdf import existing-form.pdf` walks the PDF's AcroForm widget annotations and emits matching JDF form elements:
+
+| PDF field type | JDF element |
+|---|---|
+| `Tx` (text), single-line | `input` |
+| `Tx` (text), multi-line | `textarea` |
+| `Btn` (checkbox) | `checkbox` |
+| `Ch` (choice, single) | `select` |
+| `Ch` (choice, multi) | `select` with `multiple: true` |
+| `Sig` (signature) | `signature` |
+
+Existing values in the PDF flow through — partially-filled PDFs round-trip with their data intact.
+
+### Why this matters for AI workflows
+
+A filled `.jdf` form is **structured data your RAG can index per field**. No more parsing PDF widget streams, no more brittle regex on rendered text. `viewer.getFormValues()` returns a flat `{ name → value }` map that drops straight into a database row, an LLM tool call, or a CI gate.
+
+```bash
+# CI gate: every submitted form must validate against the schema
+jdf validate inbox/*.jdf || exit 1
+# Then jq the responses straight into your retriever
+jq -s 'map(.. | select(.type=="input" or .type=="select") | {name, value})' inbox/*.jdf
+```
+
 ## Keyboard shortcuts
 
 | Shortcut | Action |

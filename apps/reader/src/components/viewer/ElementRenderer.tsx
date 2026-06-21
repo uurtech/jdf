@@ -9,6 +9,7 @@ import { ListElementView } from "./ListElement";
 import { ShapeElementView } from "./ShapeElement";
 import { CollapsibleElementView } from "./CollapsibleElement";
 import { TocElementView } from "./TocElement";
+import { FormElementSwitch } from "./FormElement";
 import { useEdit, type ElementPath } from "../../edit/context";
 
 interface ElementRendererProps {
@@ -69,6 +70,9 @@ export function ElementRenderer(props: ElementRendererProps) {
         </Match>
         <Match when={props.element.type === "toc"}>
           <TocElementView element={props.element as any} styles={props.styles} document={props.document} onNavigatePage={props.onNavigatePage} />
+        </Match>
+        <Match when={["input","textarea","checkbox","select","signature"].includes(props.element.type as string)}>
+          <FormElementSwitch element={props.element} path={props.path} styles={props.styles} />
         </Match>
       </Switch>
 

@@ -24,16 +24,18 @@ JDF lives in **four runnable surfaces** that all consume the same JSON format. T
 
 **The CLI's job is two-fold and matters for the wider story:**
 
-- **PDF → JDF** for legacy ingestion: RAG pipelines, CI gates, build steps consuming structured documents instead of binary PDFs.
+- **PDF → JDF** for legacy ingestion: RAG pipelines, CI gates, build steps consuming structured documents instead of binary PDFs. PDF AcroForm widgets become real JDF form elements with their values intact.
 - **JSON → JDF** for AI workflows: LLMs and agents emit JSON; the CLI wraps it into a validated `.jdf` (or `.jdfx`) so the output is always renderable, diffable, and grep-able.
 
 `jdf import file.md` exists for convenience but is not the headline use-case.
+
+**JDF Forms.** Five element types — `input`, `textarea`, `checkbox`, `select`, `signature` — make a JDF document fillable. jdf.js renders real `<input>`/`<textarea>`/`<select>`/canvas elements; every keystroke mutates the in-memory doc. `viewer.exportJdf()` / `viewer.downloadJdf()` returns the form-filled JSON as a blob the user can save. Reader and Rust PDF export render the same fields with the user's values. Same algorithm, three runtimes, one source of truth: the `.jdf` file.
 
 ## Hard parity rules
 
 ### When you ADD a new element type or attribute to the JDF format
 
-Update **all five** locations in the same PR. Skipping any one creates silent divergence:
+Update **all six** locations in the same PR. Skipping any one creates silent divergence:
 
 | # | File | What to add |
 |---|---|---|
@@ -41,7 +43,8 @@ Update **all five** locations in the same PR. Skipping any one creates silent di
 | 2 | `spec/jdf-schema.json` | JSON Schema definition with required / optional fields |
 | 3 | `apps/reader/src/components/viewer/<Type>Element.tsx` | SolidJS renderer used by the desktop app |
 | 4 | `jdfjs/src/renderers/element.ts` | Vanilla-DOM renderer used by the web embed |
-| 5 | `apps/reader/src-tauri/src/commands/mod.rs` | Two functions: `extract_text` (for search) and `draw_element` (for PDF export) |
+| 5 | `apps/reader/src-tauri/src/commands/mod.rs` | Three functions: `validate_document` (`valid_types`), `extract_text` (for search), `draw_element` (for PDF export) |
+| 6 | `apps/reader/src/edit/mutations.ts` | `makeBlankElement` arm so the user can insert one from the toolbar |
 
 If the element appears in PDF imports, also walk:
 

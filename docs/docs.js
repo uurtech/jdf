@@ -23,6 +23,11 @@ const SIDEBAR = (base) => `
     <li><a href="${base}embed/frameworks.html">React · Vue · Svelte</a></li>
   </ul>
 
+  <h4 class="sidebar-flag">JDF Forms <span class="sidebar-new">NEW</span></h4>
+  <ul>
+    <li><a href="${base}forms.html">Fillable forms ★</a></li>
+  </ul>
+
   <h4>Format</h4>
   <ul>
     <li><a href="${base}format/index.html">Format overview</a></li>

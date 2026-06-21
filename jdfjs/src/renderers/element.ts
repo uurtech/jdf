@@ -2,6 +2,7 @@ import type {
   Element, Style, Resources, JdfDocument,
   TextElement, RichTextElement, ImageElement, TableElement, ListElement,
   ShapeElement, CollapsibleElement, TocElement, RichTextRun, ListItem, TableCellValue, ImageResource,
+  FormInputElement, FormTextareaElement, FormCheckboxElement, FormSelectElement, FormSignatureElement,
 } from "@jdf/core";
 import { unitToPx } from "@jdf/core";
 import { resolveStyle, styleToCss, applyStyle } from "../utils/style";
@@ -13,6 +14,14 @@ export interface RenderContext {
   document: JdfDocument;
   path: (string | number)[];
   onNavigatePage?: (pageIndex: number) => void;
+  /**
+   * Called when a form field's value changes. The viewer wires this to a
+   * mutation that updates the in-memory JdfDocument so `exportJdf()` later
+   * returns the user-filled state. `path` is the element path inside the
+   * doc (e.g. `["pages", 0, "elements", 3]`); `field` is `"value"` /
+   * `"checked"` / `"values"`.
+   */
+  onFormChange?: (path: (string | number)[], field: string, value: unknown) => void;
 }
 
 const NS_SVG = "http://www.w3.org/2000/svg";
@@ -30,6 +39,11 @@ export function renderElement(el: Element, ctx: RenderContext): HTMLElement | nu
     case "shape": inner = renderShape(el); break;
     case "collapsible": inner = renderCollapsible(el, ctx); break;
     case "toc": inner = renderToc(el, ctx); break;
+    case "input": inner = renderFormInput(el, ctx); break;
+    case "textarea": inner = renderFormTextarea(el, ctx); break;
+    case "checkbox": inner = renderFormCheckbox(el, ctx); break;
+    case "select": inner = renderFormSelect(el, ctx); break;
+    case "signature": inner = renderFormSignature(el, ctx); break;
   }
   if (!inner) return null;
   wrap.appendChild(inner);
@@ -508,6 +522,186 @@ function renderToc(el: TocElement, ctx: RenderContext): HTMLElement {
 
     btn.addEventListener("click", () => ctx.onNavigatePage?.(entry.pageIndex));
     wrap.appendChild(btn);
+  }
+  return wrap;
+}
+
+// ── form elements ──────────────────────────────────────────────────────────
+
+function makeLabel(text: string | undefined): HTMLLabelElement | null {
+  if (!text) return null;
+  const lab = document.createElement("label");
+  lab.className = "jdfjs-form-label";
+  lab.textContent = text;
+  return lab;
+}
+
+function commitFormChange(ctx: RenderContext, field: string, value: unknown) {
+  if (!ctx.onFormChange) return;
+  ctx.onFormChange(ctx.path, field, value);
+}
+
+function renderFormInput(el: FormInputElement, ctx: RenderContext): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.className = "jdfjs-form-field jdfjs-form-input";
+  applyStyle(wrap, resolveStyle(el.style, ctx.styles));
+  const lab = makeLabel(el.label);
+  if (lab) wrap.appendChild(lab);
+  const input = document.createElement("input");
+  input.className = "jdfjs-form-control";
+  input.type = el.inputType || "text";
+  input.name = el.name;
+  if (el.value != null) input.value = el.value;
+  if (el.placeholder) input.placeholder = el.placeholder;
+  if (el.readonly) input.readOnly = true;
+  if (el.required) input.required = true;
+  if (el.pattern) input.pattern = el.pattern;
+  input.addEventListener("input", () => commitFormChange(ctx, "value", input.value));
+  input.addEventListener("change", () => commitFormChange(ctx, "value", input.value));
+  wrap.appendChild(input);
+  return wrap;
+}
+
+function renderFormTextarea(el: FormTextareaElement, ctx: RenderContext): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.className = "jdfjs-form-field jdfjs-form-textarea";
+  applyStyle(wrap, resolveStyle(el.style, ctx.styles));
+  const lab = makeLabel(el.label);
+  if (lab) wrap.appendChild(lab);
+  const ta = document.createElement("textarea");
+  ta.className = "jdfjs-form-control";
+  ta.name = el.name;
+  if (el.value != null) ta.value = el.value;
+  if (el.placeholder) ta.placeholder = el.placeholder;
+  if (el.readonly) ta.readOnly = true;
+  if (el.required) ta.required = true;
+  if (el.rows) ta.rows = el.rows;
+  ta.addEventListener("input", () => commitFormChange(ctx, "value", ta.value));
+  ta.addEventListener("change", () => commitFormChange(ctx, "value", ta.value));
+  wrap.appendChild(ta);
+  return wrap;
+}
+
+function renderFormCheckbox(el: FormCheckboxElement, ctx: RenderContext): HTMLElement {
+  const wrap = document.createElement("label");
+  wrap.className = "jdfjs-form-field jdfjs-form-checkbox";
+  applyStyle(wrap, resolveStyle(el.style, ctx.styles));
+  const cb = document.createElement("input");
+  cb.type = "checkbox";
+  cb.name = el.name;
+  cb.checked = el.checked === true;
+  if (el.readonly) cb.disabled = true;
+  if (el.required) cb.required = true;
+  cb.addEventListener("change", () => commitFormChange(ctx, "checked", cb.checked));
+  wrap.appendChild(cb);
+  if (el.label) {
+    const span = document.createElement("span");
+    span.className = "jdfjs-form-checkbox-label";
+    span.textContent = el.label;
+    wrap.appendChild(span);
+  }
+  return wrap;
+}
+
+function renderFormSelect(el: FormSelectElement, ctx: RenderContext): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.className = "jdfjs-form-field jdfjs-form-select";
+  applyStyle(wrap, resolveStyle(el.style, ctx.styles));
+  const lab = makeLabel(el.label);
+  if (lab) wrap.appendChild(lab);
+  const sel = document.createElement("select");
+  sel.className = "jdfjs-form-control";
+  sel.name = el.name;
+  if (el.multiple) sel.multiple = true;
+  if (el.readonly) sel.disabled = true;
+  if (el.required) sel.required = true;
+  const selectedSet = new Set<string>(
+    el.multiple ? (el.values || []) : (el.value != null ? [el.value] : []),
+  );
+  for (const opt of el.options) {
+    const o = document.createElement("option");
+    o.value = opt.value;
+    o.textContent = opt.label ?? opt.value;
+    if (selectedSet.has(opt.value)) o.selected = true;
+    sel.appendChild(o);
+  }
+  sel.addEventListener("change", () => {
+    if (el.multiple) {
+      const vals = Array.from(sel.selectedOptions).map((o) => o.value);
+      commitFormChange(ctx, "values", vals);
+    } else {
+      commitFormChange(ctx, "value", sel.value);
+    }
+  });
+  wrap.appendChild(sel);
+  return wrap;
+}
+
+function renderFormSignature(el: FormSignatureElement, ctx: RenderContext): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.className = "jdfjs-form-field jdfjs-form-signature";
+  applyStyle(wrap, resolveStyle(el.style, ctx.styles));
+  const lab = makeLabel(el.label);
+  if (lab) wrap.appendChild(lab);
+  const cw = unitToPx(el.width ?? 80);
+  const ch = unitToPx(el.height ?? 30);
+  const canvas = document.createElement("canvas");
+  canvas.className = "jdfjs-form-signature-canvas";
+  canvas.width = Math.max(50, cw);
+  canvas.height = Math.max(20, ch);
+  if (el.value) {
+    const img = new Image();
+    img.onload = () => {
+      const c = canvas.getContext("2d");
+      c?.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+    img.src = el.value;
+  }
+  let drawing = false;
+  let last: { x: number; y: number } | null = null;
+  function pointerStart(e: PointerEvent) {
+    if (el.readonly) return;
+    drawing = true;
+    last = { x: e.offsetX, y: e.offsetY };
+  }
+  function pointerMove(e: PointerEvent) {
+    if (!drawing || !last) return;
+    const c = canvas.getContext("2d");
+    if (!c) return;
+    c.strokeStyle = "#0f172a";
+    c.lineWidth = 1.6;
+    c.lineCap = "round";
+    c.beginPath();
+    c.moveTo(last.x, last.y);
+    c.lineTo(e.offsetX, e.offsetY);
+    c.stroke();
+    last = { x: e.offsetX, y: e.offsetY };
+  }
+  function pointerEnd() {
+    if (!drawing) return;
+    drawing = false;
+    last = null;
+    try {
+      commitFormChange(ctx, "value", canvas.toDataURL("image/png"));
+    } catch { /* tainted canvas — shouldn't happen, no cross-origin sources */ }
+  }
+  canvas.addEventListener("pointerdown", pointerStart);
+  canvas.addEventListener("pointermove", pointerMove);
+  canvas.addEventListener("pointerup", pointerEnd);
+  canvas.addEventListener("pointerleave", pointerEnd);
+  wrap.appendChild(canvas);
+  if (!el.readonly) {
+    const clear = document.createElement("button");
+    clear.type = "button";
+    clear.className = "jdfjs-form-signature-clear";
+    clear.textContent = "Clear";
+    clear.addEventListener("click", (e) => {
+      e.preventDefault();
+      const c = canvas.getContext("2d");
+      c?.clearRect(0, 0, canvas.width, canvas.height);
+      commitFormChange(ctx, "value", "");
+    });
+    wrap.appendChild(clear);
   }
   return wrap;
 }

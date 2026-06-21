@@ -426,6 +426,85 @@ async function extractLinks(page: any, viewport: any): Promise<LinkAnnot[]> {
   return out;
 }
 
+/**
+ * PDF AcroForm widget annotation → JDF form element. Each Widget annotation
+ * carries the field type (`fieldType` ∈ "Tx" | "Btn" | "Ch" | "Sig"), the
+ * current `fieldValue`, the field `fieldName`, and a `rect` in PDF user
+ * space. We map them to JDF input / textarea / checkbox / select / signature
+ * elements with `value` set to whatever's in the PDF — so opening a partly-
+ * filled PDF in JDF Reader / jdf.js shows the same partial fill, and
+ * exporting the JDF back to PDF preserves the values.
+ *
+ * Notes:
+ *  - PDF "Tx" fields with `multiLine` flag (Ff bit 13 = 4096) become textarea.
+ *  - PDF "Btn" can be checkbox, radio, or pushbutton — we only emit form
+ *    elements for checkboxes (Ff bit 16 = 32768 unset, bit 17 = 65536 unset).
+ *  - PDF "Ch" can be combo (dropdown) or list (multi-select). The combo
+ *    flag is Ff bit 17 = 131072.
+ */
+interface FormWidget {
+  rectMm: { x: number; y: number; w: number; h: number };
+  fieldType: string;
+  fieldName: string;
+  fieldValue: any;
+  multiLine: boolean;
+  multiSelect: boolean;
+  combo: boolean;
+  pushButton: boolean;
+  radio: boolean;
+  options: { value: string; label?: string }[];
+  readonly: boolean;
+  required: boolean;
+}
+
+async function extractFormWidgets(page: any, viewport: any): Promise<FormWidget[]> {
+  const out: FormWidget[] = [];
+  let annots: any[] = [];
+  try { annots = await page.getAnnotations(); } catch { return out; }
+  const conv = (x: number, y: number) => {
+    const [vx, vy] = viewport.convertToViewportPoint(x, y) as [number, number];
+    return { x: vx, y: vy };
+  };
+  for (const a of annots) {
+    if (a.subtype !== "Widget") continue;
+    if (!a.rect || a.rect.length < 4) continue;
+    const [x1, y1, x2, y2] = a.rect;
+    const c1 = conv(x1, y1);
+    const c2 = conv(x2, y2);
+    const xMin = Math.min(c1.x, c2.x);
+    const yMin = Math.min(c1.y, c2.y);
+    const xMax = Math.max(c1.x, c2.x);
+    const yMax = Math.max(c1.y, c2.y);
+    const flags = typeof a.fieldFlags === "number" ? a.fieldFlags : 0;
+    const options: { value: string; label?: string }[] = Array.isArray(a.options)
+      ? a.options.map((o: any) => ({
+          value: typeof o?.exportValue === "string" ? o.exportValue : (typeof o?.value === "string" ? o.value : ""),
+          label: typeof o?.displayValue === "string" ? o.displayValue : undefined,
+        })).filter((o: any) => o.value !== "")
+      : [];
+    out.push({
+      rectMm: {
+        x: xMin * PT_TO_MM,
+        y: yMin * PT_TO_MM,
+        w: (xMax - xMin) * PT_TO_MM,
+        h: (yMax - yMin) * PT_TO_MM,
+      },
+      fieldType: a.fieldType || "",
+      fieldName: a.fieldName || `field-${out.length + 1}`,
+      fieldValue: a.fieldValue ?? a.buttonValue ?? "",
+      multiLine: (flags & 4096) !== 0,
+      multiSelect: (flags & 2097152) !== 0,
+      combo: (flags & 131072) !== 0,
+      pushButton: (flags & 65536) !== 0,
+      radio: (flags & 32768) !== 0,
+      options,
+      readonly: (flags & 1) !== 0,
+      required: (flags & 2) !== 0,
+    });
+  }
+  return out;
+}
+
 async function flattenOutline(doc: any, outline: any[] | null): Promise<{ title: string; pageIndex: number }[]> {
   if (!outline) return [];
   const out: { title: string; pageIndex: number }[] = [];
@@ -526,6 +605,7 @@ export async function importPdfToJdf(
 
     const ops = await walkOps(page, OPS, viewport);
     const links = await extractLinks(page, viewport);
+    const formWidgets = await extractFormWidgets(page, viewport);
     const textContent = await page.getTextContent({ disableCombineTextItems: false });
     const items: any[] = textContent.items;
 
@@ -740,6 +820,45 @@ export async function importPdfToJdf(
         else if (link.destPage != null) text.link = { type: "internal", target: `#page-${link.destPage + 1}` };
       }
       elements.push(text);
+    }
+
+    // Form widgets — emit on top of text/shape so the user can interact
+    // with them in jdf.js / the reader. Skip pushbuttons (no form value
+    // semantics) and radio buttons (we don't yet have a radio element type;
+    // map them to a single-select if all radios in the same field share a
+    // name, otherwise drop them).
+    for (const w of formWidgets) {
+      if (w.pushButton) continue;
+      const baseEl: any = {
+        name: w.fieldName,
+        position: { x: Math.max(0, Math.round(w.rectMm.x * 100) / 100), y: Math.max(0, Math.round(w.rectMm.y * 100) / 100) },
+        width: Math.max(2, Math.round(w.rectMm.w * 100) / 100),
+        height: Math.max(2, Math.round(w.rectMm.h * 100) / 100),
+      };
+      if (w.readonly) baseEl.readonly = true;
+      if (w.required) baseEl.required = true;
+      if (w.fieldType === "Tx") {
+        if (w.multiLine) {
+          elements.push({ type: "textarea", ...baseEl, value: typeof w.fieldValue === "string" ? w.fieldValue : "" });
+        } else {
+          elements.push({ type: "input", ...baseEl, inputType: "text", value: typeof w.fieldValue === "string" ? w.fieldValue : "" });
+        }
+      } else if (w.fieldType === "Btn" && !w.radio) {
+        const checked = w.fieldValue !== "Off" && !!w.fieldValue;
+        elements.push({ type: "checkbox", ...baseEl, checked });
+      } else if (w.fieldType === "Ch") {
+        const value = typeof w.fieldValue === "string" ? w.fieldValue : "";
+        const values = Array.isArray(w.fieldValue) ? (w.fieldValue as string[]) : undefined;
+        const opts = w.options.length > 0 ? w.options : (value ? [{ value }] : []);
+        if (w.multiSelect) {
+          elements.push({ type: "select", ...baseEl, options: opts, multiple: true, values: values ?? (value ? [value] : []) });
+        } else {
+          elements.push({ type: "select", ...baseEl, options: opts, value });
+        }
+      } else if (w.fieldType === "Sig") {
+        elements.push({ type: "signature", ...baseEl, value: "" });
+      }
+      // Radio groups and unknown types fall through silently.
     }
 
     pages.push({

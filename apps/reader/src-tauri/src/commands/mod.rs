@@ -94,7 +94,11 @@ pub fn validate_document(document: serde_json::Value) -> Result<ValidationResult
         else if m.get("title").and_then(|t| t.as_str()).is_none() { warnings.push("meta.title is missing or empty".into()); }
     }
 
-    let valid_types = ["text","richtext","image","table","list","shape","collapsible","toc"];
+    let valid_types = [
+        "text","richtext","image","table","list","shape","collapsible","toc",
+        // JDF Forms — fillable elements that carry their own user input.
+        "input","textarea","checkbox","select","signature",
+    ];
     match document.get("pages").and_then(|p| p.as_array()) {
         None => errors.push("Missing required field: pages (must be array)".into()),
         Some(arr) if arr.is_empty() => errors.push("pages is empty — at least one page required".into()),
@@ -592,6 +596,77 @@ fn draw_element(
             }
             if !embedded {
                 let label = el.get("alt").and_then(|a| a.as_str()).unwrap_or("image");
+                layer.use_text(format!("[{}]", label), fs, Mm(margin_left + px), to_pdf_y(py, 0.0), font_italic);
+            }
+        }
+        // ── Form elements — printed as filled-in text + an underline so the
+        // exported PDF reflects what the user typed in the reader / jdf.js
+        // viewer. PDFs aren't interactive on most viewers; the goal is a
+        // legible flat capture of the form's filled state.
+        "input" | "textarea" => {
+            let label = el.get("label").and_then(|s| s.as_str()).unwrap_or("");
+            let value = el.get("value").and_then(|s| s.as_str()).unwrap_or("");
+            let mut row = 0.0f32;
+            if !label.is_empty() {
+                layer.use_text(label.to_string(), fs, Mm(margin_left + px), to_pdf_y(py, row), font_bold);
+                row += 1.2;
+            }
+            // Multi-line for textarea — split on \n.
+            if !value.is_empty() {
+                for (li, line) in value.split('\n').enumerate() {
+                    layer.use_text(line.to_string(), fs, Mm(margin_left + px), to_pdf_y(py, row + li as f32), f);
+                }
+            }
+            // Underline so empty fields are still visible as form blanks.
+            let underline_y = page_h - margin_top - py - (row + value.lines().count().max(1) as f32) * line_mm + 1.0;
+            let pts = vec![
+                (printpdf::Point::new(Mm(margin_left + px), Mm(underline_y)), false),
+                (printpdf::Point::new(Mm(margin_left + px + width), Mm(underline_y)), false),
+            ];
+            layer.set_outline_color(printpdf::Color::Rgb(printpdf::Rgb::new(0.6, 0.6, 0.6, None)));
+            layer.set_outline_thickness(0.2);
+            layer.add_line(printpdf::Line { points: pts, is_closed: false });
+        }
+        "checkbox" => {
+            let label = el.get("label").and_then(|s| s.as_str()).unwrap_or("");
+            let checked = el.get("checked").and_then(|c| c.as_bool()).unwrap_or(false);
+            let glyph = if checked { "[x]" } else { "[ ]" };
+            layer.use_text(format!("{} {}", glyph, label), fs, Mm(margin_left + px), to_pdf_y(py, 0.0), f);
+        }
+        "select" => {
+            let label = el.get("label").and_then(|s| s.as_str()).unwrap_or("");
+            let multiple = el.get("multiple").and_then(|m| m.as_bool()).unwrap_or(false);
+            let value: String = if multiple {
+                el.get("values")
+                    .and_then(|v| v.as_array())
+                    .map(|a| a.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>().join(", "))
+                    .unwrap_or_default()
+            } else {
+                el.get("value").and_then(|s| s.as_str()).unwrap_or("").to_string()
+            };
+            if !label.is_empty() {
+                layer.use_text(label.to_string(), fs, Mm(margin_left + px), to_pdf_y(py, 0.0), font_bold);
+                layer.use_text(value, fs, Mm(margin_left + px), to_pdf_y(py, 1.2), f);
+            } else {
+                layer.use_text(value, fs, Mm(margin_left + px), to_pdf_y(py, 0.0), f);
+            }
+        }
+        "signature" => {
+            let label = el.get("label").and_then(|s| s.as_str()).unwrap_or("Signature");
+            let value = el.get("value").and_then(|s| s.as_str()).unwrap_or("");
+            if !value.is_empty() && value.starts_with("data:image/") {
+                let comma = value.find(',').unwrap_or(0);
+                if comma > 0 {
+                    let b64 = &value[comma + 1..];
+                    let h_mm = el.get("height").and_then(|v| v.as_f64()).unwrap_or(20.0) as f32;
+                    let _ = try_embed_image(
+                        layer, b64,
+                        margin_left + px,
+                        page_h - margin_top - py - h_mm,
+                        width, h_mm,
+                    );
+                }
+            } else {
                 layer.use_text(format!("[{}]", label), fs, Mm(margin_left + px), to_pdf_y(py, 0.0), font_italic);
             }
         }
@@ -1180,6 +1255,25 @@ fn extract_text(el: &serde_json::Value) -> String {
     if let Some(t) = el.get("title").and_then(|t| t.as_str()) {
         if !out.is_empty() { out.push(' '); }
         out.push_str(t);
+    }
+    // Form fields — search must find user-filled values too. A document with
+    // 50 input fields and a value typed in one of them must still be
+    // searchable for that value.
+    if let Some(label) = el.get("label").and_then(|s| s.as_str()) {
+        if !out.is_empty() { out.push(' '); }
+        out.push_str(label);
+    }
+    if let Some(value) = el.get("value").and_then(|s| s.as_str()) {
+        if !out.is_empty() { out.push(' '); }
+        out.push_str(value);
+    }
+    if let Some(values) = el.get("values").and_then(|v| v.as_array()) {
+        for v in values {
+            if let Some(s) = v.as_str() {
+                if !out.is_empty() { out.push(' '); }
+                out.push_str(s);
+            }
+        }
     }
     // Recurse into collapsible.elements so search finds nested content even
     // when the section is closed in the UI. Search is cross-cutting; the

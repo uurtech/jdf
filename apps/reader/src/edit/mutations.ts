@@ -115,6 +115,16 @@ export function makeBlankElement(type: Element["type"], y: number = 5): Element 
       return { type: "collapsible", title: "Section", expanded: true, elements: [], position: { x: 0, y }, width: 166 } as Element;
     case "toc":
       return { type: "toc", depth: 6, position: { x: 0, y }, width: 166, style: { fontFamily: "Inter", fontSize: 10, color: "#334155" } } as Element;
+    case "input":
+      return { type: "input", name: `field_${Date.now()}`, inputType: "text", value: "", placeholder: "Enter text", position: { x: 0, y }, width: 166, height: 8 } as Element;
+    case "textarea":
+      return { type: "textarea", name: `field_${Date.now()}`, value: "", placeholder: "Enter text", rows: 3, position: { x: 0, y }, width: 166, height: 24 } as Element;
+    case "checkbox":
+      return { type: "checkbox", name: `field_${Date.now()}`, label: "Check me", checked: false, position: { x: 0, y }, width: 60, height: 6 } as Element;
+    case "select":
+      return { type: "select", name: `field_${Date.now()}`, options: [{ value: "1", label: "Option 1" }, { value: "2", label: "Option 2" }], value: "1", position: { x: 0, y }, width: 80, height: 8 } as Element;
+    case "signature":
+      return { type: "signature", name: `signature_${Date.now()}`, label: "Sign here", value: "", position: { x: 0, y }, width: 80, height: 30 } as Element;
   }
 }
 

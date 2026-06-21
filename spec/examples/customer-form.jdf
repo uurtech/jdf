@@ -1,0 +1,150 @@
+{
+  "$jdf": "1.0.0",
+  "meta": {
+    "title": "Customer Onboarding Form",
+    "pageSize": "A4",
+    "unit": "mm"
+  },
+  "pages": [
+    {
+      "id": "page-1",
+      "elements": [
+        {
+          "type": "text",
+          "content": "Customer Onboarding",
+          "heading": 1,
+          "position": {
+            "x": 20,
+            "y": 15
+          },
+          "width": 170,
+          "style": {
+            "fontSize": 22,
+            "fontWeight": "bold",
+            "color": "#0f172a"
+          }
+        },
+        {
+          "type": "text",
+          "content": "Fill the form, save when done.",
+          "position": {
+            "x": 20,
+            "y": 28
+          },
+          "width": 170,
+          "style": {
+            "fontSize": 11,
+            "color": "#475569"
+          }
+        },
+        {
+          "type": "input",
+          "name": "fullName",
+          "label": "Full name",
+          "inputType": "text",
+          "value": "",
+          "placeholder": "Jane Doe",
+          "required": true,
+          "position": {
+            "x": 20,
+            "y": 45
+          },
+          "width": 170,
+          "height": 12
+        },
+        {
+          "type": "input",
+          "name": "email",
+          "label": "Email",
+          "inputType": "email",
+          "value": "",
+          "placeholder": "you@example.com",
+          "required": true,
+          "position": {
+            "x": 20,
+            "y": 65
+          },
+          "width": 170,
+          "height": 12
+        },
+        {
+          "type": "input",
+          "name": "birthDate",
+          "label": "Date of birth",
+          "inputType": "date",
+          "value": "",
+          "position": {
+            "x": 20,
+            "y": 85
+          },
+          "width": 80,
+          "height": 12
+        },
+        {
+          "type": "select",
+          "name": "country",
+          "label": "Country",
+          "value": "tr",
+          "options": [
+            {
+              "value": "tr",
+              "label": "Turkey"
+            },
+            {
+              "value": "us",
+              "label": "United States"
+            },
+            {
+              "value": "de",
+              "label": "Germany"
+            }
+          ],
+          "position": {
+            "x": 110,
+            "y": 85
+          },
+          "width": 80,
+          "height": 12
+        },
+        {
+          "type": "textarea",
+          "name": "notes",
+          "label": "Notes",
+          "value": "",
+          "placeholder": "Anything we should know?",
+          "rows": 4,
+          "position": {
+            "x": 20,
+            "y": 105
+          },
+          "width": 170,
+          "height": 40
+        },
+        {
+          "type": "checkbox",
+          "name": "newsletter",
+          "label": "Subscribe me to the newsletter",
+          "checked": false,
+          "position": {
+            "x": 20,
+            "y": 155
+          },
+          "width": 170,
+          "height": 8
+        },
+        {
+          "type": "signature",
+          "name": "signature",
+          "label": "Signature",
+          "value": "",
+          "position": {
+            "x": 20,
+            "y": 175
+          },
+          "width": 100,
+          "height": 30
+        }
+      ]
+    }
+  ]
+}
