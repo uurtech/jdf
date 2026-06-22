@@ -1,6 +1,6 @@
 {
   "productName": "JDF Reader",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "identifier": "dev.jdf.viewer",
   "build": {
     "beforeDevCommand": "pnpm dev",
