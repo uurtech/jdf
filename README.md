@@ -1,6 +1,6 @@
-# JDF — JSON Document Format
+# JDF — the AI-native document standard
 
-A document format that's just JSON. Open `.jdf` in any text editor and you see the source. Open it in JDF Reader and you see a rendered page. Edit either side, the other reflects it. When the document carries embedded assets (images, fonts) it ships as `.jdfx` — a zip bundle around the same JSON, so a single file still travels self-contained.
+A JSON document format built for the AI era. PDFs were designed for humans and printers; JDF is designed for the systems that read, write, and reason over documents next. Open `.jdf` in any text editor and you see the source. Open it in JDF Reader and you see a rendered page. Edit either side, the other reflects it. When the document carries embedded assets (images, fonts) it ships as `.jdfx` — a zip bundle around the same JSON, so a single file still travels self-contained.
 
 <p align="center">
   <img src="docs/screenshot1.png" alt="JDF Reader rendered view">
@@ -29,7 +29,7 @@ It's JSON. Every consequence below falls out of that:
 
 ## The endgame — documents stop being storage, start being interfaces
 
-If a JSON-native document format gets global adoption, it becomes a base layer for knowledge. Then:
+If an AI-native document format gets global adoption, it becomes a base layer for knowledge. Then:
 
 - Documents stop being "static files" — they become live, addressable structures.
 - Everything becomes machine-readable by default — no parser stage, no OCR fallback.
