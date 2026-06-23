@@ -41,3 +41,8 @@ Thumbs.db
 # Claude
 .claude/
 CLAUDE.md
+
+# Internal SoW — never pushed to GitHub
+sow/
+*_sow.md
+*_pricing_calculator_inputs.md

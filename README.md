@@ -680,25 +680,42 @@ Bug reports, feature requests, and design discussions all welcome in [GitHub Iss
 
 Thanks to everyone who has helped shape JDF — code, design, docs, feedback.
 
-<p>
-  <a href="https://github.com/uurtech" title="uurtech">
-    <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/5675890&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="uurtech" />
-  </a>
-  &nbsp;
-  <a href="https://github.com/rcpzen" title="rcpzen">
-    <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/24500147&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="rcpzen" />
-  </a>
-  &nbsp;
-  <a href="https://github.com/uguracikgoz" title="uguracikgoz">
-    <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/17970755&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="uguracikgoz" />
-  </a>
-  &nbsp;
-  <a href="https://github.com/EienMosu" title="EienMosu">
-    <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/82905592&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="EienMosu" />
-  </a>
-</p>
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/uurtech" title="uurtech">
+        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/5675890&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="uurtech" /><br />
+        <sub><b>uurtech</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/feyzademirel" title="feyzademirel">
+        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/46006881&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="feyzademirel" /><br />
+        <sub><b>feyzademirel</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/rcpzen" title="rcpzen">
+        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/24500147&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="rcpzen" /><br />
+        <sub><b>rcpzen</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/uguracikgoz" title="uguracikgoz">
+        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/17970755&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="uguracikgoz" /><br />
+        <sub><b>uguracikgoz</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/EienMosu" title="EienMosu">
+        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/82905592&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="EienMosu" /><br />
+        <sub><b>EienMosu</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
 
-[@uurtech](https://github.com/uurtech) · [@rcpzen](https://github.com/rcpzen) · [@uguracikgoz](https://github.com/uguracikgoz) · [@EienMosu](https://github.com/EienMosu)
+[@uurtech](https://github.com/uurtech) · [@feyzademirel](https://github.com/feyzademirel) · [@rcpzen](https://github.com/rcpzen) · [@uguracikgoz](https://github.com/uguracikgoz) · [@EienMosu](https://github.com/EienMosu)
 
 ## License
 
