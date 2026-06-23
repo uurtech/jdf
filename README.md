@@ -1,4 +1,5 @@
-# JDF · JSON Document Standard
+# JDF
+## JSON Document Standard
 
 > *the AI-native document standard*
 
