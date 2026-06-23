@@ -1,4 +1,6 @@
-# JDF — the AI-native document standard
+# JDF — JSON Document Standard
+
+> *the AI-native document standard*
 
 A JSON document format built for the AI era. PDFs were designed for humans and printers; JDF is designed for the systems that read, write, and reason over documents next. Open `.jdf` in any text editor and you see the source. Open it in JDF Reader and you see a rendered page. Edit either side, the other reflects it. When the document carries embedded assets (images, fonts) it ships as `.jdfx` — a zip bundle around the same JSON, so a single file still travels self-contained.
 
