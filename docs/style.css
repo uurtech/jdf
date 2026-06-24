@@ -799,13 +799,16 @@ footer ul li a:hover { color: var(--brand); }
   flex-direction: column;
   gap: 0.75rem;
 }
-.shot img {
+.shot img,
+.shot jdf {
   width: 100%;
   height: auto;
   display: block;
   border-radius: 12px;
   box-shadow: 0 12px 30px -12px rgba(15, 23, 42, 0.25), 0 2px 6px rgba(15, 23, 42, 0.08);
   border: 1px solid rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  background: #ffffff;
 }
 .shot figcaption {
   font-size: 0.875rem;

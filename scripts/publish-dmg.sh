@@ -41,8 +41,17 @@ fi
 
 GH_OWNER="uurtech"
 GH_REPO="jdf"
+TAP_REPO_REMOTE="https://github.com/uurtech/homebrew-jdf.git"
 TAP_REPO_LOCAL="$REPO_ROOT/../homebrew-jdf"
 DMG_BUNDLE_DIR="$REPO_ROOT/apps/reader/src-tauri/target/release/bundle/dmg"
+
+# Auto-clone the Homebrew tap repo next to this one if missing — releases
+# need it to push the updated Cask. Uses GITHUB_TOKEN so private setups work too.
+if [[ ! -d "$TAP_REPO_LOCAL/.git" ]]; then
+  echo "→ Tap repo not found at $TAP_REPO_LOCAL — cloning"
+  git clone "https://${GITHUB_TOKEN}@github.com/${GH_OWNER}/homebrew-jdf.git" "$TAP_REPO_LOCAL"
+  echo "  ✓ Cloned $TAP_REPO_REMOTE → $TAP_REPO_LOCAL"
+fi
 
 # ── Step 1: bump versions in lockstep ──────────────────────────────────────
 if [[ -n "$BUMP" ]]; then
@@ -88,12 +97,15 @@ SHA256=$(shasum -a 256 "$DMG" | awk '{print $1}')
 echo "→ DMG: $DMG_BASENAME"
 echo "→ sha256: $SHA256"
 
-# ── Step 3: update local Casks/jdf.rb (reference copy) ─────────────────────
+# ── Step 3: update local Casks/jdf.rb (canonical) and mirror to tap ────────
+# `Casks/jdf.rb` in this repo is the source of truth. We sed in the new
+# version/sha256 here, then OVERWRITE the tap repo's Cask with this file so
+# any structural change (new stanza, postflight block, etc.) propagates
+# automatically — no need to manually sync the tap.
 update_cask() {
   local cask_path="$1"
   if [[ ! -f "$cask_path" ]]; then return; fi
   echo "→ Updating $cask_path"
-  # Replace version + sha256 + reference dmg name (Reader vs Viewer just in case)
   sed -i.bak -E "s/^  version \"[^\"]+\"/  version \"$NEW_VER\"/" "$cask_path"
   sed -i.bak -E "s/^  sha256 \"[a-f0-9]+\"/  sha256 \"$SHA256\"/" "$cask_path"
   rm -f "$cask_path.bak"
@@ -164,24 +176,26 @@ DMG_DOWNLOAD_URL="https://github.com/$GH_OWNER/$GH_REPO/releases/download/$TAG/$
 echo "→ Asset URL: $DMG_DOWNLOAD_URL"
 
 # ── Step 5: refresh tap repo (uurtech/homebrew-jdf) ─────────────────────────
-if [[ -d "$TAP_REPO_LOCAL/.git" ]]; then
-  echo "→ Updating local tap repo at $TAP_REPO_LOCAL"
-  update_cask "$TAP_REPO_LOCAL/Casks/jdf.rb"
-  (
-    cd "$TAP_REPO_LOCAL"
-    git add Casks/jdf.rb
-    if ! git diff --cached --quiet; then
-      git commit -m "Bump jdf to $NEW_VER" >/dev/null
-      git push
-      echo "  ✓ Tap repo pushed"
-    else
-      echo "  (tap repo already up to date)"
-    fi
-  )
-else
-  echo "→ Tap repo not found at $TAP_REPO_LOCAL — skipping"
-  echo "  Manual: clone uurtech/homebrew-jdf next to this repo and re-run"
-fi
+# Mirror the canonical Casks/jdf.rb verbatim into the tap repo. Any structural
+# change in this repo's Cask (new stanza, postflight block, etc.) propagates
+# automatically on the next release — no manual tap sync. The tap repo is
+# auto-cloned at the top of this script if it didn't exist.
+echo "→ Mirroring Casks/jdf.rb → $TAP_REPO_LOCAL"
+mkdir -p "$TAP_REPO_LOCAL/Casks"
+cp "$REPO_ROOT/Casks/jdf.rb" "$TAP_REPO_LOCAL/Casks/jdf.rb"
+(
+  cd "$TAP_REPO_LOCAL"
+  # Make sure pushes use the token, even if a stale plain origin URL is set.
+  git remote set-url origin "https://${GITHUB_TOKEN}@github.com/${GH_OWNER}/homebrew-jdf.git" 2>/dev/null || true
+  git add Casks/jdf.rb
+  if ! git diff --cached --quiet; then
+    git commit -m "Bump jdf to $NEW_VER" >/dev/null
+    git push
+    echo "  ✓ Tap repo pushed"
+  else
+    echo "  (tap repo already up to date)"
+  fi
+)
 
 # ── Step 6: install locally for sanity (extract .app from the dmg) ─────────
 echo "→ Installing /Applications/JDF Reader.app (extracting from dmg)"
