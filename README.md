@@ -16,7 +16,7 @@ JDF runs in three places:
 | Surface | What it is | Install |
 |---|---|---|
 | **JDF Reader** | Native macOS app — read, edit, import PDF/MD, export PDF | `brew tap uurtech/jdf && brew install jdf` |
-| **jdf.js** | JavaScript library — embed `.jdf` files on any web page | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf@0.1.11">` |
+| **jdf.js** | JavaScript library — embed `.jdf` files on any web page | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf@0.1.21">` |
 | **`@uurtech/jdf-cli`** | CLI — validate, convert PDF→JDF, wrap LLM JSON output into JDF | `npx @uurtech/jdf-cli import paper.pdf` |
 
 ## Why JDF
@@ -88,8 +88,8 @@ Linux and Windows builds (`.deb`, `.AppImage`, `.rpm`, `.msi`, `.exe`) are produ
 Embed JDF documents on any web page with one tag:
 
 ```html
-<link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf@0.1.11/dist/jdfjs.css">
-<script type="module" src="https://unpkg.com/@uurtech/jdf@0.1.11"></script>
+<link rel="stylesheet" href="https://unpkg.com/@uurtech/jdf@0.1.21/dist/jdfjs.css">
+<script type="module" src="https://unpkg.com/@uurtech/jdf@0.1.21"></script>
 
 <jdf src="/whitepaper.jdf"></jdf>
 ```
@@ -217,7 +217,7 @@ Editing lives in the desktop Reader only — jdf.js is a viewer, the CLI is non-
 |---|---|
 | **JDF Reader** (macOS) | `brew tap uurtech/jdf && brew install jdf` — DMG / `.app`, signed via GitHub release |
 | **JDF Reader** (Linux / Windows) | `.deb` / `.AppImage` / `.rpm` / `.msi` / `.exe` from the [latest release](https://github.com/uurtech/jdf/releases/latest) |
-| **jdf.js** | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf@0.1.11">` |
+| **jdf.js** | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf@0.1.21">` |
 | **`@uurtech/jdf-cli`** | `npx @uurtech/jdf-cli validate file.jdf` (no install) |
 
 ## Page model
@@ -639,7 +639,7 @@ Done:
 - JSON Schema, CLI validate, CI on all three OSes.
 - Homebrew tap (`uurtech/jdf`).
 - **jdf.js — web embed library** with auto-init, single `<jdf src="...">` form, feature parity with the desktop renderer.
-- Published to npm as [`@uurtech/jdf`](https://www.npmjs.com/package/@uurtech/jdf) — install via `npm install @uurtech/jdf` or load from CDN at `https://unpkg.com/@uurtech/jdf@0.1.11` (always pin a version in production).
+- Published to npm as [`@uurtech/jdf`](https://www.npmjs.com/package/@uurtech/jdf) — install via `npm install @uurtech/jdf` or load from CDN at `https://unpkg.com/@uurtech/jdf@0.1.21` (always pin a version in production).
 - **`.jdfx` zip bundles** — automatic for documents with embedded images/fonts. Reader, jdf.js, and CLI all read and write the format; manifest schema at [`spec/jdfx-manifest-schema.json`](spec/jdfx-manifest-schema.json).
 - **Markdown image imports** — `![alt](relative.png)` works in both the desktop importer and `jdf import file.md`. Relative paths are resolved against the source file's directory and embedded into the output bundle.
 
