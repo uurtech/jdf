@@ -60,7 +60,18 @@ brew tap uurtech/jdf
 brew install jdf
 ```
 
-`brew` clones the tap, downloads the latest `.dmg` from the GitHub release, and installs `JDF Reader.app` into `/Applications`.
+`brew` clones the tap, downloads the latest `.dmg` from the GitHub release, installs `JDF Reader.app` into `/Applications`, and automatically strips the macOS quarantine attribute so the app launches on first run.
+
+**Manual install (without Homebrew).** Download the `.dmg` directly from the [latest release](https://github.com/uurtech/jdf/releases/latest), drag `JDF Reader.app` into `/Applications`, then either:
+
+- **Right-click → Open** (one-time), confirm "Open" in the dialog. macOS remembers the choice.
+- Or run once in Terminal:
+  ```bash
+  xattr -cr "/Applications/JDF Reader.app"
+  open "/Applications/JDF Reader.app"
+  ```
+
+> **Why this step?** The `.dmg` is **unsigned** — JDF doesn't pay Apple's $99/yr Developer Program fee. macOS Gatekeeper blocks unsigned apps with a "damaged" or "unverified developer" dialog on first launch. The commands above remove the quarantine attribute macOS adds to downloads; the app itself is unchanged. The Homebrew Cask runs the same command automatically in its `postflight` step.
 
 Upgrade later:
 

@@ -240,6 +240,24 @@ main { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
   white-space: nowrap;
 }
 
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  background: linear-gradient(120deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #ffffff;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 14px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+}
+
+.btn-primary:hover { color: #ffffff; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(29, 78, 216, 0.35); }
+
+.btn-primary svg { stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
 .btn-secondary {
   display: inline-flex;
   align-items: center;

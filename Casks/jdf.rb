@@ -12,6 +12,14 @@ cask "jdf" do
 
   app "JDF Reader.app"
 
+  # The dmg is unsigned. Strip the macOS quarantine attribute so Gatekeeper
+  # does not show "JDF Reader is damaged and can't be opened" on first launch.
+  postflight do
+    system_command "/usr/bin/xattr",
+                   args: ["-cr", "#{appdir}/JDF Reader.app"],
+                   sudo: false
+  end
+
   zap trash: [
     "~/Library/Application Support/dev.jdf.viewer",
     "~/Library/Caches/dev.jdf.viewer",
