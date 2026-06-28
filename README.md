@@ -81,7 +81,13 @@ brew upgrade --cask jdf
 
 The Cask formula lives in a separate tap repo: [`uurtech/homebrew-jdf/Casks/jdf.rb`](https://github.com/uurtech/homebrew-jdf/blob/main/Casks/jdf.rb). A reference copy is also kept in this repo at [`Casks/jdf.rb`](Casks/jdf.rb).
 
-Linux and Windows builds (`.deb`, `.AppImage`, `.rpm`, `.msi`, `.exe`) are produced by the GitHub Actions release workflow on every tag — see the [latest release](https://github.com/uurtech/jdf/releases/latest).
+### Desktop · Windows
+
+Download the `.exe` (NSIS) or `.msi` installer from the [latest release](https://github.com/uurtech/jdf/releases/latest) and run it. The installer registers `.jdf` and `.jdfx` file associations automatically.
+
+### Desktop · Linux
+
+Download `.deb`, `.AppImage`, or `.rpm` from the [latest release](https://github.com/uurtech/jdf/releases/latest).
 
 ### Web · jdf.js
 
@@ -118,7 +124,7 @@ pnpm install
 pnpm tauri build      # produces .app + .dmg in apps/reader/src-tauri/target/release/bundle/
 ```
 
-Requires Node 20+, pnpm 9+, Rust stable, Xcode CLT (macOS).
+Requires Node 20+, pnpm 9+, Rust stable. Platform-specific: Xcode CLT (macOS), Visual Studio Build Tools with C++ workload + WebView2 (Windows), `libwebkit2gtk-4.1-dev libgtk-3-dev` (Linux).
 
 ## Open & edit
 
