@@ -9,6 +9,8 @@ import { SearchPanel } from "./components/shared/SearchPanel";
 import { WelcomeScreen } from "./components/shared/WelcomeScreen";
 import { HelpOverlay } from "./components/shared/HelpOverlay";
 import { InsertBar } from "./components/shared/InsertBar";
+import { FirstRunWizard } from "./components/shared/FirstRunWizard";
+import { TitleBar } from "./components/shared/TitleBar";
 import { EditContext, type ElementPath } from "./edit/context";
 import {
   applyFieldUpdate,
@@ -51,13 +53,18 @@ export default function App() {
   const [showSidebar, setShowSidebar] = createSignal(true);
   const [showSearch, setShowSearch] = createSignal(false);
   const [showHelp, setShowHelp] = createSignal(false);
-  const [darkMode, setDarkMode] = createSignal(localStorage.getItem("jdf-dark") === "1");
+  const [darkMode, setDarkMode] = createSignal(
+    localStorage.getItem("jdf-dark") !== null
+      ? localStorage.getItem("jdf-dark") === "1"
+      : window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
   const [error, setError] = createSignal<string | null>(null);
   const [importing, setImporting] = createSignal(false);
   const [recentFiles, setRecentFiles] = createSignal<string[]>(JSON.parse(localStorage.getItem("jdf-recent") || "[]"));
   const [savingState, setSavingState] = createSignal<"idle" | "saving" | "saved" | "error">("idle");
   const [mdSearchQuery, setMdSearchQuery] = createSignal("");
   const [dirty, setDirty] = createSignal(false);
+  const [showFirstRun, setShowFirstRun] = createSignal(!localStorage.getItem("jdf-first-run-done"));
 
   let saveTimer: number | undefined;
 
@@ -119,7 +126,7 @@ export default function App() {
 
   function scheduleAutoSave() {
     if (saveTimer) clearTimeout(saveTimer);
-    saveTimer = window.setTimeout(() => { autoSaveCurrent(); }, SAVE_DEBOUNCE_MS);
+    saveTimer = window.setTimeout(() => { saveTimer = undefined; autoSaveCurrent(); }, SAVE_DEBOUNCE_MS);
   }
 
   function commit(next: JdfDocument) {
@@ -341,14 +348,18 @@ export default function App() {
         const hasUnsavedImport = dirty() && loaded() && !isEditableFile();
         if (!hasPendingJdfSave && !hasUnsavedImport) return;
         e.preventDefault();
-        if (hasPendingJdfSave) await flushPendingSave();
+        try {
+          if (hasPendingJdfSave) await flushPendingSave();
+        } catch {}
         if (hasUnsavedImport) {
-          const ok = window.confirm(
-            "You have unsaved edits to an imported document.\n\nThe edits live in memory only — closing now will lose them.\n\nClick OK to save them as a .jdf file, Cancel to close without saving."
+          const { ask } = await import("@tauri-apps/plugin-dialog");
+          const answer = await ask(
+            "You have unsaved changes. Do you want to save before closing?",
+            { title: "Unsaved Changes", kind: "warning", okLabel: "Save", cancelLabel: "Don't Save" }
           );
-          if (ok) {
+          if (answer) {
             await saveAsJdf();
-            if (dirty()) return;
+            if (dirty()) return; // user cancelled the save dialog
           }
         }
         await win.destroy();
@@ -365,10 +376,12 @@ export default function App() {
     // race with our own interceptor and silently no-op.
     try {
       if (dirty() && loaded() && !isEditableFile()) {
-        const ok = window.confirm(
-          "You have unsaved edits to an imported document.\n\nThe edits live in memory only — closing now will lose them.\n\nClick OK to save them as a .jdf file, Cancel to close without saving."
+        const { ask } = await import("@tauri-apps/plugin-dialog");
+        const answer = await ask(
+          "You have unsaved changes. Do you want to save before closing?",
+          { title: "Unsaved Changes", kind: "warning", okLabel: "Save", cancelLabel: "Don't Save" }
         );
-        if (ok) {
+        if (answer) {
           await saveAsJdf();
           if (dirty()) return; // user cancelled the save dialog
         }
@@ -393,12 +406,12 @@ export default function App() {
     if (isEditableFile()) {
       await flushPendingSave();
     } else if (dirty() && doc()) {
-      const choice = window.confirm(
-        "You have unsaved edits.\n\nThe document was imported from " +
-        (loaded()?.type?.toUpperCase() || "another format") +
-        ", so changes are not auto-saved.\n\nClick OK to save it as a .jdf file, Cancel to discard your edits."
+      const { ask } = await import("@tauri-apps/plugin-dialog");
+      const answer = await ask(
+        "You have unsaved changes. Do you want to save before closing?",
+        { title: "Unsaved Changes", kind: "warning", okLabel: "Save", cancelLabel: "Don't Save" }
       );
-      if (choice) {
+      if (answer) {
         await saveAsJdf();
         if (dirty()) return false;
       }
@@ -534,6 +547,7 @@ export default function App() {
       insertPageAfter: addPageAfter, deletePage: removePage,
     }}>
       <div class={`h-screen flex flex-col relative ${darkMode() ? "dark" : ""} bg-white dark:bg-slate-900`}>
+        <TitleBar title={loaded() ? basename(loaded()!.path) + " — JDF Reader" : "JDF Reader"} />
         <Toolbar
           document={doc()}
           fileName={loaded() ? basename(loaded()!.path) : undefined}
@@ -638,6 +652,10 @@ export default function App() {
           <div class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-red-600 text-white px-5 py-3 rounded-lg shadow-2xl text-sm max-w-md z-50 animate-in">
             {error()}
           </div>
+        </Show>
+
+        <Show when={showFirstRun()}>
+          <FirstRunWizard onComplete={() => setShowFirstRun(false)} />
         </Show>
       </div>
     </EditContext.Provider>

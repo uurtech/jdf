@@ -28,7 +28,7 @@ export function InsertBar(props: InsertBarProps) {
             class="flex flex-col items-center px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors group"
             title={`Insert ${item.label}`}
           >
-            <span class="text-base leading-none">{item.icon}</span>
+            <span class="text-base leading-none text-gray-700 dark:text-gray-200">{item.icon}</span>
             <span class="text-[9px] text-gray-500 dark:text-gray-400 mt-0.5">{item.label}</span>
           </button>
         )}

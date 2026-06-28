@@ -15,7 +15,8 @@
         "width": 1200,
         "height": 800,
         "minWidth": 800,
-        "minHeight": 600
+        "minHeight": 600,
+        "decorations": false
       }
     ],
     "security": {
@@ -25,6 +26,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "licenseFile": "../src-tauri/installer/LICENSE",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -80,10 +82,18 @@
     },
     "windows": {
       "wix": {
-        "language": "en-US"
+        "language": "en-US",
+        "bannerPath": "installer/wix-banner.bmp",
+        "dialogImagePath": "installer/wix-dialog.bmp"
       },
       "nsis": {
-        "installMode": "perMachine"
+        "installMode": "both",
+        "displayLanguageSelector": true,
+        "languages": ["English", "Turkish"],
+        "headerImage": "installer/nsis-header.bmp",
+        "sidebarImage": "installer/nsis-sidebar.bmp",
+        "installerIcon": "icons/icon.ico",
+        "startMenuFolder": "JDF Reader"
       }
     },
     "linux": {

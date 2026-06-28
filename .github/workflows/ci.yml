@@ -56,3 +56,92 @@ jobs:
         with:
           workspaces: apps/reader/src-tauri
       - run: cargo check --manifest-path apps/reader/src-tauri/Cargo.toml
+
+  windows-build:
+    name: Windows full build + smoke test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/reader/src-tauri
+          key: windows-ci
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build Tauri (Windows)
+        run: pnpm --filter @jdf/reader tauri build --target x86_64-pc-windows-msvc
+
+      - name: Verify installer artifacts exist
+        shell: bash
+        run: |
+          BUNDLE="apps/reader/src-tauri/target/x86_64-pc-windows-msvc/release/bundle"
+          NSIS_COUNT=$(find "$BUNDLE/nsis" -name "*.exe" 2>/dev/null | wc -l)
+          MSI_COUNT=$(find "$BUNDLE/msi" -name "*.msi" 2>/dev/null | wc -l)
+          echo "NSIS installers: $NSIS_COUNT"
+          echo "MSI installers: $MSI_COUNT"
+          if [ "$NSIS_COUNT" -lt 1 ] && [ "$MSI_COUNT" -lt 1 ]; then
+            echo "::error::No installer produced"
+            exit 1
+          fi
+          echo "✓ Installer artifacts verified"
+
+      - name: Smoke test — application startup
+        shell: pwsh
+        run: |
+          $exe = "apps\reader\src-tauri\target\x86_64-pc-windows-msvc\release\jdf-reader.exe"
+          if (-not (Test-Path $exe)) {
+            Write-Error "Release binary not found"
+            exit 1
+          }
+
+          # Verify valid PE
+          $bytes = [System.IO.File]::ReadAllBytes($exe)
+          if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) {
+            Write-Error "Invalid PE executable"
+            exit 1
+          }
+          Write-Host "✓ Valid PE executable"
+
+          # Start and verify it doesn't crash
+          $proc = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 5
+          if ($proc.HasExited) {
+            Write-Error "Application crashed on startup (exit: $($proc.ExitCode))"
+            exit 1
+          }
+          Write-Host "✓ Application running (PID: $($proc.Id))"
+          $proc | Stop-Process -Force
+          Write-Host "✓ Smoke test passed"
+
+      - name: Smoke test — CLI validation
+        shell: bash
+        run: |
+          pnpm --filter @jdf/cli start validate spec/examples/hello-world.jdf
+          echo "✓ CLI validate works"
+
+      - name: Smoke test — PDF import
+        shell: bash
+        run: |
+          if [ -f "spec/examples/sample.pdf" ]; then
+            pnpm --filter @jdf/cli start import spec/examples/sample.pdf -o ./test-output.jdf --json
+            pnpm --filter @jdf/cli start validate ./test-output.jdf
+            echo "✓ PDF import pipeline works"
+          else
+            echo "⚠ No sample.pdf, skipping"
+          fi

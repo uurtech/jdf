@@ -5,7 +5,11 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [solid(), tailwindcss()],
   clearScreen: false,
-  server: { port: 1420, strictPort: true },
+  server: {
+    port: 1420,
+    strictPort: true,
+    watch: { ignored: ["**/src-tauri/**"] },
+  },
   envPrefix: ["VITE_", "TAURI_"],
   build: {
     target: "esnext",

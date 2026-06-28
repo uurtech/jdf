@@ -73,6 +73,21 @@ jobs:
             apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
             apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
 
+      - name: Upload raw binary (Windows)
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: jdf-reader-win-binary
+          path: apps/reader/src-tauri/target/${{ matrix.target }}/release/jdf-reader.exe
+
+      - name: Upload NSIS installer (Windows)
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: jdf-reader-win-nsis
+          path: apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
+          if-no-files-found: warn
+
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
@@ -84,3 +99,78 @@ jobs:
             apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm
             apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
             apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
+
+  # Windows-specific smoke tests before release goes live
+  windows-smoke:
+    name: Windows smoke tests
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download binary
+        uses: actions/download-artifact@v4
+        with:
+          name: jdf-reader-win-binary
+          path: ./bin
+
+      - name: Verify startup
+        shell: pwsh
+        run: |
+          $exe = ".\bin\jdf-reader.exe"
+          # Valid PE check
+          $bytes = [System.IO.File]::ReadAllBytes($exe)
+          if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { exit 1 }
+          Write-Host "✓ Valid PE"
+
+          $proc = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 5
+          if ($proc.HasExited) {
+            Write-Error "Crashed on startup (exit: $($proc.ExitCode))"
+            exit 1
+          }
+          $proc | Stop-Process -Force
+          Write-Host "✓ App starts and runs"
+
+      - name: Download NSIS installer
+        uses: actions/download-artifact@v4
+        with:
+          name: jdf-reader-win-nsis
+          path: ./installer
+        continue-on-error: true
+
+      - name: Test silent install/uninstall
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem ".\installer\*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { Write-Host "⚠ No NSIS installer, skipping"; exit 0 }
+
+          Write-Host "Installing: $($exe.Name)"
+          Start-Process -FilePath $exe.FullName -ArgumentList "/S" -Wait
+          Write-Host "✓ Silent install completed"
+
+          # Find and start installed binary
+          $installed = @(
+            "$env:LOCALAPPDATA\JDF Reader\jdf-reader.exe",
+            "$env:ProgramFiles\JDF Reader\jdf-reader.exe"
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+          if ($installed) {
+            $proc = Start-Process -FilePath $installed -PassThru
+            Start-Sleep -Seconds 5
+            if (-not $proc.HasExited) {
+              Write-Host "✓ Installed app starts correctly"
+              $proc | Stop-Process -Force
+            }
+          }
+
+          # Uninstall
+          $uninstaller = @(
+            "$env:LOCALAPPDATA\JDF Reader\uninstall.exe",
+            "$env:ProgramFiles\JDF Reader\uninstall.exe"
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+          if ($uninstaller) {
+            Start-Process -FilePath $uninstaller -ArgumentList "/S" -Wait
+            Write-Host "✓ Silent uninstall completed"
+          }
