@@ -146,6 +146,11 @@
             "What",
             "Install"
           ],
+          "columns": [
+            { "width": 40 },
+            { "width": 76 },
+            { "width": 50 }
+          ],
           "position": {
             "x": 0,
             "y": 164
@@ -157,7 +162,7 @@
           "rows": [
             [
               "JDF Reader",
-              "Native macOS asdasdasdasd",
+              "Native macOS desktop app",
               "brew install jdf"
             ],
             [
@@ -167,7 +172,7 @@
             ],
             [
               "@uurtech/jdf-cli",
-              "CLI for validate / import",
+              "CLI for validate / convert",
               "npx @uurtech/jdf-cli validate"
             ]
           ],
@@ -301,20 +306,6 @@
           },
           "title": "What does PDF do that JDF can't?",
           "type": "collapsible",
-          "width": 166
-        },
-        {
-          "content": "New text",
-          "position": {
-            "x": 0,
-            "y": 5
-          },
-          "style": {
-            "color": "#0f172a",
-            "fontFamily": "Inter",
-            "fontSize": 11
-          },
-          "type": "text",
           "width": 166
         }
       ],

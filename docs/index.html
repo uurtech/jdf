@@ -100,7 +100,7 @@
           <div class="channel-icon">$</div>
           <div>
             <div class="channel-title">CLI — PDF & JSON → JDF</div>
-            <div class="channel-sub">For RAG, CI, AI agents · <code>npx @uurtech/jdf-cli import paper.pdf</code></div>
+            <div class="channel-sub">For RAG, CI, AI agents · <code>npx @uurtech/jdf-cli convert paper.pdf</code></div>
           </div>
         </a>
       </div>
@@ -301,7 +301,7 @@ brew install jdf">
           <h3>Headless PDF ingestion</h3>
           <p>Same algorithm the desktop reader uses, packaged as a node CLI. Run it on a build server, in a Lambda, in a CI step — output is the structured tree your retriever wants instead of `pdfplumber` heuristics.</p>
           <pre class="cli-pre"><code><span class="cli-comment"># 1360-page AWS API spec → 60k structured elements in 90s</span>
-$ jdf import partner-api.pdf -o api.jdf <span class="cli-flag">--json</span>
+$ jdf convert partner-api.pdf -o api.jdf <span class="cli-flag">--json</span>
 $ jdf validate api.jdf  <span class="cli-comment"># schema gate — exit 1 fails CI</span></code></pre>
         </div>
 
@@ -311,7 +311,7 @@ $ jdf validate api.jdf  <span class="cli-comment"># schema gate — exit 1 fails
           <p>Models emit JSON. Hand them the JDF schema, drop the response into the CLI, and you get a validated `.jdf` you can render, ship, or audit. Three input shapes are accepted: a full document, a bare element array, or a partial.</p>
           <pre class="cli-pre"><code><span class="cli-comment"># model output → validated, renderable document</span>
 $ openai-cli generate &gt; report.json
-$ jdf import report.json -o report.jdf
+$ jdf convert report.json -o report.jdf
 <span class="cli-comment"># exit 1 if the model violated the schema</span></code></pre>
         </div>
       </div>
@@ -321,7 +321,7 @@ $ jdf import report.json -o report.jdf
         <p>One step in your workflow rejects malformed JSON or PDFs with weird structure before they reach production:</p>
         <pre class="cli-pre cli-pre-wide"><code><span class="cli-key">- name</span>: Convert &amp; validate generated document
   <span class="cli-key">run</span>: |
-    npx @uurtech/jdf-cli import dist/output.json -o dist/output.jdf
+    npx @uurtech/jdf-cli convert dist/output.json -o dist/output.jdf
     npx @uurtech/jdf-cli validate dist/output.jdf</code></pre>
       </div>
 

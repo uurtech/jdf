@@ -28,7 +28,7 @@
       <h2>Install</h2>
 <pre><code><span class="com"># run on demand (no install)</span>
 npx @uurtech/jdf-cli validate doc.jdf
-npx @uurtech/jdf-cli import paper.pdf
+npx @uurtech/jdf-cli convert paper.pdf
 
 <span class="com"># or install globally</span>
 npm install -g @uurtech/jdf-cli
@@ -57,32 +57,32 @@ jdf --help</code></pre>
 <pre><code><span class="com"># .github/workflows/ci.yml</span>
 - run<span class="punc">:</span> npx @uurtech/jdf-cli validate docs/whitepaper.jdf</code></pre>
 
-      <h3><code>jdf import &lt;file.pdf&gt; [-o output.{jdf,jdfx}] [--json]</code></h3>
+      <h3><code>jdf convert &lt;file.pdf&gt; [-o output.{jdf,jdfx}] [--json]</code></h3>
       <p>Convert a PDF to a JDF document. Same algorithm the desktop reader uses, packaged as a node CLI — both surfaces import <code>@jdf/pdf-import</code> from <code>packages/jdf-pdf-import/</code>, so output is bit-identical for the same PDF. The reader uses the browser entry point (DOM canvas, real Web Worker); the CLI uses the node entry point (<code>@napi-rs/canvas</code>, in-process).</p>
 
-<pre><code>jdf import paper.pdf                       <span class="com"># pure-text PDF → paper.jdf</span>
-jdf import contract.pdf                    <span class="com"># with images → contract.jdfx (auto)</span>
-jdf import contract.pdf -o contract.jdf <span class="com">--json</span>  <span class="com"># force pure JSON</span>
+<pre><code>jdf convert paper.pdf                       <span class="com"># pure-text PDF → paper.jdf</span>
+jdf convert contract.pdf                    <span class="com"># with images → contract.jdfx (auto)</span>
+jdf convert contract.pdf -o contract.jdf <span class="com">--json</span>  <span class="com"># force pure JSON</span>
                                            <span class="com"># (RAG / CI consumers prefer one text file)</span></code></pre>
 
       <p>The <code>--json</code> flag forces a single <code>.jdf</code> file even when the PDF embeds images — assets are base64-inlined. Pipelines that consume one text file per document (RAG ingestion, CI gates, agent context windows) should turn this on.</p>
 
       <p>Per text run the importer extracts position (mm), font family, font size (pt), bold / italic, color, opacity, and link annotations. Vector shapes (rect, line, path with Bezier curves) and embedded raster images are preserved at their original transforms. Invisible OCR layers (text rendering mode 3) are filtered out.</p>
 
-      <h3><code>jdf import &lt;file.json&gt; [-o output.{jdf,jdfx}] [--json]</code></h3>
+      <h3><code>jdf convert &lt;file.json&gt; [-o output.{jdf,jdfx}] [--json]</code></h3>
       <p>Wrap raw JSON into a validated JDF document. Three input shapes are accepted:</p>
       <ol>
         <li><strong>Full JDF document</strong> — has <code>$jdf</code> and <code>pages</code>. The CLI validates and re-emits (no transformation).</li>
         <li><strong>Bare element array</strong> — wrapped into a single-page A4 document. The CLI fills in <code>$jdf</code>, <code>meta</code>, and a default page.</li>
         <li><strong>Partial</strong> — <code>{ "elements": [...] }</code> or <code>{ "pages": [...] }</code> with optional <code>meta</code>, <code>styles</code>, <code>resources</code>. Filled in with sensible defaults (1.0.0, A4, no margins).</li>
       </ol>
-<pre><code>jdf import response.json -o report.jdf     <span class="com"># LLM output → JDF</span>
-jdf import elements.json                   <span class="com"># bare array → 1-page A4 doc</span>
-jdf import partial.json                    <span class="com"># partial → filled-in doc</span></code></pre>
+<pre><code>jdf convert response.json -o report.jdf     <span class="com"># LLM output → JDF</span>
+jdf convert elements.json                   <span class="com"># bare array → 1-page A4 doc</span>
+jdf convert partial.json                    <span class="com"># partial → filled-in doc</span></code></pre>
 
       <p><strong>Validation runs after every JSON import.</strong> If the resulting document doesn't match the schema, the CLI exits with code 1 and prints the path-level errors. This is what makes it safe to gate CI on model output — a malformed JSON response from an LLM never silently ships as a broken document.</p>
 
-      <h3><code>jdf import &lt;file.md&gt; [-o output.{jdf,jdfx}]</code></h3>
+      <h3><code>jdf convert &lt;file.md&gt; [-o output.{jdf,jdfx}]</code></h3>
       <p>Convenience: convert Markdown to JDF using <code>marked</code>-style parsing with full GFM (tables, blockquotes, fenced code, links, images, task lists, hr, strikethrough). Image references resolve against the source file's directory and are read from disk during import.</p>
 
       <h3>Auto file-shape selection</h3>
@@ -115,7 +115,7 @@ jdf import partial.json                    <span class="com"># partial → fille
 <pre><code><span class="com"># Bash — convert every PDF in a corpus and validate</span>
 for pdf in corpus/*.pdf; do
   out=&quot;${pdf%.pdf}.jdf&quot;
-  npx @uurtech/jdf-cli import &quot;$pdf&quot; -o &quot;$out&quot; --json || exit 1
+  npx @uurtech/jdf-cli convert &quot;$pdf&quot; -o &quot;$out&quot; --json || exit 1
   npx @uurtech/jdf-cli validate &quot;$out&quot; || exit 1
 done</code></pre>
 
@@ -124,13 +124,13 @@ done</code></pre>
 <pre><code><span class="com"># inside a workflow that calls a model</span>
 - run<span class="punc">:</span> |
     node generate-doc.js &gt; dist/output.json
-    npx @uurtech/jdf-cli import dist/output.json -o dist/output.jdf
+    npx @uurtech/jdf-cli convert dist/output.json -o dist/output.jdf
     <span class="com"># exit 1 here means the model violated the JDF schema</span></code></pre>
 
       <h2>PDF AcroForm → JDF Forms</h2>
       <p>The CLI's PDF importer also walks <code>AcroForm</code> widget annotations and emits matching JDF form elements. Filled values in the source PDF survive the conversion — the resulting <code>.jdf</code> renders in jdf.js with the same fields pre-populated, and the user can keep editing in any browser without an Acrobat install.</p>
 <pre><code><span class="com"># Convert an existing fillable PDF to JDF (values + structure preserved)</span>
-$ jdf import w9-form.pdf -o w9-form.jdf
+$ jdf convert w9-form.pdf -o w9-form.jdf
 $ jdf validate w9-form.jdf
 
 <span class="com"># Now host it; users fill the rest in their browser:</span>

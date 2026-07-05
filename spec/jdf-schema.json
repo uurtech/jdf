@@ -42,7 +42,8 @@
         "pageSize": { "$ref": "#/definitions/PageSize" },
         "pageOrientation": { "$ref": "#/definitions/PageOrientation" },
         "margins": { "$ref": "#/definitions/Margins" },
-        "unit": { "$ref": "#/definitions/Unit" }
+        "unit": { "$ref": "#/definitions/Unit" },
+        "flow": { "type": "boolean", "description": "Document-level default: lay elements out top-to-bottom and auto-paginate overflow in PDF export. Per-page `flow` overrides." }
       }
     },
     "PageSize": {
@@ -335,7 +336,7 @@
         "headers": { "type": "array", "items": { "type": "string" } },
         "rows": {
           "type": "array",
-          "items": { "type": "array", "items": { "oneOf": [{ "type": "string" }, { "type": "object", "required": ["content"], "properties": { "content": { "type": "string" }, "style": { "$ref": "#/definitions/StyleRef" }, "colspan": { "type": "integer" }, "rowspan": { "type": "integer" } } }] } }
+          "items": { "type": "array", "items": { "oneOf": [{ "type": "string" }, { "type": "object", "required": ["content"], "properties": { "content": { "type": "string" }, "style": { "$ref": "#/definitions/StyleRef" }, "align": { "type": "string", "enum": ["left","center","right","justify"] }, "colspan": { "type": "integer" }, "rowspan": { "type": "integer" } } }] } }
         },
         "position": { "$ref": "#/definitions/Position" }, "width": { "type": "number" },
         "headerStyle": { "$ref": "#/definitions/StyleRef" },

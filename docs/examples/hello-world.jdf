@@ -146,6 +146,11 @@
             "What",
             "Install"
           ],
+          "columns": [
+            { "width": 40 },
+            { "width": 76 },
+            { "width": 50 }
+          ],
           "position": {
             "x": 0,
             "y": 164
@@ -157,7 +162,7 @@
           "rows": [
             [
               "JDF Reader",
-              "Native macOS app",
+              "Native macOS desktop app",
               "brew install jdf"
             ],
             [
@@ -167,7 +172,7 @@
             ],
             [
               "@uurtech/jdf-cli",
-              "CLI for validate / import",
+              "CLI for validate / convert",
               "npx @uurtech/jdf-cli validate"
             ]
           ],
@@ -187,6 +192,124 @@
         }
       ],
       "id": "page-1"
+    },
+    {
+      "elements": [
+        {
+          "content": "DOCUMENT FORMAT",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "style": "label",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "Table of Contents",
+          "heading": 1,
+          "position": {
+            "x": 0,
+            "y": 8
+          },
+          "style": "h1",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "fill": "#2563eb",
+          "height": 0.6,
+          "position": {
+            "x": 0,
+            "y": 32
+          },
+          "shape": "rect",
+          "type": "shape",
+          "width": 18
+        },
+        {
+          "depth": 3,
+          "position": {
+            "x": 0,
+            "y": 42
+          },
+          "style": "body",
+          "type": "toc",
+          "width": 166
+        },
+        {
+          "content": "Embedding on the web",
+          "heading": 2,
+          "position": {
+            "x": 0,
+            "y": 110
+          },
+          "style": "h2",
+          "tocEntry": "Embedding",
+          "tocLevel": 2,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "Three lines of HTML and your document appears, fully styled, on any web page:",
+          "position": {
+            "x": 0,
+            "y": 122
+          },
+          "style": "body",
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "<link rel=\"stylesheet\" href=\"https://unpkg.com/@uurtech/jdf/dist/jdfjs.css\">\n<script type=\"module\" src=\"https://unpkg.com/@uurtech/jdf\"></script>\n<jdf src=\"/whitepaper.jdf\"></jdf>",
+          "position": {
+            "x": 0,
+            "y": 138
+          },
+          "style": {
+            "backgroundColor": "#f1f5f9",
+            "borderRadius": 4,
+            "color": "#1e293b",
+            "fontFamily": "JetBrains Mono",
+            "fontSize": 9,
+            "lineHeight": 1.5,
+            "padding": 10
+          },
+          "type": "text",
+          "width": 166
+        },
+        {
+          "content": "Try it yourself",
+          "heading": 2,
+          "position": {
+            "x": 0,
+            "y": 178
+          },
+          "style": "h2",
+          "tocEntry": "Try it",
+          "tocLevel": 2,
+          "type": "text",
+          "width": 166
+        },
+        {
+          "elements": [
+            {
+              "content": "Today: nothing meaningful. Tomorrow: anything we want to add. The format is open, the schema is JSON, the renderers are MIT.",
+              "style": "body",
+              "type": "text"
+            }
+          ],
+          "expanded": false,
+          "position": {
+            "x": 0,
+            "y": 190
+          },
+          "title": "What does PDF do that JDF can't?",
+          "type": "collapsible",
+          "width": 166
+        }
+      ],
+      "id": "page-2"
     }
   ],
   "styles": {

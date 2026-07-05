@@ -3,6 +3,7 @@ import type {
   TextElement, RichTextElement, ImageElement, TableElement, ListElement,
   ShapeElement, CollapsibleElement, TocElement, RichTextRun, ListItem, TableCellValue, ImageResource,
   FormInputElement, FormTextareaElement, FormCheckboxElement, FormSelectElement, FormSignatureElement,
+  TextAlign,
 } from "@jdf/core";
 import { unitToPx } from "@jdf/core";
 import { resolveStyle, styleToCss, applyStyle } from "../utils/style";
@@ -187,6 +188,22 @@ function cellAttrs(c: TableCellValue): { colspan?: number; rowspan?: number } {
   if (typeof c === "string") return {};
   return { colspan: c.colspan, rowspan: c.rowspan };
 }
+/** Per-cell style object → CSS map (string ref / array / inline Style). */
+function cellCss(c: TableCellValue, styles: Record<string, Style>): Record<string, string> {
+  if (typeof c === "string" || !c.style) return {};
+  const s = c.style;
+  if (typeof s === "string") return styleToCss(styles[s] || {});
+  if (Array.isArray(s)) { let m = {}; for (const k of s) m = { ...m, ...styleToCss(styles[k] || {}) }; return m; }
+  return styleToCss(s);
+}
+function cellAlign(c: TableCellValue): TextAlign | undefined {
+  return typeof c === "string" ? undefined : c.align;
+}
+/** Normalise a column width (number → px, string passed through, e.g. "30%"). */
+function colWidthCss(w: string | number | undefined): string | undefined {
+  if (w == null) return undefined;
+  return typeof w === "number" ? `${unitToPx(w)}px` : w;
+}
 
 function renderTable(el: TableElement, ctx: RenderContext): HTMLElement {
   const wrap = document.createElement("div");
@@ -231,8 +248,22 @@ function renderTable(el: TableElement, ctx: RenderContext): HTMLElement {
   const table = document.createElement("table");
   table.style.width = "100%";
   table.style.borderCollapse = "collapse";
+  table.style.tableLayout = el.columns?.some((c) => c.width != null) ? "fixed" : "auto";
   table.style.fontSize = "14px";
   if (borders.outer) table.style.border = `${borders.width || 1}px solid ${borders.color || "#e2e8f0"}`;
+
+  // Column widths — honour columns[].width via a <colgroup> so both header
+  // and body cells share the same track sizing.
+  if (el.columns?.some((c) => c.width != null)) {
+    const colgroup = document.createElement("colgroup");
+    el.columns.forEach((c) => {
+      const col = document.createElement("col");
+      const w = colWidthCss(c.width);
+      if (w) col.style.width = w;
+      colgroup.appendChild(col);
+    });
+    table.appendChild(colgroup);
+  }
 
   if (headers && headers.length > 0) {
     const thead = document.createElement("thead");
@@ -265,8 +296,10 @@ function renderTable(el: TableElement, ctx: RenderContext): HTMLElement {
       if (attrs.rowspan) td.rowSpan = attrs.rowspan;
       td.style.padding = "8px 12px";
       td.style.verticalAlign = "top";
-      td.style.textAlign = colAlign(ci) || "left";
+      // Cell-level align wins over the column default.
+      td.style.textAlign = cellAlign(cell) || colAlign(ci) || "left";
       if (borders.inner) td.style.border = `${borders.width || 1}px solid ${borders.color || "#e2e8f0"}`;
+      applyStyle(td, cellCss(cell, ctx.styles));
       tr.appendChild(td);
     });
     tbody.appendChild(tr);

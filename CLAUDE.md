@@ -46,7 +46,7 @@ JDF lives in **four runnable surfaces** that all consume the same JSON format. T
 - **PDF → JDF** for legacy ingestion: RAG pipelines, CI gates, build steps consuming structured documents instead of binary PDFs. PDF AcroForm widgets become real JDF form elements with their values intact.
 - **JSON → JDF** for AI workflows: LLMs and agents emit JSON; the CLI wraps it into a validated `.jdf` (or `.jdfx`) so the output is always renderable, diffable, and grep-able.
 
-`jdf import file.md` exists for convenience but is not the headline use-case.
+`jdf convert file.md` exists for convenience but is not the headline use-case.
 
 **JDF Forms.** Five element types — `input`, `textarea`, `checkbox`, `select`, `signature` — make a JDF document fillable. jdf.js renders real `<input>`/`<textarea>`/`<select>`/canvas elements; every keystroke mutates the in-memory doc. `viewer.exportJdf()` / `viewer.downloadJdf()` returns the form-filled JSON as a blob the user can save. Reader and Rust PDF export render the same fields with the user's values. Same algorithm, three runtimes, one source of truth: the `.jdf` file.
 
@@ -107,12 +107,17 @@ The reader's `apps/reader/src/import/pdfToJdf.ts` is now a one-line re-export of
 
 The CLI's two headline paths are **PDF → JDF** (for RAG / CI ingestion) and **JSON → JDF** (for AI / agent output wrapping). Markdown is a convenience.
 
+The headline verb is **`jdf convert`**. `jdf import` stays registered as a
+back-compat alias (same code path) so older scripts keep working; new docs and
+examples use `convert`.
+
 | Command | Status | Path |
 |---|---|---|
 | `jdf validate <file.jdf>` | ✓ done | `tools/jdf-cli/src/commands/validate.ts` |
-| `jdf import file.pdf` | ✓ done — uses `@jdf/pdf-import/node` | `tools/jdf-cli/src/commands/import-pdf.ts` |
-| `jdf import file.json` | ✓ done — full doc / element array / partial | `tools/jdf-cli/src/commands/import-json.ts` |
-| `jdf import file.md` | ✓ done | `tools/jdf-cli/src/commands/import-md.ts` |
+| `jdf convert file.pdf` | ✓ done — uses `@jdf/pdf-import/node` | `tools/jdf-cli/src/commands/import-pdf.ts` |
+| `jdf convert file.json` | ✓ done — full doc / element array / partial | `tools/jdf-cli/src/commands/import-json.ts` |
+| `jdf convert file.md` | ✓ done | `tools/jdf-cli/src/commands/import-md.ts` |
+| `jdf import …` | ✓ alias of `convert` (back-compat) | same handlers |
 
 Flags:
 - `-o, --output <path>` — explicit output path (extension picks `.jdf` vs `.jdfx`).
@@ -139,9 +144,10 @@ Do not add `<jdf-viewer>` or `data-jdf` variants — kullanıcı kararı, `<jdf>
 ```bash
 pnpm typecheck          # TS across reader, jdfjs, jdf-cli, jdf-pdf-import
 cd apps/reader/src-tauri && cargo check
-pnpm --filter jdfjs build
+pnpm --filter @uurtech/jdf build   # jdf.js embed (package name is @uurtech/jdf, not "jdfjs")
 pnpm --filter @uurtech/jdf-cli start validate spec/examples/hello-world.jdf
-pnpm --filter @uurtech/jdf-cli start import spec/examples/sample.pdf -o /tmp/sample.jdf --json
+pnpm --filter @uurtech/jdf-cli start validate spec/examples/flow-report.jdf
+pnpm --filter @uurtech/jdf-cli start convert spec/examples/sample.pdf -o /tmp/sample.jdf --json
 pnpm --filter @uurtech/jdf-cli start validate /tmp/sample.jdf
 ```
 
@@ -169,3 +175,5 @@ User talks Turkish. Replies in Turkish. Code comments, file paths, commit messag
 - **Don't put `unpkg.com/jdfjs` URLs in HTML before npm publish succeeded.** The CDN 404s, demos break.
 - **Don't commit `.env`.** It's gitignored along with `.env.example` (intentional — example contains placeholder secrets the user fills in locally).
 - **Don't rename `apps/reader/` lightly.** It will cascade through Cargo.toml, Tauri config, lib name, DMG asset name, and every script path.
+- **`flow` is a PDF-export layout concern, not a renderer feature.** `page.flow` (default `meta.flow`) makes the Rust exporter (`export_pdf` / `measure_element` in `commands/mod.rs`) lay elements out top-to-bottom and auto-paginate overflow. The HTML renderers (jdf.js + reader) still position elements absolutely by `position.y` — flow is intentionally export-only, like edit/IO. When you touch flow, keep `measure_element` in sync with `draw_element`'s wrap/line-height maths or the page breaks land in the wrong place. Fixture: `spec/examples/flow-report.jdf`.
+- **CLI markdown parity is hand-maintained, not shared.** `tools/jdf-cli/src/commands/import-md.ts` (TS, regex-based) and the reader's `markdown_to_jdf` (Rust `pulldown_cmark`) are two implementations of one spec — like the two renderers. They must emit the same element set (richtext/table/blockquote/nested-list/hr). If you add a markdown feature to one, add it to the other.

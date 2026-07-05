@@ -13,12 +13,13 @@ The CLI exists for two workflows:
 
 Usage:
   jdf validate <file.jdf>
-  jdf import <file.{pdf,json,md}> [-o output.{jdf,jdfx}] [--json]
+  jdf convert <file.{pdf,json,md}> [-o output.{jdf,jdfx}] [--json]
   jdf --help
 
 Commands:
   validate   Validate a .jdf / .jdfx file against the JDF schema
-  import     Convert a PDF, JSON, or Markdown file into JDF
+  convert    Convert a PDF, JSON, or Markdown file into JDF
+             (alias: import)
 
 Flags:
   -o, --output <path>   Explicit output path (extension picks .jdf vs .jdfx)
@@ -29,10 +30,10 @@ Flags:
 
 Examples:
   jdf validate spec/examples/hello-world.jdf
-  jdf import paper.pdf                        # PDF → JDF (or .jdfx for images)
-  jdf import contract.pdf --json | jq .       # PDF → pure JSON, pipe-friendly
-  jdf import response.json -o response.jdf    # LLM JSON output → validated JDF
-  jdf import README.md
+  jdf convert paper.pdf                        # PDF → JDF (or .jdfx for images)
+  jdf convert contract.pdf --json | jq .       # PDF → pure JSON, pipe-friendly
+  jdf convert response.json -o response.jdf    # LLM JSON output → validated JDF
+  jdf convert README.md
 `;
 
 // Flags that NEVER take a value, so the parser knows not to swallow the next
@@ -94,9 +95,12 @@ async function main() {
         const ok = await validate(positional[0]);
         process.exit(ok ? 0 : 1);
       }
+      // `convert` is the headline verb; `import` stays as a back-compat alias
+      // so existing scripts and docs keep working.
+      case "convert":
       case "import": {
         const input = positional[0];
-        if (!input) { console.error("Usage: jdf import <file.{pdf,json,md}> [-o output.jdf] [--json]"); process.exit(1); }
+        if (!input) { console.error("Usage: jdf convert <file.{pdf,json,md}> [-o output.jdf] [--json]"); process.exit(1); }
         const output = typeof flags.output === "string" ? flags.output : undefined;
         const forceJson = flags.json === true;
         const lower = input.toLowerCase();

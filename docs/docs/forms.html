@@ -406,7 +406,7 @@ viewer<span class="punc">.</span>downloadJdf<span class="punc">(</span><span cla
       <p>Existing PDFs with form fields convert one-to-one. The CLI walks the PDF's widget annotations and emits matching JDF form elements with their current values intact:</p>
 
 <pre><code><span class="com"># PDF AcroForm → JDF with form elements + filled values</span>
-$ jdf import w9-form.pdf -o w9-form.jdf
+$ jdf convert w9-form.pdf -o w9-form.jdf
 $ jdf validate w9-form.jdf
 ✓ Valid: w9-form.jdf
   Format:    1.0.0

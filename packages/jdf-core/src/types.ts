@@ -89,7 +89,7 @@ export interface ImageElement {
   style?: StyleRef;
 }
 
-export type TableCellValue = string | { content: string; style?: StyleRef; colspan?: number; rowspan?: number };
+export type TableCellValue = string | { content: string; style?: StyleRef; align?: TextAlign; colspan?: number; rowspan?: number };
 
 export interface TableColumn { width?: string | number; header?: string; align?: TextAlign; }
 
@@ -304,6 +304,10 @@ export interface Meta {
   pageOrientation?: PageOrientation;
   margins?: Margins;
   unit?: Unit;
+  /** Document-level default for flow layout. When true, PDF export lays
+   *  elements out top-to-bottom and auto-paginates overflow. Per-page
+   *  `flow` overrides this. */
+  flow?: boolean;
 }
 
 export interface JdfDocument {

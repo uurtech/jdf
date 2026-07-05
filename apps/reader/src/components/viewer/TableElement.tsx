@@ -1,5 +1,6 @@
 import { For, Show } from "solid-js";
-import type { TableElement, Style, TableCellValue, TableBorders } from "@jdf/core";
+import type { TableElement, Style, TableCellValue, TableBorders, TextAlign } from "@jdf/core";
+import { MM_TO_PX } from "@jdf/core";
 import { resolveStyle, styleToCss } from "./PageRenderer";
 import { Editable } from "../shared/Editable";
 import { useEdit, type ElementPath } from "../../edit/context";
@@ -17,6 +18,16 @@ function cellText(c: TableCellValue): string {
 function cellAttrs(c: TableCellValue) {
   if (typeof c === "string") return {};
   return { colspan: c.colspan, rowspan: c.rowspan };
+}
+
+function cellAlign(c: TableCellValue): TextAlign | undefined {
+  return typeof c === "string" ? undefined : c.align;
+}
+
+/** Normalise a column width (number → px, string passed through, e.g. "30%"). */
+function colWidthCss(w: string | number | undefined): string | undefined {
+  if (w == null) return undefined;
+  return typeof w === "number" ? `${w * MM_TO_PX}px` : w;
 }
 
 export function TableElementView(props: TableElementViewProps) {
@@ -59,6 +70,16 @@ export function TableElementView(props: TableElementViewProps) {
 
   const headers = () => props.element.headers ?? props.element.columns?.map((c) => c.header || "").filter((h) => h !== "");
 
+  const hasColWidths = () => props.element.columns?.some((c) => c.width != null) ?? false;
+
+  const cellCss = (c: TableCellValue) => {
+    if (typeof c === "string" || !c.style) return {};
+    const s = c.style;
+    if (typeof s === "string") return styleToCss(props.styles[s] || {});
+    if (Array.isArray(s)) { let m = {}; for (const k of s) m = { ...m, ...styleToCss(props.styles[k] || {}) }; return m; }
+    return styleToCss(s);
+  };
+
   function commitCell(rowIdx: number, colIdx: number, value: string) {
     const row = props.element.rows[rowIdx];
     if (!row) return;
@@ -76,9 +97,17 @@ export function TableElementView(props: TableElementViewProps) {
         class="w-full border-collapse"
         style={{
           "font-size": "14px",
+          "table-layout": hasColWidths() ? "fixed" : "auto",
           ...(borders().outer ? { border: `${borders().width || 1}px solid ${borders().color || "#e2e8f0"}` } : {}),
         }}
       >
+        <Show when={hasColWidths()}>
+          <colgroup>
+            <For each={props.element.columns!}>
+              {(c) => <col style={{ ...(colWidthCss(c.width) ? { width: colWidthCss(c.width) } : {}) }} />}
+            </For>
+          </colgroup>
+        </Show>
         <Show when={headers() && headers()!.length > 0}>
           <thead>
             <tr style={headerCss()}>
@@ -114,8 +143,9 @@ export function TableElementView(props: TableElementViewProps) {
                     <td
                       class="px-3 py-2 align-top"
                       style={{
-                        "text-align": props.element.columns?.[colIdx()]?.align || "left",
+                        "text-align": cellAlign(cell) || props.element.columns?.[colIdx()]?.align || "left",
                         ...(borders().inner ? { border: `${borders().width || 1}px solid ${borders().color || "#e2e8f0"}` } : {}),
+                        ...cellCss(cell),
                       }}
                       {...cellAttrs(cell)}
                     >

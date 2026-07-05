@@ -17,7 +17,7 @@ JDF runs in three places:
 |---|---|---|
 | **JDF Reader** | Native macOS app — read, edit, import PDF/MD, export PDF | `brew tap uurtech/jdf && brew install jdf` |
 | **jdf.js** | JavaScript library — embed `.jdf` files on any web page | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf@0.1.21">` |
-| **`@uurtech/jdf-cli`** | CLI — validate, convert PDF→JDF, wrap LLM JSON output into JDF | `npx @uurtech/jdf-cli import paper.pdf` |
+| **`@uurtech/jdf-cli`** | CLI — validate, convert PDF→JDF, wrap LLM JSON output into JDF | `npx @uurtech/jdf-cli convert paper.pdf` |
 
 ## Why JDF
 
@@ -197,9 +197,9 @@ Editing lives in the desktop Reader only — jdf.js is a viewer, the CLI is non-
 | Capability | JDF Reader | jdf.js | CLI |
 |---|:---:|:---:|:---:|
 | Open `.jdf` from disk | ✓ | ✓ (via `<jdf src>` / `embed()`) | ✓ (`validate`) |
-| Import `.md` → `.jdf` | ✓ | — | ✓ (`jdf import file.md`) |
-| Import `.pdf` → `.jdf` (full fidelity: positions, fonts, colors, shapes, embedded images) | ✓ | — | ✓ (`jdf import file.pdf`) — same algorithm via `@jdf/pdf-import` |
-| Wrap raw / LLM JSON → validated `.jdf` | — | — | ✓ (`jdf import file.json`) — full doc, element array, or `{ pages: [...] }` partial |
+| Import `.md` → `.jdf` | ✓ | — | ✓ (`jdf convert file.md`) |
+| Import `.pdf` → `.jdf` (full fidelity: positions, fonts, colors, shapes, embedded images) | ✓ | — | ✓ (`jdf convert file.pdf`) — same algorithm via `@jdf/pdf-import` |
+| Wrap raw / LLM JSON → validated `.jdf` | — | — | ✓ (`jdf convert file.json`) — full doc, element array, or `{ pages: [...] }` partial |
 | JSON Schema validation | ✓ (live, in-app) | — | ✓ (`jdf validate file.jdf`) |
 | Markdown viewer (native render, no conversion) | ✓ | — | — |
 
@@ -234,7 +234,7 @@ The same algorithm runs from the CLI for unattended pipelines:
 
 ```bash
 # headless conversion — RAG ingestion, CI gate, build step
-jdf import contract.pdf -o contract.jdf --json
+jdf convert contract.pdf -o contract.jdf --json
 jdf validate contract.jdf      # exit 1 on schema failure → CI fails the build
 ```
 
@@ -269,7 +269,7 @@ Round-trip back to `.pdf` via the toolbar (or `Cmd+Shift+E`). Respects:
 
 `.md` opens with a continuous-scroll, GitHub-style render (`marked`, full GFM: tables, blockquotes, code, links, images, task lists, hr, strikethrough). Toolbar toggle flips to the paged JDF render of the same content. `Cmd+F` highlights matches inline with `<mark>` tags in the live MD output, line-by-line.
 
-**Images in Markdown** — `![alt](path/to/picture.png)` works with relative paths (`komojam_target_architecture.drawio.png`), absolute paths, and `http(s)://` URLs. On import the relative ones are read from disk and base64-embedded into the document so the resulting `.jdf` is self-contained and portable. Both the JDF Reader app and the CLI (`jdf import file.md`) follow the same rule.
+**Images in Markdown** — `![alt](path/to/picture.png)` works with relative paths (`komojam_target_architecture.drawio.png`), absolute paths, and `http(s)://` URLs. On import the relative ones are read from disk and base64-embedded into the document so the resulting `.jdf` is self-contained and portable. Both the JDF Reader app and the CLI (`jdf convert file.md`) follow the same rule.
 
 ## Images & assets — `.jdf` vs `.jdfx`
 
@@ -311,7 +311,7 @@ hello.jdfx                  (zip)
 
 1. Relative paths are resolved against the Markdown file's directory and read from disk.
 2. Bytes get embedded into the document.
-3. If at least one image was embedded, the importer writes a `.jdfx`; otherwise a plain `.jdf`. Same rule in the desktop reader and `jdf import file.md`.
+3. If at least one image was embedded, the importer writes a `.jdfx`; otherwise a plain `.jdf`. Same rule in the desktop reader and `jdf convert file.md`.
 
 ## RAG / AI ingestion
 
@@ -387,7 +387,22 @@ See [`docs/docs/why-ai.html`](docs/docs/why-ai.html) for the long-form discussio
 
 Positions in mm (default), font sizes in pt. A4 content area: 166 × 247 mm with the default 22 / 25 mm margins.
 
-Full schema: [`spec/jdf-schema.json`](spec/jdf-schema.json). Working example: [`spec/examples/hello-world.jdf`](spec/examples/hello-world.jdf).
+### Flow layout & auto-pagination
+
+Set `"flow": true` on a page (or `meta.flow` for the whole document) and you no longer pin every element's `position.y` by hand. In flow mode the PDF exporter lays elements out top-to-bottom, word-wraps long text inside the content width, and breaks any overflow onto a fresh page instead of clipping it. Leave `flow` unset (the default) and authored positions are honoured exactly as before — mix both across pages in one document.
+
+```json
+{
+  "pages": [
+    { "flow": true, "elements": [
+      { "type": "text", "content": "Title", "heading": 1, "width": 166 },
+      { "type": "text", "content": "A long paragraph that wraps and paginates automatically…", "width": 166 }
+    ] }
+  ]
+}
+```
+
+Full schema: [`spec/jdf-schema.json`](spec/jdf-schema.json). Working examples: [`spec/examples/hello-world.jdf`](spec/examples/hello-world.jdf) (absolute layout) and [`spec/examples/flow-report.jdf`](spec/examples/flow-report.jdf) (flow + auto-pagination).
 
 Internal navigation: `link: "#page-3"` or `link: { type: "internal", target: "#page-3" }` on text/richtext.
 
@@ -464,13 +479,13 @@ The CLI is the bridge between **legacy documents** (PDFs everywhere) and **AI wo
 npx @uurtech/jdf-cli validate doc.jdf
 
 # PDF → JDF — same algorithm the desktop reader uses, headless
-npx @uurtech/jdf-cli import paper.pdf -o paper.jdf --json
+npx @uurtech/jdf-cli convert paper.pdf -o paper.jdf --json
 
 # JSON → JDF — wrap raw JSON (LLM output, generated reports) into a validated doc
-npx @uurtech/jdf-cli import response.json -o response.jdf
+npx @uurtech/jdf-cli convert response.json -o response.jdf
 
 # Markdown → JDF (convenience)
-npx @uurtech/jdf-cli import README.md
+npx @uurtech/jdf-cli convert README.md
 
 # or install globally
 npm install -g @uurtech/jdf-cli
@@ -479,8 +494,8 @@ jdf validate doc.jdf
 
 ### Why this CLI exists
 
-- **PDF → JDF for RAG / CI ingestion.** Pipelines that want structured documents stop fighting `pdfplumber` / `pymupdf` heuristics — `jdf import file.pdf --json` produces a tree your retriever can chunk by element type. The algorithm is shared with the desktop reader (`@jdf/pdf-import` package), so the CLI's output and the reader's output are bit-identical for the same input.
-- **JSON → JDF for AI agents.** Models naturally emit JSON. `jdf import response.json` accepts three shapes: a full JDF document (validated and optionally re-emitted), a bare element array (wrapped into a single-page A4 doc), or a `{ elements: [...] }` / `{ pages: [...] }` partial. The output is always validated against `spec/jdf-schema.json` — a non-zero exit makes it safe to drop into CI as a gate on model output.
+- **PDF → JDF for RAG / CI ingestion.** Pipelines that want structured documents stop fighting `pdfplumber` / `pymupdf` heuristics — `jdf convert file.pdf --json` produces a tree your retriever can chunk by element type. The algorithm is shared with the desktop reader (`@jdf/pdf-import` package), so the CLI's output and the reader's output are bit-identical for the same input.
+- **JSON → JDF for AI agents.** Models naturally emit JSON. `jdf convert response.json` accepts three shapes: a full JDF document (validated and optionally re-emitted), a bare element array (wrapped into a single-page A4 doc), or a `{ elements: [...] }` / `{ pages: [...] }` partial. The output is always validated against `spec/jdf-schema.json` — a non-zero exit makes it safe to drop into CI as a gate on model output.
 - **One file in, one renderable file out.** `validate` runs after every `import`, so if the JSON is malformed, the build breaks — there is no "shipping a broken document" path.
 
 ### Flags
@@ -496,7 +511,7 @@ jdf validate doc.jdf
 # .github/workflows/docs.yml
 - name: Validate model-emitted document
   run: |
-    npx @uurtech/jdf-cli import dist/output.json -o dist/output.jdf
+    npx @uurtech/jdf-cli convert dist/output.json -o dist/output.jdf
     npx @uurtech/jdf-cli validate dist/output.jdf
 ```
 
@@ -563,7 +578,7 @@ const blob = viewer.exportJdf();
 
 ### PDF AcroForm import
 
-`jdf import existing-form.pdf` walks the PDF's AcroForm widget annotations and emits matching JDF form elements:
+`jdf convert existing-form.pdf` walks the PDF's AcroForm widget annotations and emits matching JDF form elements:
 
 | PDF field type | JDF element |
 |---|---|
@@ -641,7 +656,7 @@ Done:
 - **jdf.js — web embed library** with auto-init, single `<jdf src="...">` form, feature parity with the desktop renderer.
 - Published to npm as [`@uurtech/jdf`](https://www.npmjs.com/package/@uurtech/jdf) — install via `npm install @uurtech/jdf` or load from CDN at `https://unpkg.com/@uurtech/jdf@0.1.21` (always pin a version in production).
 - **`.jdfx` zip bundles** — automatic for documents with embedded images/fonts. Reader, jdf.js, and CLI all read and write the format; manifest schema at [`spec/jdfx-manifest-schema.json`](spec/jdfx-manifest-schema.json).
-- **Markdown image imports** — `![alt](relative.png)` works in both the desktop importer and `jdf import file.md`. Relative paths are resolved against the source file's directory and embedded into the output bundle.
+- **Markdown image imports** — `![alt](relative.png)` works in both the desktop importer and `jdf convert file.md`. Relative paths are resolved against the source file's directory and embedded into the output bundle.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the per-release log.
 
@@ -657,13 +672,12 @@ The next surface area, grouped by theme. Items at the top of each group are sche
 
 ### CLI parity with the desktop reader
 
-- **`jdf import file.pdf`** — full PDF import in the CLI. Extract the existing browser importer (`apps/reader/src/import/pdfToJdf.ts`) into `packages/jdf-pdf-import/` with two entry points: `browser.ts` (canvas) and `node.ts` (`node-canvas`). Desktop and CLI consume the same algorithm — no duplication.
+- **`jdf convert file.pdf`** — full PDF import in the CLI. Extract the existing browser importer (`apps/reader/src/import/pdfToJdf.ts`) into `packages/jdf-pdf-import/` with two entry points: `browser.ts` (canvas) and `node.ts` (`node-canvas`). Desktop and CLI consume the same algorithm — no duplication.
 - **`jdf export file.jdf -o file.pdf`** — PDF export in the CLI. Wraps the Rust exporter as a standalone binary or ports it to JS.
 
 ### Rendering & import quality
 
 - **PDF table detection** — geometry-based row/column grouping during PDF import. Today the importer emits cells as positioned `text` elements; this pass groups them into real `table` elements with `headers` + `rows`. The single biggest fidelity win for RAG retrieval and export round-trips.
-- **Multi-page overflow on PDF export** — content longer than the page flows to page N+1 instead of being clipped. Currently the exporter assumes one logical page per `page` entry.
 - **Editing in jdf.js** — opt-in editor mode (`<jdf src="..." editable>`) that mirrors the desktop reader's inline editing, hover action bar, and `Cmd+S` save. Today jdf.js is strictly a renderer.
 
 ### Editor & ecosystem

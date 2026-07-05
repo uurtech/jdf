@@ -403,7 +403,8 @@ export class JDFViewer {
     const footerH = footer?.height ?? 0;
 
     if (header) {
-      const h = this.renderHeaderFooter(header, pageIndex, this.doc.pages.length, styles);
+      const headerPath: (string | number)[] = page.header ? ["pages", pageIndex, "header"] : ["header"];
+      const h = this.renderHeaderFooter(header, pageIndex, this.doc.pages.length, styles, headerPath);
       h.classList.add("jdfjs-header");
       h.style.paddingTop = `${unitToPx(margins.top! / 2)}px`;
       h.style.paddingLeft = `${unitToPx(margins.left!)}px`;
@@ -438,7 +439,8 @@ export class JDFViewer {
     pageEl.appendChild(content);
 
     if (footer) {
-      const f = this.renderHeaderFooter(footer, pageIndex, this.doc.pages.length, styles);
+      const footerPath: (string | number)[] = page.footer ? ["pages", pageIndex, "footer"] : ["footer"];
+      const f = this.renderHeaderFooter(footer, pageIndex, this.doc.pages.length, styles, footerPath);
       f.classList.add("jdfjs-footer");
       f.style.paddingBottom = `${unitToPx(margins.bottom! / 2)}px`;
       f.style.paddingLeft = `${unitToPx(margins.left!)}px`;
@@ -450,7 +452,7 @@ export class JDFViewer {
     return wrapper;
   }
 
-  private renderHeaderFooter(hf: HeaderFooter, pageIndex: number, totalPages: number, styles: Record<string, Style>): HTMLDivElement {
+  private renderHeaderFooter(hf: HeaderFooter, pageIndex: number, totalPages: number, styles: Record<string, Style>, basePath: (string | number)[]): HTMLDivElement {
     const div = document.createElement("div");
     if (hf.elements?.length) {
       hf.elements.forEach((el, idx) => {
@@ -458,8 +460,12 @@ export class JDFViewer {
           styles,
           resources: this.doc.resources,
           document: this.doc,
-          path: ["__hf__", pageIndex, idx],
+          // Real doc path so form-field mutations land on the right node and
+          // survive exportJdf (was a synthetic ["__hf__", …] that
+          // handleFormChange could not resolve).
+          path: [...basePath, "elements", idx],
           onNavigatePage: (i) => this.goToPage(i),
+          onFormChange: (path, field, value) => this.handleFormChange(path, field, value),
         });
         if (node) div.appendChild(node);
       });
@@ -559,18 +565,40 @@ export class JDFViewer {
   }
 
   /**
-   * Walk every page's elements and yield each form element with its
-   * resolved name. Used by getFormValues / downloadJdf consumers.
+   * Walk every page's elements — recursing into container elements
+   * (collapsible / table cells / list items) and the doc + per-page
+   * header/footer trees — and yield each form element with its resolved
+   * name. Previously this only scanned top-level `page.elements`, so a
+   * field nested inside a collapsible section or placed in a header was
+   * silently dropped from getFormValues / downloadJdf.
    */
   private *iterFormFields(): Generator<{ name: string; field: any }> {
-    for (const page of this.doc.pages || []) {
-      for (const el of (page.elements || []) as any[]) {
-        if (!el || typeof el !== "object") continue;
-        if (el.type === "input" || el.type === "textarea" || el.type === "checkbox" || el.type === "select" || el.type === "signature") {
-          if (typeof el.name === "string" && el.name.length > 0) yield { name: el.name, field: el };
-        }
+    const seen = new Set<any>();
+    const walk = function* (node: any): Generator<{ name: string; field: any }> {
+      if (!node || typeof node !== "object" || seen.has(node)) return;
+      seen.add(node);
+      if (Array.isArray(node)) {
+        for (const item of node) yield* walk(item);
+        return;
       }
+      const t = node.type;
+      if (t === "input" || t === "textarea" || t === "checkbox" || t === "select" || t === "signature") {
+        if (typeof node.name === "string" && node.name.length > 0) yield { name: node.name, field: node };
+      }
+      // Recurse into any nested element carriers.
+      if (Array.isArray(node.elements)) yield* walk(node.elements);
+      if (Array.isArray(node.items)) yield* walk(node.items);
+      if (Array.isArray(node.rows)) {
+        for (const row of node.rows) if (Array.isArray(row)) yield* walk(row);
+      }
+    };
+    for (const page of this.doc.pages || []) {
+      yield* walk(page.elements);
+      yield* walk(page.header?.elements);
+      yield* walk(page.footer?.elements);
     }
+    yield* walk(this.doc.header?.elements);
+    yield* walk(this.doc.footer?.elements);
   }
 
   toJSON(options: { pretty?: boolean } = {}): string {

@@ -276,6 +276,106 @@ fn get_color(el: &serde_json::Value, doc: &serde_json::Value) -> Option<printpdf
     None
 }
 
+/// Millimetres per point, and the default line-height multiplier used across
+/// the exporter. Kept as module constants so text and table layout agree.
+const PT_TO_MM: f32 = 0.3528;
+const LINE_HEIGHT: f32 = 1.2;
+
+/// Greedy word-wrap for the flat PDF capture. printpdf's built-in fonts give
+/// us no glyph metrics, so we approximate advance width as
+/// `fontSize(pt) * PT_TO_MM * char_factor` (≈0.5em for Helvetica, ≈0.6em for
+/// the monospaced Courier). Wraps on whitespace; a single word longer than the
+/// line is hard-split so nothing runs off the page. Explicit `\n` are honoured
+/// as blank/forced breaks. Without this, every long paragraph, list item and
+/// table cell overflowed the right margin — the #1 reason exported PDFs didn't
+/// look like PDFs.
+fn wrap_text(text: &str, fs_pt: f32, width_mm: f32, char_factor: f32) -> Vec<String> {
+    let char_w = fs_pt * PT_TO_MM * char_factor;
+    if width_mm <= 0.0 || char_w <= 0.0 { return text.split('\n').map(|s| s.to_string()).collect(); }
+    let max_chars = (width_mm / char_w).floor().max(1.0) as usize;
+    let mut lines = Vec::new();
+    let hard_split = |word: &str, lines: &mut Vec<String>| -> String {
+        let mut chunk = String::new();
+        for ch in word.chars() {
+            if chunk.chars().count() >= max_chars { lines.push(chunk.clone()); chunk.clear(); }
+            chunk.push(ch);
+        }
+        chunk
+    };
+    for raw_line in text.split('\n') {
+        if raw_line.trim().is_empty() { lines.push(String::new()); continue; }
+        let mut cur = String::new();
+        for word in raw_line.split_whitespace() {
+            if cur.is_empty() {
+                cur = if word.chars().count() > max_chars { hard_split(word, &mut lines) } else { word.to_string() };
+            } else if cur.chars().count() + 1 + word.chars().count() <= max_chars {
+                cur.push(' ');
+                cur.push_str(word);
+            } else {
+                lines.push(std::mem::take(&mut cur));
+                cur = if word.chars().count() > max_chars { hard_split(word, &mut lines) } else { word.to_string() };
+            }
+        }
+        lines.push(cur);
+    }
+    lines
+}
+
+/// Approximate rendered width of a string in mm for right/center alignment.
+fn text_width_mm(s: &str, fs_pt: f32, char_factor: f32) -> f32 {
+    s.chars().count() as f32 * fs_pt * PT_TO_MM * char_factor
+}
+
+/// Filled rectangle given the bottom-left corner (printpdf's mm-from-bottom coords).
+fn fill_rect(layer: &printpdf::PdfLayerReference, x: f32, y_bottom: f32, w: f32, h: f32, color: printpdf::Rgb) {
+    use printpdf::*;
+    layer.set_fill_color(Color::Rgb(color));
+    let pts = vec![
+        (Point::new(Mm(x), Mm(y_bottom)), false),
+        (Point::new(Mm(x + w), Mm(y_bottom)), false),
+        (Point::new(Mm(x + w), Mm(y_bottom + h)), false),
+        (Point::new(Mm(x), Mm(y_bottom + h)), false),
+    ];
+    layer.add_polygon(Polygon { rings: vec![pts], mode: path::PaintMode::Fill, winding_order: path::WindingOrder::NonZero });
+}
+
+/// Stroked rectangle (grid border) given the bottom-left corner.
+fn stroke_rect(layer: &printpdf::PdfLayerReference, x: f32, y_bottom: f32, w: f32, h: f32, color: printpdf::Rgb, width: f32) {
+    use printpdf::*;
+    layer.set_outline_color(Color::Rgb(color));
+    layer.set_outline_thickness(width.max(0.05));
+    let pts = vec![
+        (Point::new(Mm(x), Mm(y_bottom)), false),
+        (Point::new(Mm(x + w), Mm(y_bottom)), false),
+        (Point::new(Mm(x + w), Mm(y_bottom + h)), false),
+        (Point::new(Mm(x), Mm(y_bottom + h)), false),
+    ];
+    layer.add_polygon(Polygon { rings: vec![pts], mode: path::PaintMode::Stroke, winding_order: path::WindingOrder::NonZero });
+}
+
+/// Resolve a single string field (e.g. "backgroundColor", "color") from a
+/// StyleRef that may be an inline object, a named-style string, or an array of
+/// named styles (later entries win).
+fn style_ref_str(sref: Option<&serde_json::Value>, doc: &serde_json::Value, field: &str) -> Option<String> {
+    let s = sref?;
+    if let Some(v) = s.get(field).and_then(|v| v.as_str()) { return Some(v.to_string()); }
+    if let Some(name) = s.as_str() {
+        return doc.get("styles").and_then(|ss| ss.get(name)).and_then(|st| st.get(field)).and_then(|v| v.as_str()).map(|s| s.to_string());
+    }
+    if let Some(arr) = s.as_array() {
+        let mut found = None;
+        for item in arr {
+            if let Some(name) = item.as_str() {
+                if let Some(v) = doc.get("styles").and_then(|ss| ss.get(name)).and_then(|st| st.get(field)).and_then(|v| v.as_str()) {
+                    found = Some(v.to_string());
+                }
+            }
+        }
+        return found;
+    }
+    None
+}
+
 #[tauri::command]
 pub async fn export_pdf(document: serde_json::Value, path: String) -> Result<(), String> {
     use printpdf::*;
@@ -288,22 +388,142 @@ pub async fn export_pdf(document: serde_json::Value, path: String) -> Result<(),
     let font_italic = doc.add_builtin_font(BuiltinFont::HelveticaOblique).map_err(|e| format!("{}", e))?;
     let font_mono = doc.add_builtin_font(BuiltinFont::Courier).map_err(|e| format!("{}", e))?;
 
-    for (i, page) in pages.iter().enumerate() {
+    let mut first = true;
+    for page in pages.iter() {
         let (page_w, page_h) = resolve_page_dim(page, &document);
-        let (m_top, _m_right, _m_bottom, m_left) = resolve_margins(page, &document);
-        let (cp, cl) = if i == 0 { (first_page.clone(), first_layer.clone()) } else { doc.add_page(Mm(page_w), Mm(page_h), "Layer 1") };
-        let layer = doc.get_page(cp).get_layer(cl);
+        let (m_top, m_right, m_bottom, m_left) = resolve_margins(page, &document);
+        // Flow mode: lay elements out top-to-bottom, breaking to a fresh page
+        // when the next element won't fit in the remaining content height.
+        // Opt-in via page.flow === true (or doc.meta.flow). Otherwise the
+        // authored position.y is honoured exactly as before.
+        let flow = page.get("flow").and_then(|f| f.as_bool())
+            .or_else(|| document.get("meta").and_then(|m| m.get("flow")).and_then(|f| f.as_bool()))
+            .unwrap_or(false);
+        let content_h = page_h - m_top - m_bottom;
+
+        let new_layer = |first: &mut bool| -> printpdf::PdfLayerReference {
+            if *first { *first = false; doc.get_page(first_page).get_layer(first_layer.clone()) }
+            else { let (cp, cl) = doc.add_page(Mm(page_w), Mm(page_h), "Layer 1"); doc.get_page(cp).get_layer(cl) }
+        };
+
+        let mut layer = new_layer(&mut first);
         if let Some(elements) = page.get("elements").and_then(|e| e.as_array()) {
-            for el in elements {
-                draw_element(&layer, el, &document, &font, &font_bold, &font_italic, &font_mono, m_left, m_top, page_h);
+            if flow {
+                let mut cursor = 0.0f32; // mm from top content edge
+                for el in elements {
+                    let h = measure_element(el, &document);
+                    // Break before drawing if it won't fit (and something is
+                    // already on the page). Oversized single elements still
+                    // draw on their own fresh page and simply clip.
+                    if cursor > 0.0 && cursor + h > content_h {
+                        layer = new_layer(&mut first);
+                        cursor = 0.0;
+                    }
+                    draw_element(&layer, el, &document, &font, &font_bold, &font_italic, &font_mono, m_left, m_top, page_h, Some(cursor));
+                    cursor += h;
+                }
+            } else {
+                for el in elements {
+                    draw_element(&layer, el, &document, &font, &font_bold, &font_italic, &font_mono, m_left, m_top, page_h, None);
+                }
             }
         }
+        let _ = m_right;
     }
     let file = fs::File::create(&path).map_err(|e| format!("{}", e))?;
     doc.save(&mut BufWriter::new(file)).map_err(|e| format!("{}", e))?;
     Ok(())
 }
 
+/// Estimate an element's rendered height in mm — used by flow pagination to
+/// decide when to break to a new page. Mirrors the wrapping/line-height maths
+/// in draw_element so the measured height matches what actually gets drawn.
+fn measure_element(el: &serde_json::Value, document: &serde_json::Value) -> f32 {
+    let tp = el.get("type").and_then(|t| t.as_str()).unwrap_or("");
+    let width = el.get("width").and_then(|w| w.as_f64()).unwrap_or(166.0) as f32;
+    let fs = get_font_size(el, document) as f32;
+    let mono = is_mono(el, document);
+    let char_factor = if mono { 0.62 } else { 0.5 };
+    let line_mm = fs * PT_TO_MM * LINE_HEIGHT;
+    match tp {
+        "text" => {
+            let content = el.get("content").and_then(|c| c.as_str()).unwrap_or("");
+            wrap_text(content, fs, width, char_factor).len().max(1) as f32 * line_mm + 2.0
+        }
+        "richtext" => {
+            let combined: String = el.get("runs").and_then(|r| r.as_array())
+                .map(|runs| runs.iter().filter_map(|r| r.get("text").and_then(|t| t.as_str())).collect::<Vec<_>>().concat())
+                .unwrap_or_default();
+            wrap_text(&combined, fs, width, char_factor).len().max(1) as f32 * line_mm + 2.0
+        }
+        "list" => {
+            let indent = fs * PT_TO_MM * char_factor * 3.0;
+            el.get("items").and_then(|i| i.as_array()).map(|items| {
+                items.iter().map(|it| {
+                    let c = it.get("content").and_then(|c| c.as_str()).unwrap_or("");
+                    wrap_text(c, fs, width - indent, char_factor).len().max(1) as f32 * line_mm + 0.4 * line_mm
+                }).sum::<f32>()
+            }).unwrap_or(0.0) + 2.0
+        }
+        "table" => {
+            let pad = 1.5f32;
+            let col_count = el.get("headers").and_then(|h| h.as_array()).map(|a| a.len()).unwrap_or(0)
+                .max(el.get("rows").and_then(|r| r.as_array()).and_then(|a| a.iter().map(|r| r.as_array().map(|x| x.len()).unwrap_or(0)).max()).unwrap_or(0));
+            if col_count == 0 { return line_mm; }
+            let col_w = width / col_count as f32;
+            let mut total = 0.0f32;
+            let row_h = |cells: &dyn Fn(usize) -> String| -> f32 {
+                let mut max_lines = 1usize;
+                for ci in 0..col_count { max_lines = max_lines.max(wrap_text(&cells(ci), fs, (col_w - 2.0 * pad).max(1.0), char_factor).len().max(1)); }
+                max_lines as f32 * line_mm + 2.0 * pad
+            };
+            if let Some(h) = el.get("headers").and_then(|h| h.as_array()) {
+                let hs: Vec<String> = h.iter().filter_map(|v| v.as_str().map(String::from)).collect();
+                if !hs.is_empty() { total += row_h(&|ci| hs.get(ci).cloned().unwrap_or_default()); }
+            }
+            if let Some(rows) = el.get("rows").and_then(|r| r.as_array()) {
+                for row in rows {
+                    let r = row.clone();
+                    total += row_h(&|ci| match r.get(ci) {
+                        Some(serde_json::Value::String(s)) => s.clone(),
+                        Some(v) => v.get("content").and_then(|c| c.as_str()).unwrap_or("").to_string(),
+                        None => String::new(),
+                    });
+                }
+            }
+            total + 2.0
+        }
+        "image" | "signature" => el.get("height").and_then(|v| v.as_f64()).unwrap_or(40.0) as f32 + 2.0,
+        "shape" => el.get("height").and_then(|v| v.as_f64()).unwrap_or(1.0) as f32 + 2.0,
+        "input" | "select" => line_mm * 2.5,
+        "textarea" => {
+            let value = el.get("value").and_then(|s| s.as_str()).unwrap_or("");
+            (value.lines().count().max(1) as f32 + 1.0) * line_mm + 2.0
+        }
+        "checkbox" => line_mm + 2.0,
+        "collapsible" => {
+            let title_h = line_mm + 2.0;
+            let kids: f32 = el.get("elements").and_then(|e| e.as_array())
+                .map(|els| els.iter().map(|c| measure_element(c, document)).sum())
+                .unwrap_or(0.0);
+            let expanded = el.get("expanded").and_then(|e| e.as_bool()).unwrap_or(true);
+            if expanded { title_h + kids } else { title_h }
+        }
+        "toc" => {
+            // One row per heading across the doc.
+            document.get("pages").and_then(|p| p.as_array()).map(|pages| {
+                pages.iter().flat_map(|pg| pg.get("elements").and_then(|e| e.as_array()).cloned().unwrap_or_default())
+                    .filter(|ce| {
+                        let k = ce.get("type").and_then(|t| t.as_str()).unwrap_or("");
+                        (k == "text" || k == "richtext") && (ce.get("heading").map(|h| !h.is_null() && h.as_bool() != Some(false)).unwrap_or(false) || ce.get("tocEntry").is_some())
+                    }).count() as f32 * line_mm * 1.4 + 2.0
+            }).unwrap_or(line_mm)
+        }
+        _ => line_mm + 2.0,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
 fn draw_element(
     layer: &printpdf::PdfLayerReference,
     el: &serde_json::Value,
@@ -315,26 +535,36 @@ fn draw_element(
     margin_left: f32,
     margin_top: f32,
     page_h: f32,
+    // When Some, the element is laid out in flow mode at this y (mm from the
+    // top content edge) instead of its authored `position.y`. Absolute mode
+    // (None) preserves the original position-based rendering.
+    y_override: Option<f32>,
 ) {
     use printpdf::*;
     let tp = el.get("type").and_then(|t| t.as_str()).unwrap_or("");
     let px = el.get("position").and_then(|p| p.get("x")).and_then(|x| x.as_f64()).unwrap_or(0.0) as f32;
-    let py = el.get("position").and_then(|p| p.get("y")).and_then(|y| y.as_f64()).unwrap_or(0.0) as f32;
+    let py = y_override.unwrap_or_else(|| el.get("position").and_then(|p| p.get("y")).and_then(|y| y.as_f64()).unwrap_or(0.0) as f32);
     let width = el.get("width").and_then(|w| w.as_f64()).unwrap_or(166.0) as f32;
     let fs = get_font_size(el, document) as f32;
     let bold = is_bold(el, document);
     let italic = is_italic(el, document);
-    let f = if bold { font_bold } else if italic { font_italic } else { font };
+    let mono = is_mono(el, document);
+    // Mono wins over bold/italic — code blocks read as Courier. The mono
+    // branch was previously dead (font_mono passed in but never selected),
+    // so `fontFamily: "JetBrains Mono"` fell back to Helvetica in the PDF.
+    let f = if mono { font_mono } else if bold { font_bold } else if italic { font_italic } else { font };
 
     // page_h, margin_top, y are mm. `fs` is in pt; convert to mm before
     // multiplying by line spacing. 1pt ≈ 0.3528mm; default line-height 1.2.
     // The previous formula (`line * fs * 0.4`) treated pt-as-mm and produced
     // line spacing roughly 6× too tight on small text and 2.83× too loose
     // on large text after compounding with the page conversion.
-    const PT_TO_MM: f32 = 0.3528;
-    const LINE_HEIGHT: f32 = 1.2;
+    // PT_TO_MM / LINE_HEIGHT now live at module scope so table + text agree.
     let line_mm = fs * PT_TO_MM * LINE_HEIGHT;
     let to_pdf_y = |y: f32, line: f32| Mm(page_h - margin_top - y - line * line_mm);
+    // Char-advance factor: monospaced Courier is wider than the proportional
+    // Helvetica family. Used by wrap_text to estimate how many chars fit.
+    let char_factor = if is_mono(el, document) { 0.62 } else { 0.5 };
 
     if let Some(c) = get_color(el, document) {
         layer.set_fill_color(Color::Rgb(c));
@@ -342,20 +572,39 @@ fn draw_element(
         layer.set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None)));
     }
 
+    let align = text_align(el, document);
+    // Draw a line of text honouring alignment inside [px, px+width].
+    let draw_aligned = |line: &str, line_idx: f32, face: &printpdf::IndirectFontRef| {
+        let x = match align.as_deref() {
+            Some("right") => margin_left + px + width - text_width_mm(line, fs, char_factor),
+            Some("center") => margin_left + px + (width - text_width_mm(line, fs, char_factor)) / 2.0,
+            _ => margin_left + px,
+        };
+        layer.use_text(line.to_string(), fs, Mm(x.max(margin_left + px)), to_pdf_y(py, line_idx), face);
+    };
+
     match tp {
         "text" => {
+            // Optional background block (code snippets, callouts) behind the text.
             let content = el.get("content").and_then(|c| c.as_str()).unwrap_or("");
-            for (li, line) in content.split('\n').enumerate() {
-                if line.trim().is_empty() { continue; }
-                layer.use_text(line.to_string(), fs, Mm(margin_left + px), to_pdf_y(py, li as f32), f);
+            let wrapped = wrap_text(content, fs, width, char_factor);
+            if let Some(bg) = style_ref_str(el.get("style"), document, "backgroundColor").and_then(|c| parse_color(&c)) {
+                let block_h = wrapped.len().max(1) as f32 * line_mm + 2.0;
+                fill_rect(layer, margin_left + px, page_h - margin_top - py - block_h, width, block_h, bg);
+                if let Some(c) = get_color(el, document) { layer.set_fill_color(Color::Rgb(c)); }
+                else { layer.set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None))); }
+            }
+            for (li, line) in wrapped.iter().enumerate() {
+                if line.is_empty() { continue; }
+                draw_aligned(line, li as f32, f);
             }
         }
         "richtext" => {
             if let Some(runs) = el.get("runs").and_then(|r| r.as_array()) {
                 let combined: String = runs.iter().filter_map(|r| r.get("text").and_then(|t| t.as_str())).collect::<Vec<_>>().concat();
-                for (li, line) in combined.split('\n').enumerate() {
-                    if line.trim().is_empty() { continue; }
-                    layer.use_text(line.to_string(), fs, Mm(margin_left + px), to_pdf_y(py, li as f32), f);
+                for (li, line) in wrap_text(&combined, fs, width, char_factor).iter().enumerate() {
+                    if line.is_empty() { continue; }
+                    draw_aligned(line, li as f32, f);
                 }
             }
         }
@@ -363,41 +612,29 @@ fn draw_element(
             if let Some(items) = el.get("items").and_then(|i| i.as_array()) {
                 let ordered = el.get("ordered").and_then(|o| o.as_bool()).unwrap_or(false)
                     || el.get("listType").and_then(|t| t.as_str()) == Some("ordered");
+                // Wrap each item; the bullet/number sits on the first line and
+                // continuation lines hang-indent under the text. `line` tracks
+                // the running line offset so multi-line items don't overlap.
+                let indent = fs * PT_TO_MM * char_factor * 3.0; // ~3 chars for "• " / "1. "
+                let mut line: f32 = 0.0;
                 for (idx, item) in items.iter().enumerate() {
                     let bullet = if ordered { format!("{}. ", idx + 1) } else { "• ".to_string() };
                     let content = item.get("content").and_then(|c| c.as_str()).unwrap_or("");
-                    layer.use_text(format!("{}{}", bullet, content), fs, Mm(margin_left + px), to_pdf_y(py, idx as f32 * 1.5), f);
+                    let wrapped = wrap_text(content, fs, width - indent, char_factor);
+                    for (wi, wline) in wrapped.iter().enumerate() {
+                        if wi == 0 {
+                            layer.use_text(format!("{}{}", bullet, wline), fs, Mm(margin_left + px), to_pdf_y(py, line), f);
+                        } else {
+                            layer.use_text(wline.to_string(), fs, Mm(margin_left + px + indent), to_pdf_y(py, line), f);
+                        }
+                        line += 1.0;
+                    }
+                    line += 0.4; // small gap between items
                 }
             }
         }
         "table" => {
-            let headers: Vec<String> = el.get("headers").and_then(|h| h.as_array())
-                .map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect())
-                .unwrap_or_default();
-            let rows: Vec<Vec<String>> = el.get("rows").and_then(|r| r.as_array())
-                .map(|a| a.iter().map(|row| {
-                    row.as_array().map(|cells| cells.iter().map(|c| {
-                        if let Some(s) = c.as_str() { s.to_string() }
-                        else { c.get("content").and_then(|x| x.as_str()).unwrap_or("").to_string() }
-                    }).collect()).unwrap_or_default()
-                }).collect())
-                .unwrap_or_default();
-            let col_count = headers.len().max(rows.first().map(|r| r.len()).unwrap_or(0));
-            if col_count == 0 { return; }
-            let col_w = width / col_count as f32;
-            let mut row_idx: f32 = 0.0;
-            if !headers.is_empty() {
-                for (ci, h) in headers.iter().enumerate() {
-                    layer.use_text(h.clone(), fs, Mm(margin_left + px + ci as f32 * col_w), to_pdf_y(py, row_idx), font_bold);
-                }
-                row_idx += 1.5;
-            }
-            for row in &rows {
-                for (ci, cell) in row.iter().enumerate() {
-                    layer.use_text(cell.clone(), fs, Mm(margin_left + px + ci as f32 * col_w), to_pdf_y(py, row_idx), f);
-                }
-                row_idx += 1.5;
-            }
+            draw_table(layer, el, document, font, font_bold, margin_left + px, page_h - margin_top - py, width, fs, char_factor);
         }
         "collapsible" => {
             let title = el.get("title").and_then(|t| t.as_str()).unwrap_or("");
@@ -413,7 +650,7 @@ fn draw_element(
             if expanded {
                 if let Some(children) = el.get("elements").and_then(|e| e.as_array()) {
                     for child in children {
-                        draw_element(layer, child, document, font, font_bold, font_italic, font_mono, margin_left, margin_top, page_h);
+                        draw_element(layer, child, document, font, font_bold, font_italic, font_mono, margin_left, margin_top, page_h, None);
                     }
                 }
             }
@@ -671,6 +908,165 @@ fn draw_element(
             }
         }
         _ => {}
+    }
+}
+
+/// Render a table as a real grid: per-column widths, cell borders, header
+/// background, alternating row shading, wrapped cell text, and per-cell / per-
+/// column alignment. `x` is the left edge (mm from left), `y_top` is the top
+/// edge (mm from bottom). Replaces the old "print 4 columns of text on one
+/// line each" behaviour that ignored borders, widths, colours, and wrapping.
+#[allow(clippy::too_many_arguments)]
+fn draw_table(
+    layer: &printpdf::PdfLayerReference,
+    el: &serde_json::Value,
+    doc: &serde_json::Value,
+    font: &printpdf::IndirectFontRef,
+    font_bold: &printpdf::IndirectFontRef,
+    x: f32,
+    y_top: f32,
+    width: f32,
+    fs: f32,
+    char_factor: f32,
+) {
+    use printpdf::*;
+
+    let headers: Vec<String> = el.get("headers").and_then(|h| h.as_array())
+        .map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+        .or_else(|| el.get("columns").and_then(|c| c.as_array()).map(|a| {
+            a.iter().filter_map(|c| c.get("header").and_then(|h| h.as_str()).map(String::from)).collect::<Vec<_>>()
+        }).filter(|v: &Vec<String>| v.iter().any(|s| !s.is_empty())))
+        .unwrap_or_default();
+
+    // Rows keep the raw cell value so we can read per-cell align.
+    let rows: Vec<Vec<serde_json::Value>> = el.get("rows").and_then(|r| r.as_array())
+        .map(|a| a.iter().map(|row| row.as_array().cloned().unwrap_or_default()).collect())
+        .unwrap_or_default();
+
+    let col_count = headers.len().max(rows.iter().map(|r| r.len()).max().unwrap_or(0));
+    if col_count == 0 { return; }
+
+    // Column widths: explicit columns[].width (number in mm) is honoured;
+    // unspecified columns share the remaining width equally.
+    let columns = el.get("columns").and_then(|c| c.as_array());
+    let mut col_w = vec![0.0f32; col_count];
+    let mut fixed_total = 0.0f32;
+    let mut flexible = 0usize;
+    for i in 0..col_count {
+        let w = columns.and_then(|c| c.get(i)).and_then(|c| c.get("width")).and_then(|w| w.as_f64());
+        match w {
+            Some(v) if v > 0.0 => { col_w[i] = v as f32; fixed_total += v as f32; }
+            _ => { flexible += 1; }
+        }
+    }
+    let remaining = (width - fixed_total).max(0.0);
+    let flex_w = if flexible > 0 { remaining / flexible as f32 } else { 0.0 };
+    for i in 0..col_count { if col_w[i] == 0.0 { col_w[i] = flex_w; } }
+    // If the fixed widths overflow the table width, scale everything to fit.
+    let sum: f32 = col_w.iter().sum();
+    if sum > width && sum > 0.0 { let k = width / sum; for w in col_w.iter_mut() { *w *= k; } }
+    let col_x = |ci: usize| -> f32 { x + col_w[..ci].iter().sum::<f32>() };
+
+    // Border config.
+    let (border_outer, border_inner, border_color, border_w) = {
+        let b = el.get("borders");
+        match b {
+            Some(serde_json::Value::Bool(false)) => (false, false, Rgb::new(0.886, 0.909, 0.941, None), 0.3),
+            Some(serde_json::Value::Object(_)) => (
+                b.and_then(|x| x.get("outer")).and_then(|v| v.as_bool()).unwrap_or(true),
+                b.and_then(|x| x.get("inner")).and_then(|v| v.as_bool()).unwrap_or(true),
+                b.and_then(|x| x.get("color")).and_then(|v| v.as_str()).and_then(parse_color).unwrap_or(Rgb::new(0.886, 0.909, 0.941, None)),
+                b.and_then(|x| x.get("width")).and_then(|v| v.as_f64()).unwrap_or(0.3) as f32,
+            ),
+            _ => (true, true, Rgb::new(0.886, 0.909, 0.941, None), 0.3),
+        }
+    };
+
+    let header_bg = style_ref_str(el.get("headerStyle"), doc, "backgroundColor").and_then(|c| parse_color(&c));
+    let alt_bg = el.get("alternatingRowColor").and_then(|c| c.as_str()).and_then(parse_color)
+        .or_else(|| style_ref_str(el.get("alternateRowStyle"), doc, "backgroundColor").and_then(|c| parse_color(&c)));
+
+    let pad = 1.5f32; // cell padding in mm
+    let line_mm = fs * PT_TO_MM * LINE_HEIGHT;
+
+    // Per-column and per-cell alignment.
+    let col_align = |ci: usize| -> Option<String> {
+        columns.and_then(|c| c.get(ci)).and_then(|c| c.get("align")).and_then(|a| a.as_str()).map(String::from)
+    };
+
+    // Compute the height a row needs given its wrapped cells.
+    let row_height = |cells: &dyn Fn(usize) -> String| -> f32 {
+        let mut max_lines = 1usize;
+        for ci in 0..col_count {
+            let text = cells(ci);
+            let n = wrap_text(&text, fs, (col_w[ci] - 2.0 * pad).max(1.0), char_factor).len().max(1);
+            max_lines = max_lines.max(n);
+        }
+        max_lines as f32 * line_mm + 2.0 * pad
+    };
+
+    // Draw one row of cells at the given top-y (mm from bottom). Returns row height.
+    let draw_row = |cell_text: &dyn Fn(usize) -> String,
+                        cell_align: &dyn Fn(usize) -> Option<String>,
+                        row_top: f32, face: &printpdf::IndirectFontRef, bg: Option<Rgb>| -> f32 {
+        let h = row_height(cell_text);
+        let row_bottom = row_top - h;
+        if let Some(color) = bg { fill_rect(layer, x, row_bottom, width, h, color); }
+        // Reset text colour to black after any fill_rect changed fill colour.
+        layer.set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None)));
+        for ci in 0..col_count {
+            let cx = col_x(ci);
+            if border_inner {
+                stroke_rect(layer, cx, row_bottom, col_w[ci], h, border_color.clone(), border_w);
+            }
+            let text = cell_text(ci);
+            let inner_w = (col_w[ci] - 2.0 * pad).max(1.0);
+            let wrapped = wrap_text(&text, fs, inner_w, char_factor);
+            let align = cell_align(ci).or_else(|| col_align(ci));
+            for (li, line) in wrapped.iter().enumerate() {
+                if line.is_empty() { continue; }
+                let tw = text_width_mm(line, fs, char_factor);
+                let tx = match align.as_deref() {
+                    Some("right") => cx + col_w[ci] - pad - tw,
+                    Some("center") => cx + (col_w[ci] - tw) / 2.0,
+                    _ => cx + pad,
+                };
+                let ty = row_top - pad - (li as f32 + 1.0) * line_mm + line_mm * 0.25;
+                layer.use_text(line.to_string(), fs, Mm(tx.max(cx + pad)), Mm(ty), face);
+            }
+        }
+        h
+    };
+
+    let mut cursor = y_top;
+    let table_start = y_top;
+    if !headers.is_empty() {
+        let hs = headers.clone();
+        let get = move |ci: usize| hs.get(ci).cloned().unwrap_or_default();
+        let noalign = |_ci: usize| None;
+        let h = draw_row(&get, &noalign, cursor, font_bold, header_bg);
+        cursor -= h;
+    }
+    for (ri, row) in rows.iter().enumerate() {
+        let row = row.clone();
+        let get = move |ci: usize| -> String {
+            match row.get(ci) {
+                Some(serde_json::Value::String(s)) => s.clone(),
+                Some(v) => v.get("content").and_then(|c| c.as_str()).unwrap_or("").to_string(),
+                None => String::new(),
+            }
+        };
+        let row2 = rows[ri].clone();
+        let getalign = move |ci: usize| -> Option<String> {
+            row2.get(ci).and_then(|v| v.get("align")).and_then(|a| a.as_str()).map(String::from)
+        };
+        let bg = if ri % 2 == 1 { alt_bg.clone() } else { None };
+        let h = draw_row(&get, &getalign, cursor, font, bg);
+        cursor -= h;
+    }
+    // Outer border around the whole table.
+    if border_outer {
+        stroke_rect(layer, x, cursor, width, table_start - cursor, border_color, border_w);
     }
 }
 
@@ -1325,6 +1721,38 @@ fn is_italic(el: &serde_json::Value, doc: &serde_json::Value) -> bool {
         }
     }
     false
+}
+
+/// True when the element's fontFamily names a monospaced face. printpdf only
+/// ships Courier as its built-in mono, so any "mono"/"code"/"consolas"/
+/// "JetBrains"/"Menlo" family maps to Courier.
+fn is_mono(el: &serde_json::Value, doc: &serde_json::Value) -> bool {
+    let fam = el.get("style").and_then(|s| s.get("fontFamily").and_then(|v| v.as_str()))
+        .or_else(|| el.get("style").and_then(|s| s.as_str())
+            .and_then(|name| doc.get("styles").and_then(|ss| ss.get(name)).and_then(|s| s.get("fontFamily")).and_then(|v| v.as_str())));
+    match fam {
+        Some(f) => {
+            let l = f.to_lowercase();
+            l.contains("mono") || l.contains("courier") || l.contains("consol") || l.contains("menlo") || l.contains("code")
+        }
+        None => false,
+    }
+}
+
+/// Resolve text alignment for a block element: the top-level `align` field
+/// wins, then `style.textAlign` (inline or named). Returns "left"/"center"/
+/// "right"/"justify".
+fn text_align(el: &serde_json::Value, doc: &serde_json::Value) -> Option<String> {
+    if let Some(a) = el.get("align").and_then(|a| a.as_str()) { return Some(a.to_string()); }
+    if let Some(s) = el.get("style") {
+        if let Some(a) = s.get("textAlign").and_then(|v| v.as_str()) { return Some(a.to_string()); }
+        if let Some(name) = s.as_str() {
+            if let Some(a) = doc.get("styles").and_then(|ss| ss.get(name)).and_then(|s| s.get("textAlign")).and_then(|v| v.as_str()) {
+                return Some(a.to_string());
+            }
+        }
+    }
+    None
 }
 
 struct StderrGuard { old: Option<i32> }

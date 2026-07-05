@@ -128,17 +128,40 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
       const y1Local = (va.y - minY) * PT_TO_MM;
       const x2Local = (vb.x - minX) * PT_TO_MM;
       const y2Local = (vb.y - minY) * PT_TO_MM;
-      shapes.push({
-        kind: "path",
-        x: minX * PT_TO_MM,
-        y: minY * PT_TO_MM,
-        width: Math.max(0.05, (maxX - minX) * PT_TO_MM),
-        height: Math.max(0.05, (maxY - minY) * PT_TO_MM),
-        stroke: isStroke ? gs.stroke : undefined,
-        strokeWidth: isStroke ? gs.lineWidth * PT_TO_MM : undefined,
-        opacity: gs.strokeAlpha,
-        path: `M ${x1Local.toFixed(2)} ${y1Local.toFixed(2)} L ${x2Local.toFixed(2)} ${y2Local.toFixed(2)}`,
-      });
+      const wLocal = Math.max(0.05, (maxX - minX) * PT_TO_MM);
+      const hLocal = Math.max(0.05, (maxY - minY) * PT_TO_MM);
+      // Axis-aligned single segments (horizontal / vertical rules — the vast
+      // majority of PDF divider lines) become a real `line` shape. All three
+      // renderers draw `line` from the box's (0,0) to (w,h) corner, so only
+      // axis-aligned lines round-trip without losing direction; genuinely
+      // diagonal segments stay a `path` to preserve their slope.
+      const dx = Math.abs(va.x - vb.x);
+      const dy = Math.abs(va.y - vb.y);
+      const axisAligned = dx < 0.5 || dy < 0.5;
+      if (axisAligned) {
+        shapes.push({
+          kind: "line",
+          x: minX * PT_TO_MM,
+          y: minY * PT_TO_MM,
+          width: wLocal,
+          height: hLocal,
+          stroke: isStroke ? gs.stroke : undefined,
+          strokeWidth: isStroke ? gs.lineWidth * PT_TO_MM : undefined,
+          opacity: gs.strokeAlpha,
+        });
+      } else {
+        shapes.push({
+          kind: "path",
+          x: minX * PT_TO_MM,
+          y: minY * PT_TO_MM,
+          width: wLocal,
+          height: hLocal,
+          stroke: isStroke ? gs.stroke : undefined,
+          strokeWidth: isStroke ? gs.lineWidth * PT_TO_MM : undefined,
+          opacity: gs.strokeAlpha,
+          path: `M ${x1Local.toFixed(2)} ${y1Local.toFixed(2)} L ${x2Local.toFixed(2)} ${y2Local.toFixed(2)}`,
+        });
+      }
     } else if (pathSegments.length > 0) {
       const vpSegments = pathSegments.map((seg) => {
         if (seg.type === "Z") return seg;
