@@ -60,6 +60,49 @@ CLI_VER=$(node -p "require('./tools/jdf-cli/package.json').version")
 CLI_NAME=$(node -p "require('./tools/jdf-cli/package.json').name")
 TAG="v$READER_VER"
 
+# ── Update the CLI Homebrew Formula + mirror to the tap ────────────────────
+# Formula/jdf-cli.rb is the canonical CLI recipe (Cask = the .app, Formula =
+# the CLI binary). It points at the npm tarball we JUST published, so this must
+# run after `publish-npm.sh`. We fetch the published tarball, hash it, sed the
+# new version/url/sha256 in, then mirror the file into the tap so
+# `brew install uurtech/jdf/jdf-cli` resolves the new version.
+echo ""
+echo "→ Updating CLI Homebrew Formula (Formula/jdf-cli.rb)"
+CLI_TARBALL_URL="https://registry.npmjs.org/${CLI_NAME}/-/jdf-cli-${CLI_VER}.tgz"
+CLI_TARBALL_TMP="$(mktemp)"
+curl -sL "$CLI_TARBALL_URL" -o "$CLI_TARBALL_TMP"
+CLI_SHA256=$(shasum -a 256 "$CLI_TARBALL_TMP" | awk '{print $1}')
+rm -f "$CLI_TARBALL_TMP"
+FORMULA_PATH="$REPO_ROOT/Formula/jdf-cli.rb"
+if [[ -f "$FORMULA_PATH" ]]; then
+  sed -i.bak -E "s|^  url \".*\"|  url \"$CLI_TARBALL_URL\"|" "$FORMULA_PATH"
+  sed -i.bak -E "s|^  version \"[^\"]+\"|  version \"$CLI_VER\"|" "$FORMULA_PATH"
+  sed -i.bak -E "s|^  sha256 \"[a-f0-9]+\"|  sha256 \"$CLI_SHA256\"|" "$FORMULA_PATH"
+  rm -f "$FORMULA_PATH.bak"
+  echo "  ✓ Formula updated → $CLI_VER (sha256 $CLI_SHA256)"
+  # Mirror into the tap repo (cloned by publish-dmg.sh into ../homebrew-jdf).
+  TAP_REPO_LOCAL="$REPO_ROOT/../homebrew-jdf"
+  if [[ -d "$TAP_REPO_LOCAL/.git" ]]; then
+    mkdir -p "$TAP_REPO_LOCAL/Formula"
+    cp "$FORMULA_PATH" "$TAP_REPO_LOCAL/Formula/jdf-cli.rb"
+    (
+      cd "$TAP_REPO_LOCAL"
+      git add Formula/jdf-cli.rb
+      if ! git diff --cached --quiet; then
+        git commit -m "Bump jdf-cli to $CLI_VER" >/dev/null
+        git push
+        echo "  ✓ Tap Formula pushed"
+      else
+        echo "  (tap Formula already up to date)"
+      fi
+    )
+  else
+    echo "  ⚠  tap repo not found at $TAP_REPO_LOCAL — skipping Formula mirror"
+  fi
+else
+  echo "  ⚠  $FORMULA_PATH missing — skipping Formula update"
+fi
+
 echo ""
 echo "═══════════════════════════════════════════════════════════"
 echo "Step 3/4: Refresh docs/jdfjs-local + pinned version refs"
@@ -105,6 +148,7 @@ git add \
   jdfjs/package.json \
   tools/jdf-cli/package.json \
   Casks/jdf.rb \
+  Formula/jdf-cli.rb \
   docs/jdfjs-local/jdfjs.js \
   docs/jdfjs-local/jdfjs.css \
   docs/index.html \
