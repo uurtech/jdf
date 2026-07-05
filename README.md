@@ -17,11 +17,7 @@ JDF runs in three places:
 |---|---|---|
 | **JDF Reader** | Native macOS app — read, edit, import PDF/MD, export PDF | `brew tap uurtech/jdf && brew install jdf` |
 | **jdf.js** | JavaScript library — embed `.jdf` files on any web page | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf@0.1.21">` |
-<<<<<<< HEAD
-| **`@uurtech/jdf-cli`** | CLI — validate, convert PDF→JDF, wrap LLM JSON output into JDF | `npx @uurtech/jdf-cli convert paper.pdf` |
-=======
-| **`@uurtech/jdf-cli`** | CLI — validate, convert PDF→JDF, wrap LLM JSON output into JDF | `brew install uurtech/jdf/jdf-cli`, `npm i -g @uurtech/jdf-cli`, or `npx @uurtech/jdf-cli import paper.pdf` |
->>>>>>> 97f3bce6b3bff4703e356108bf603ce58e174790
+| **`@uurtech/jdf-cli`** | CLI — validate, convert PDF→JDF, wrap LLM JSON output into JDF | `brew install uurtech/jdf/jdf-cli`, `npm i -g @uurtech/jdf-cli`, or `npx @uurtech/jdf-cli convert paper.pdf` |
 
 ## Why JDF
 
