@@ -17,7 +17,7 @@ JDF runs in three places:
 |---|---|---|
 | **JDF Reader** | Native macOS app — read, edit, import PDF/MD, export PDF | `brew tap uurtech/jdf && brew install jdf` |
 | **jdf.js** | JavaScript library — embed `.jdf` files on any web page | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf@0.1.22">` |
-| **`@uurtech/jdf-cli`** | CLI — validate, convert PDF→JDF, wrap LLM JSON output into JDF | `brew install uurtech/jdf/jdf-cli`, `npm i -g @uurtech/jdf-cli`, or `npx @uurtech/jdf-cli convert paper.pdf` |
+| **`@uurtech/jdf-cli`** | CLI — validate, convert PDF/JSON/MD→JDF, and RAG-native `chunk` + `embed` | `brew install uurtech/jdf/jdf-cli`, `npm i -g @uurtech/jdf-cli`, or `npx @uurtech/jdf-cli convert paper.pdf` |
 
 ## Why JDF
 
@@ -474,7 +474,7 @@ Full reference: [`jdfjs/README.md`](jdfjs/README.md) · [`docs/docs/embed/`](doc
 
 ## CLI
 
-The CLI is the bridge between **legacy documents** (PDFs everywhere) and **AI workflows** (LLMs emit JSON). Two paths matter:
+The CLI is the bridge between **legacy documents** (PDFs everywhere), **AI workflows** (LLMs emit JSON), and **RAG pipelines** (chunk + embed, incrementally):
 
 ```bash
 # run on demand (no install)
@@ -489,23 +489,63 @@ npx @uurtech/jdf-cli convert response.json -o response.jdf
 # Markdown → JDF (convenience)
 npx @uurtech/jdf-cli convert README.md
 
+# JDF → retrieval-ready chunks (offline, deterministic)
+npx @uurtech/jdf-cli chunk paper.jdf                 # → paper.chunks.jsonl
+
+# JDF → embeddings (local via Ollama by default; incremental)
+npx @uurtech/jdf-cli embed paper.jdf --incremental
+
 # or install globally
 npm install -g @uurtech/jdf-cli
 jdf validate doc.jdf
 ```
 
+### Commands
+
+| Command | What it does |
+|---|---|
+| `jdf validate <file>` | Validate a `.jdf` / `.jdfx` against the schema. Non-zero exit on failure. |
+| `jdf convert <file>` | PDF / JSON / Markdown → validated JDF. (alias: `import`) |
+| `jdf chunk <file>` | Split a JDF document into retrieval-ready chunks. Offline, deterministic. |
+| `jdf embed <file>` | Compute embeddings for the chunks. Local (Ollama) by default; incremental. |
+
 ### Why this CLI exists
 
 - **PDF → JDF for RAG / CI ingestion.** Pipelines that want structured documents stop fighting `pdfplumber` / `pymupdf` heuristics — `jdf convert file.pdf --json` produces a tree your retriever can chunk by element type. The algorithm is shared with the desktop reader (`@jdf/pdf-import` package), so the CLI's output and the reader's output are bit-identical for the same input.
 - **JSON → JDF for AI agents.** Models naturally emit JSON. `jdf convert response.json` accepts three shapes: a full JDF document (validated and optionally re-emitted), a bare element array (wrapped into a single-page A4 doc), or a `{ elements: [...] }` / `{ pages: [...] }` partial. The output is always validated against `spec/jdf-schema.json` — a non-zero exit makes it safe to drop into CI as a gate on model output.
-- **One file in, one renderable file out.** `validate` runs after every `import`, so if the JSON is malformed, the build breaks — there is no "shipping a broken document" path.
+- **JDF → chunks + embeddings for retrieval.** `jdf chunk` reads JDF's heading hierarchy and typed elements to produce section-aware chunks (tables serialized as `Header: value` rows, so column meaning survives). `jdf embed` turns those into vectors — **locally by default (Ollama, no data leaves your machine)** or via a remote API. Both are separate, opt-in steps: the converter never chunks or embeds, stays pure and offline.
+- **One file in, one renderable file out.** `validate` runs after every `convert`, so if the JSON is malformed, the build breaks — there is no "shipping a broken document" path.
 
 ### Flags
 
-| Flag | What it does |
-|---|---|
-| `-o, --output <path>` | Explicit output path. Extension picks `.jdf` (single JSON file) vs `.jdfx` (zip bundle for documents with embedded assets). |
-| `--json` | Force pure-JSON `.jdf` output even when the document carries images. RAG pipelines and CI consumers that prefer one text file over a zip should turn this on. |
+| Flag | Commands | What it does |
+|---|---|---|
+| `-o, --output <path>` | all | Explicit output path. For `convert`, the extension picks `.jdf` vs `.jdfx`. |
+| `--json` | convert | Force pure-JSON `.jdf` output even when the document carries images. |
+| `--strategy <s>` | chunk, embed | `section` (default) · `element` · `fixed`. |
+| `--format <f>` | chunk | `jsonl` (default) · `json` · `inline` (write an `index` block into the `.jdf`). |
+| `--max-tokens <n>` | chunk, embed | Soft cap per chunk (default 512). |
+| `--provider <p>` | embed | `ollama` (default, local) · `openai` (remote API). |
+| `--model <name>` | embed | Model id (default `nomic-embed-text` / `text-embedding-3-small`). |
+| `--incremental` | embed | Skip chunks whose content hash is unchanged — re-embed only what changed. |
+
+### RAG ingestion, incrementally
+
+`jdf chunk` and `jdf embed` exist because JDF is diffable JSON with a real structure. Chunking is **deterministic** — same document + same options → byte-identical chunks and stable content hashes. That is what makes `--incremental` embedding work: edit one paragraph in a 500-page document and you re-embed one chunk, not five hundred.
+
+```bash
+# section-aware chunks, ready for any vector store
+jdf chunk report.jdf                      # → report.chunks.jsonl
+#   {"id":"p3e7","text":"…","path":["Report","Pricing"],"page":3,"types":["text","table"],"tokens":142,"hash":"ab12cd"}
+
+# embed locally (Ollama auto-starts via Docker if needed), skipping unchanged chunks
+jdf embed report.jdf --incremental        # → report.embeddings.json
+
+# or inline the chunk index into the document itself (renderers ignore it; still schema-valid)
+jdf chunk report.jdf --format inline
+```
+
+Embeddings are **cache, never source of truth** — delete and regenerate at will. The document `.jdf` stays pure; the RAG layer lives beside it.
 
 ### CI gate
 
@@ -659,6 +699,7 @@ Done:
 - Published to npm as [`@uurtech/jdf`](https://www.npmjs.com/package/@uurtech/jdf) — install via `npm install @uurtech/jdf` or load from CDN at `https://unpkg.com/@uurtech/jdf@0.1.22` (always pin a version in production).
 - **`.jdfx` zip bundles** — automatic for documents with embedded images/fonts. Reader, jdf.js, and CLI all read and write the format; manifest schema at [`spec/jdfx-manifest-schema.json`](spec/jdfx-manifest-schema.json).
 - **Markdown image imports** — `![alt](relative.png)` works in both the desktop importer and `jdf convert file.md`. Relative paths are resolved against the source file's directory and embedded into the output bundle.
+- **RAG tooling in the CLI** — `jdf chunk` (deterministic, section-aware, offline) and `jdf embed` (local via Ollama or remote via OpenAI, with `--incremental` re-embedding). Tables serialize as `Header: value` rows; chunk index can be inlined into the `.jdf`.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the per-release log.
 
@@ -669,13 +710,12 @@ The next surface area, grouped by theme. Items at the top of each group are sche
 ### RAG / AI tooling
 
 - **Public benchmark suite** — parse / chunk / embed / retrieval cost measured on a shared corpus (academic PDFs, financial filings, scanned reports). Results published at `docs/docs/benchmarks.html` and linked from the RAG section. Backs the structural claims in [`docs/docs/why-ai.html`](docs/docs/why-ai.html) with real numbers.
-- **`@uurtech/jdf-rag`** — RAG-ready ingestor as a published package. One import gives you an iterator of typed chunks (`text` / `richtext` / `table` / `list` / `image`) each carrying first-class metadata (page index, type, heading level, link target). No PDF library, no chunker config.
+- **`@uurtech/jdf-rag`** — the CLI's `chunk` / `embed` logic as a published library (programmatic `chunkDocument()` / `embedDocument()`), so an ingestor can call it in-process instead of shelling out. The CLI commands already ship today; this packages them for embedding in apps.
 - **`@uurtech/jdf-llm`** — structured-output helpers for the major LLM APIs (OpenAI `response_format`, Anthropic `tools`, Google `responseSchema`). Ships the JDF JSON Schema as a guaranteed-valid generation target plus prompt scaffolding for "produce a one-page report" workflows.
 
 ### CLI parity with the desktop reader
 
-- **`jdf convert file.pdf`** — full PDF import in the CLI. Extract the existing browser importer (`apps/reader/src/import/pdfToJdf.ts`) into `packages/jdf-pdf-import/` with two entry points: `browser.ts` (canvas) and `node.ts` (`node-canvas`). Desktop and CLI consume the same algorithm — no duplication.
-- **`jdf export file.jdf -o file.pdf`** — PDF export in the CLI. Wraps the Rust exporter as a standalone binary or ports it to JS.
+- **`jdf export file.jdf -o file.pdf`** — PDF export in the CLI. Wraps the Rust exporter as a standalone binary or ports it to JS. (PDF import, chunk, and embed already ship in the CLI.)
 
 ### Rendering & import quality
 

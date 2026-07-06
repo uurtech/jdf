@@ -565,9 +565,33 @@ section > h2 {
 
 .rag-note strong { color: var(--brand-strong); }
 
+.rag-shipped {
+  margin-top: 28px;
+  padding: 22px 24px;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--brand-soft), transparent);
+}
+.rag-shipped h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: var(--brand-strong);
+}
+.rag-shipped p {
+  margin: 0 0 16px;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--text);
+}
+.rag-shipped strong { color: var(--brand-strong); }
+
 .rag-foot {
   margin-top: 24px;
   text-align: center;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 720px) {

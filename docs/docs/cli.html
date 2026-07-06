@@ -93,6 +93,34 @@ jdf convert partial.json                    <span class="com"># partial → fill
       </ul>
       <p>Pass <code>--json</code> or specify <code>-o foo.jdf</code> explicitly to keep assets base64-inlined in <code>resources.images</code>. The schema is identical either way.</p>
 
+      <h3><code>jdf chunk &lt;file.{jdf,jdfx}&gt; [--strategy section|element|fixed] [--format jsonl|json|inline] [--max-tokens N] [-o out]</code></h3>
+      <p><strong>Turn a document into retrieval-ready chunks — offline, deterministic, zero network.</strong> Because JDF already carries a heading hierarchy (<code>heading</code> / <code>tocLevel</code>) and typed elements, chunking reads structure instead of guessing at it. Same input + same options → byte-identical chunks (and stable content hashes), which is what makes incremental re-embedding possible.</p>
+<pre><code>jdf chunk report.jdf                        <span class="com"># → report.chunks.jsonl (section strategy)</span>
+jdf chunk report.jdf --strategy element     <span class="com"># one chunk per element</span>
+jdf chunk report.jdf --format inline        <span class="com"># write an "index" block back into the .jdf</span>
+jdf chunk report.jdf --max-tokens 256 -o out.jsonl</code></pre>
+      <p>Each chunk line carries everything a vector store needs — no re-derivation:</p>
+<pre><code>{<span class="str">"id"</span>:<span class="str">"p3e7"</span>, <span class="str">"text"</span>:<span class="str">"…"</span>, <span class="str">"path"</span>:[<span class="str">"Report"</span>,<span class="str">"Pricing"</span>],
+ <span class="str">"page"</span>:3, <span class="str">"types"</span>:[<span class="str">"text"</span>,<span class="str">"table"</span>], <span class="str">"tokens"</span>:142, <span class="str">"hash"</span>:<span class="str">"ab12cd…"</span>}</code></pre>
+      <ul>
+        <li><strong>section</strong> (default) — each heading starts a chunk holding the heading + its following content; oversized sections split on element boundaries.</li>
+        <li><strong>element</strong> — one chunk per element, breadcrumb tracked from headings.</li>
+        <li><strong>fixed</strong> — accumulate to a <code>--max-tokens</code> budget.</li>
+      </ul>
+      <p><strong>Tables serialize as <code>Header: value | Header: value</code> rows</strong> — the column semantics stay attached to each value, so a retriever matches <code>"Price: $4,800"</code> instead of a bare number floating away from its column. This is the single biggest RAG win over PDF, where table structure is lost during extraction.</p>
+      <p><code>--format inline</code> writes the chunks into the document itself under a top-level <code>index</code> block. Renderers ignore it (data-only); a pipeline reads it instead of recomputing. The <code>.jdf</code> stays schema-valid.</p>
+
+      <h3><code>jdf embed &lt;file.{jdf,jdfx}&gt; [--provider ollama|openai] [--model NAME] [--strategy …] [--incremental] [-o out]</code></h3>
+      <p>Compute embeddings for the chunks. Builds on <code>jdf chunk</code> — same deterministic boundaries, same hashes — and writes an embeddings sidecar (<code>file.embeddings.json</code>). Unlike <code>convert</code>/<code>chunk</code>, this is the one step that can touch a model, so it's opt-in and never part of conversion.</p>
+<pre><code>jdf embed report.jdf                        <span class="com"># local via Ollama (default) — no data leaves the machine</span>
+jdf embed report.jdf --incremental          <span class="com"># only re-embed chunks whose hash changed</span>
+jdf embed report.jdf --provider openai      <span class="com"># remote API (prompts for endpoint/key, or reads env)</span></code></pre>
+      <ul>
+        <li><strong>--provider ollama</strong> (default) — <strong>fully local.</strong> Embeddings run on your machine; nothing is sent anywhere. If nothing is listening on the Ollama port the CLI offers to start it via Docker (<code>ollama/ollama</code>) and pulls the model. OpenAI's models can't run locally, so local-first means Ollama.</li>
+        <li><strong>--provider openai</strong> — remote API. Reads <code>OPENAI_API_KEY</code> / <code>OPENAI_BASE_URL</code>, or prompts for them on an interactive terminal. Point <code>OPENAI_BASE_URL</code> at Azure / a proxy / a local gateway to keep data in your network.</li>
+      </ul>
+      <p><strong><code>--incremental</code> is the ingestion speed win.</strong> It reads the previous sidecar and skips every chunk whose content hash is unchanged. Edit one paragraph in a 500-page document and you re-embed one chunk, not five hundred — because JDF is diffable JSON and the chunker is deterministic. Embeddings are cache: delete them and regenerate any time; they are never the source of truth.</p>
+
       <h2>Schema validation in CI</h2>
       <p>If your project generates <code>.jdf</code> files programmatically, validate them on every PR. Example workflow:</p>
 
@@ -112,12 +140,15 @@ jdf convert partial.json                    <span class="com"># partial → fill
 
       <h2>RAG ingestion pipeline</h2>
       <p>Drop a PDF into a corpus loader, get a structured JDF tree out — your retriever chunks by element type instead of token windows that slice tables in half:</p>
-<pre><code><span class="com"># Bash — convert every PDF in a corpus and validate</span>
+<pre><code><span class="com"># Bash — PDF corpus → validated JDF → chunks → embeddings, end to end</span>
 for pdf in corpus/*.pdf; do
   out=&quot;${pdf%.pdf}.jdf&quot;
   npx @uurtech/jdf-cli convert &quot;$pdf&quot; -o &quot;$out&quot; --json || exit 1
   npx @uurtech/jdf-cli validate &quot;$out&quot; || exit 1
+  npx @uurtech/jdf-cli chunk &quot;$out&quot;                    <span class="com"># → *.chunks.jsonl</span>
+  npx @uurtech/jdf-cli embed &quot;$out&quot; --incremental      <span class="com"># local, skips unchanged</span>
 done</code></pre>
+      <p>Re-run the loop after editing a few documents and <code>--incremental</code> re-embeds only the chunks that actually changed — the diffable-JSON payoff for ingestion cost.</p>
 
       <h2>LLM output gate</h2>
       <p>Models emit JSON. The CLI accepts that JSON and either passes it through (if it's already a valid JDF document) or wraps it (if it's a bare element array / partial). Validation runs at the end — non-zero exit fails the build:</p>

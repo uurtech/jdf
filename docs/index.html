@@ -99,8 +99,8 @@
         <a class="channel" href="docs/cli.html">
           <div class="channel-icon">$</div>
           <div>
-            <div class="channel-title">CLI — PDF & JSON → JDF</div>
-            <div class="channel-sub">For RAG, CI, AI agents · <code>npx @uurtech/jdf-cli convert paper.pdf</code></div>
+            <div class="channel-title">CLI — convert · chunk · embed</div>
+            <div class="channel-sub">RAG-native: PDF/JSON → JDF, then chunk &amp; embed · <code>npx @uurtech/jdf-cli chunk report.jdf</code></div>
           </div>
         </a>
       </div>
@@ -232,11 +232,23 @@ brew install jdf">
         </table>
       </div>
 
+      <div class="rag-shipped">
+        <h3>Not a plan — it ships in the CLI today</h3>
+        <p>Chunking and embedding are built in. <code>jdf chunk</code> reads JDF's heading hierarchy for section-aware chunks (tables serialized as <code>Header: value</code> rows, so column meaning survives). <code>jdf embed</code> turns them into vectors — <strong>locally via Ollama by default, so no data leaves your machine</strong> — and <code>--incremental</code> re-embeds only the chunks whose content hash changed. Edit one paragraph in a 500-page doc → one embedding call, not five hundred.</p>
+        <pre class="cli-pre cli-pre-wide"><code><span class="cli-comment"># deterministic, offline — same doc → byte-identical chunks &amp; stable hashes</span>
+$ jdf chunk report.jdf
+  <span class="cli-comment">{"id":"p3e7","text":"…","path":["Report","Pricing"],"page":3,"types":["text","table"],"tokens":142,"hash":"ab12cd"}</span>
+
+<span class="cli-comment"># local embeddings; Ollama auto-starts via Docker if needed; skips unchanged chunks</span>
+$ jdf embed report.jdf <span class="cli-flag">--incremental</span>   <span class="cli-comment"># → report.embeddings.json</span></code></pre>
+      </div>
+
       <div class="rag-note">
         <strong>Benchmarks coming.</strong> The wins above are <em>structural</em> — pipeline stages JDF removes entirely — not measured timings. We're running benchmarks on a public corpus (academic PDFs, financial filings, scanned reports) and will publish parse / chunk / embed / retrieval numbers here as soon as they're ready. If you run a comparison on your own corpus, please <a href="https://github.com/uurtech/jdf/issues" target="_blank" rel="noopener">open an issue</a> — we'd like to include it.
       </div>
 
       <div class="rag-foot">
+        <a class="btn-secondary" href="docs/cli.html">CLI: chunk &amp; embed reference →</a>
         <a class="btn-secondary" href="docs/why-ai.html">Long-form: why JDF is AI-friendly →</a>
       </div>
     </section>
@@ -293,7 +305,7 @@ brew install jdf">
 
     <section id="cli" class="cli">
       <h2>The CLI is how PDFs and AI plug in</h2>
-      <p class="section-lead">Two unattended workflows the desktop app can't cover: legacy PDFs entering a RAG pipeline, and LLM-emitted JSON becoming a renderable document. Both run in CI, both validate against the schema, both fail loudly on malformed input.</p>
+      <p class="section-lead">Three unattended workflows the desktop app can't cover: legacy PDFs entering a pipeline, LLM-emitted JSON becoming a renderable document, and RAG ingestion — chunking and embedding, incrementally. All run in CI, all validate against the schema, all fail loudly on malformed input.</p>
 
       <div class="cli-grid">
         <div class="cli-card">
@@ -313,6 +325,16 @@ $ jdf validate api.jdf  <span class="cli-comment"># schema gate — exit 1 fails
 $ openai-cli generate &gt; report.json
 $ jdf convert report.json -o report.jdf
 <span class="cli-comment"># exit 1 if the model violated the schema</span></code></pre>
+        </div>
+
+        <div class="cli-card">
+          <div class="cli-tag">JDF → RAG</div>
+          <h3>Chunk &amp; embed, incrementally</h3>
+          <p>JDF already carries the heading hierarchy, so chunking reads structure instead of guessing. Deterministic chunks → stable hashes → <code>--incremental</code> re-embeds only what changed. Embed <strong>locally via Ollama</strong> (no data leaves the machine) or a remote API.</p>
+          <pre class="cli-pre"><code><span class="cli-comment"># section-aware chunks (tables kept as Header: value)</span>
+$ jdf chunk report.jdf  <span class="cli-comment"># → report.chunks.jsonl</span>
+<span class="cli-comment"># local embeddings, skip unchanged chunks</span>
+$ jdf embed report.jdf <span class="cli-flag">--incremental</span></code></pre>
         </div>
       </div>
 

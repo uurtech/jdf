@@ -182,22 +182,30 @@ function renderImage(el: ImageElement, ctx: RenderContext): HTMLElement {
 
 // ── table ───────────────────────────────────────────────────────────────────
 function cellText(c: TableCellValue): string {
-  return typeof c === "string" ? c : c.content;
+  // Tolerate malformed cells (null, numbers, missing content) instead of
+  // throwing — a single bad cell must never abort the whole render. The reader
+  // (SolidJS <For>) is naturally lenient here; the web embed's .forEach used to
+  // throw on `null.content`, killing the table and every element after it on
+  // the page. Coerce anything non-stringy to a best-effort string.
+  if (c == null) return "";
+  if (typeof c === "string") return c;
+  if (typeof c === "object") return c.content == null ? "" : String(c.content);
+  return String(c);
 }
 function cellAttrs(c: TableCellValue): { colspan?: number; rowspan?: number } {
-  if (typeof c === "string") return {};
+  if (c == null || typeof c !== "object") return {};
   return { colspan: c.colspan, rowspan: c.rowspan };
 }
 /** Per-cell style object → CSS map (string ref / array / inline Style). */
 function cellCss(c: TableCellValue, styles: Record<string, Style>): Record<string, string> {
-  if (typeof c === "string" || !c.style) return {};
+  if (c == null || typeof c !== "object" || !c.style) return {};
   const s = c.style;
   if (typeof s === "string") return styleToCss(styles[s] || {});
   if (Array.isArray(s)) { let m = {}; for (const k of s) m = { ...m, ...styleToCss(styles[k] || {}) }; return m; }
   return styleToCss(s);
 }
 function cellAlign(c: TableCellValue): TextAlign | undefined {
-  return typeof c === "string" ? undefined : c.align;
+  return c == null || typeof c !== "object" ? undefined : c.align;
 }
 /** Normalise a column width (number → px, string passed through, e.g. "30%"). */
 function colWidthCss(w: string | number | undefined): string | undefined {
@@ -284,7 +292,14 @@ function renderTable(el: TableElement, ctx: RenderContext): HTMLElement {
   }
 
   const tbody = document.createElement("tbody");
-  el.rows.forEach((row, ri) => {
+  // Normalise rows/cells defensively: a row that isn't an array (object, null,
+  // stray string) or a table whose `rows` isn't an array must not throw and
+  // abort the page render. Non-array rows are skipped (like the reader's <For>),
+  // matching desktop behaviour so a partly-malformed table still shows its
+  // well-formed rows on the web instead of vanishing.
+  const rows: TableCellValue[][] = Array.isArray(el.rows) ? el.rows : [];
+  rows.forEach((row, ri) => {
+    if (!Array.isArray(row)) return;
     const tr = document.createElement("tr");
     applyStyle(tr, rowCss as any);
     if (ri % 2 === 1) applyStyle(tr, altRowCss as any);

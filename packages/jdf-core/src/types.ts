@@ -310,6 +310,28 @@ export interface Meta {
   flow?: boolean;
 }
 
+/** A single retrieval chunk — see `jdf chunk`. Data-only; renderers ignore it. */
+export interface ChunkRecord {
+  id: string;
+  text: string;
+  path: string[];
+  page: number;
+  types: string[];
+  tokens: number;
+  hash: string;
+}
+
+/**
+ * Precomputed RAG index. Optional, derived, cacheable — produced by
+ * `jdf chunk --format inline`. Renderers ignore it entirely; a pipeline reads
+ * `index.chunks` instead of recomputing chunk boundaries. Deleting it never
+ * affects rendering or validity.
+ */
+export interface DocumentIndex {
+  chunker: string;
+  chunks: ChunkRecord[];
+}
+
 export interface JdfDocument {
   $jdf: string;
   meta: Meta;
@@ -318,4 +340,6 @@ export interface JdfDocument {
   header?: HeaderFooter;
   footer?: HeaderFooter;
   pages: Page[];
+  /** Optional precomputed RAG chunk index (see `jdf chunk`). Data-only. */
+  index?: DocumentIndex;
 }

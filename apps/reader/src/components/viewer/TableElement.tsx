@@ -12,16 +12,22 @@ interface TableElementViewProps {
 }
 
 function cellText(c: TableCellValue): string {
-  return typeof c === "string" ? c : c.content;
+  // Tolerate malformed cells (null, numbers, missing content) — keep the web
+  // embed (jdf.js) and reader byte-identical in leniency so the same document
+  // renders the same rows on both surfaces.
+  if (c == null) return "";
+  if (typeof c === "string") return c;
+  if (typeof c === "object") return c.content == null ? "" : String(c.content);
+  return String(c);
 }
 
 function cellAttrs(c: TableCellValue) {
-  if (typeof c === "string") return {};
+  if (c == null || typeof c !== "object") return {};
   return { colspan: c.colspan, rowspan: c.rowspan };
 }
 
 function cellAlign(c: TableCellValue): TextAlign | undefined {
-  return typeof c === "string" ? undefined : c.align;
+  return c == null || typeof c !== "object" ? undefined : c.align;
 }
 
 /** Normalise a column width (number → px, string passed through, e.g. "30%"). */
@@ -73,7 +79,7 @@ export function TableElementView(props: TableElementViewProps) {
   const hasColWidths = () => props.element.columns?.some((c) => c.width != null) ?? false;
 
   const cellCss = (c: TableCellValue) => {
-    if (typeof c === "string" || !c.style) return {};
+    if (c == null || typeof c !== "object" || !c.style) return {};
     const s = c.style;
     if (typeof s === "string") return styleToCss(props.styles[s] || {});
     if (Array.isArray(s)) { let m = {}; for (const k of s) m = { ...m, ...styleToCss(props.styles[k] || {}) }; return m; }

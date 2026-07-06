@@ -96,8 +96,8 @@
         <tbody>
           <tr><td><code>type</code></td><td><code>"table"</code></td></tr>
           <tr><td><code>headers</code></td><td>array of strings</td></tr>
-          <tr><td><code>columns</code></td><td>array of <code>{header, width, align}</code></td></tr>
-          <tr><td><code>rows</code></td><td>2D array — each cell is a string or <code>{content, colspan, rowspan, style}</code></td></tr>
+          <tr><td><code>columns</code></td><td>array of <code>{header, width, align}</code> — <code>width</code> in mm (number) or a CSS string like <code>"30%"</code>; sets fixed column tracks</td></tr>
+          <tr><td><code>rows</code></td><td>2D array — each cell is a string or <code>{content, colspan, rowspan, align, style}</code></td></tr>
           <tr><td><code>borders</code></td><td>boolean or <code>{outer, inner, color, width}</code></td></tr>
           <tr><td><code>alternatingRowColor</code></td><td>color string</td></tr>
           <tr><td><code>alternateRowStyle</code></td><td>StyleRef</td></tr>
@@ -108,7 +108,7 @@
   <span class="key">"headers"</span><span class="punc">:</span> <span class="punc">[</span><span class="str">"Quarter"</span><span class="punc">,</span> <span class="str">"Revenue"</span><span class="punc">,</span> <span class="str">"YoY"</span><span class="punc">],</span>
   <span class="key">"borders"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"outer"</span><span class="punc">:</span> <span class="key">true</span><span class="punc">,</span> <span class="key">"inner"</span><span class="punc">:</span> <span class="key">true</span><span class="punc">,</span> <span class="key">"color"</span><span class="punc">:</span> <span class="str">"#e2e8f0"</span> <span class="punc">},</span>
   <span class="key">"alternatingRowColor"</span><span class="punc">:</span> <span class="str">"#f8fafc"</span><span class="punc">,</span>
-  <span class="key">"columns"</span><span class="punc">:</span> <span class="punc">[{</span> <span class="key">"align"</span><span class="punc">:</span> <span class="str">"left"</span> <span class="punc">},</span> <span class="punc">{</span> <span class="key">"align"</span><span class="punc">:</span> <span class="str">"right"</span> <span class="punc">},</span> <span class="punc">{</span> <span class="key">"align"</span><span class="punc">:</span> <span class="str">"right"</span> <span class="punc">}],</span>
+  <span class="key">"columns"</span><span class="punc">:</span> <span class="punc">[{</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">80</span><span class="punc">,</span> <span class="key">"align"</span><span class="punc">:</span> <span class="str">"left"</span> <span class="punc">},</span> <span class="punc">{</span> <span class="key">"width"</span><span class="punc">:</span> <span class="num">45</span><span class="punc">,</span> <span class="key">"align"</span><span class="punc">:</span> <span class="str">"right"</span> <span class="punc">},</span> <span class="punc">{</span> <span class="key">"align"</span><span class="punc">:</span> <span class="str">"right"</span> <span class="punc">}],</span>
   <span class="key">"rows"</span><span class="punc">:</span> <span class="punc">[</span>
     <span class="punc">[</span><span class="str">"Q1"</span><span class="punc">,</span> <span class="str">"$2.3M"</span><span class="punc">,</span> <span class="str">"+12%"</span><span class="punc">],</span>
     <span class="punc">[</span><span class="str">"Q2"</span><span class="punc">,</span> <span class="str">"$2.7M"</span><span class="punc">,</span> <span class="str">"+15%"</span><span class="punc">]</span>

@@ -68,6 +68,16 @@
       <h3>Positioning units</h3>
       <p>Positions and dimensions are millimeters by default. Font sizes are points. Override with <code>meta.unit: "mm" | "in" | "pt" | "px"</code>.</p>
 
+      <h3>Flow layout &amp; auto-pagination</h3>
+      <p>Set <code>"flow": true</code> on a page — or <code>meta.flow</code> for the whole document — and you no longer pin every element's <code>position.y</code> by hand. In flow mode the PDF exporter lays elements out top-to-bottom, word-wraps long text inside the content width, and breaks any overflow onto a fresh page instead of clipping it. Leave <code>flow</code> unset (the default) and authored positions are honored exactly as before; you can mix both across pages in one document.</p>
+<pre><code><span class="punc">{</span> <span class="key">"pages"</span><span class="punc">:</span> <span class="punc">[</span>
+    <span class="punc">{</span> <span class="key">"flow"</span><span class="punc">:</span> <span class="key">true</span><span class="punc">,</span> <span class="key">"elements"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Title"</span><span class="punc">,</span> <span class="key">"heading"</span><span class="punc">:</span> <span class="num">1</span> <span class="punc">},</span>
+      <span class="punc">{</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"text"</span><span class="punc">,</span> <span class="key">"content"</span><span class="punc">:</span> <span class="str">"A long paragraph that wraps and paginates automatically…"</span> <span class="punc">}</span>
+    <span class="punc">]</span> <span class="punc">}</span>
+  <span class="punc">]</span> <span class="punc">}</span></code></pre>
+      <p>Working example: <a href="../../../spec/examples/flow-report.jdf"><code>spec/examples/flow-report.jdf</code></a>.</p>
+
       <h2>Element types</h2>
 
       <p>Every page has an <code>elements[]</code> array. Each element has a <code>type</code> discriminator:</p>
