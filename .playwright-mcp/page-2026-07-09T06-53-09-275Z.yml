@@ -1,0 +1,19 @@
+- generic [active] [ref=e1]:
+  - link "← JDF.dev" [ref=e3] [cursor=pointer]:
+    - /url: index.html
+  - generic [ref=e9]:
+    - generic [ref=e10]: JDF.dev
+    - generic [ref=e11]: The AI-native document standard
+    - paragraph [ref=e12]: PDFs were built for humans and printers. JDF is built for the systems that read, write, and reason over documents next — and it's just JSON.
+    - generic [ref=e15]:
+      - generic [ref=e16]: Ugur Kazdal
+      - generic [ref=e17]: Startups Solutions Architect · Amazon Web Services
+    - generic [ref=e18]:
+      - generic [ref=e19]: Format v1.0.0
+      - generic [ref=e20]: Release 0.1.23
+  - generic [ref=e21]: ← → · Space · Home/End · F fullscreen
+  - generic [ref=e22]:
+    - button "Previous" [ref=e23] [cursor=pointer]: ‹
+    - generic [ref=e24]: 1 / 17
+    - button "Next" [ref=e25] [cursor=pointer]: ›
+    - button "Fullscreen" [ref=e26] [cursor=pointer]: ⛶
