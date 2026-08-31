@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JDF — kill the PDF</title>
+<style>
+  :root{
+    --bg:#0a0a0f;              /* near-black */
+    --bg2:#12121c;
+    --panel:#16161f;
+    --panel-soft:#1c1c28;
+    --line:rgba(255,255,255,.09);
+    --ink:#f4f4f8;
+    --ink-soft:#a3a3b8;
+    --muted:#6b6b80;
+    --v:#7c5cff;               /* violet */
+    --c:#22d3ee;               /* cyan */
+    --lime:#a3e635;
+    --pink:#f472b6;
+    --amber:#fbbf24;
+    --red:#fb7185;
+    --grad:linear-gradient(115deg,#7c5cff 0%,#22d3ee 100%);
+    --grad2:linear-gradient(115deg,#f472b6 0%,#7c5cff 60%,#22d3ee 100%);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  #deck{position:fixed;inset:0}
+  .slide{
+    position:absolute;inset:0; display:none; flex-direction:column;
+    padding:7vh 8vw;
+    background:
+      radial-gradient(90% 120% at 12% -10%, rgba(124,92,255,.16) 0%, transparent 45%),
+      radial-gradient(80% 100% at 100% 110%, rgba(34,211,238,.13) 0%, transparent 50%),
+      var(--bg);
+    animation:fade .45s ease both;
+  }
+  .slide.active{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  @keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+
+  /* alt palette for "bright" slides */
+  .slide.alt{
+    background:
+      radial-gradient(85% 110% at 90% -10%, rgba(244,114,182,.14) 0%, transparent 45%),
+      radial-gradient(80% 100% at 0% 110%, rgba(163,230,53,.10) 0%, transparent 50%),
+      var(--bg2);
+  }
+
+  .center{flex:1;display:flex;flex-direction:column;justify-content:center}
+
+  .eyebrow{font-size:.82rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:1.2rem}
+  h1{font-size:clamp(2.6rem,6.4vw,5.2rem);line-height:1.0;letter-spacing:-.04em;font-weight:850}
+  h2{font-size:clamp(1.9rem,4.3vw,3.3rem);line-height:1.06;letter-spacing:-.03em;font-weight:800}
+  .lede{font-size:clamp(1.1rem,1.9vw,1.5rem);color:var(--ink-soft);max-width:60ch;line-height:1.5;margin-top:1.4rem}
+  .ink-soft{color:var(--ink-soft)}
+  em{font-style:normal;color:var(--c)}
+
+  .big{font-size:clamp(2.4rem,5.8vw,4.6rem);font-weight:850;line-height:1.08;letter-spacing:-.035em;max-width:22ch}
+  .hl{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hl2{background:var(--grad2);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .grid{display:grid;gap:1.1rem;margin-top:2.1rem}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:1.55rem 1.7rem;
+    position:relative;overflow:hidden}
+  .card::after{content:"";position:absolute;inset:0;border-radius:18px;padding:1px;
+    background:linear-gradient(135deg,rgba(124,92,255,.35),transparent 40%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:.7}
+  .card h3{font-size:1.24rem;margin-bottom:.45rem;letter-spacing:-.01em}
+  .card p{color:var(--ink-soft);font-size:1.02rem;line-height:1.5}
+  .card .ic{font-size:1.9rem;margin-bottom:.65rem;display:block}
+
+  ul.feat{list-style:none;margin-top:1.7rem;display:flex;flex-direction:column;gap:1.15rem}
+  ul.feat li{display:flex;gap:1rem;align-items:flex-start;font-size:1.3rem;line-height:1.4}
+  ul.feat li b{font-weight:750;color:var(--ink)}
+  ul.feat .dot{flex:0 0 auto;width:30px;height:30px;border-radius:9px;background:var(--grad);
+    color:#0a0a0f;display:grid;place-items:center;font-size:1rem;font-weight:850;margin-top:.15rem}
+
+  /* ── Comparison tables (the stars) ── */
+  .cmp{width:100%;border-collapse:separate;border-spacing:0;margin-top:1.7rem;font-size:clamp(.9rem,1.35vw,1.1rem);
+    border-radius:18px;overflow:hidden;border:1px solid var(--line);
+    box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .cmp th,.cmp td{padding:.68rem 1.1rem;text-align:left;line-height:1.35;vertical-align:middle}
+  .cmp thead th{font-size:.98rem;font-weight:800;letter-spacing:-.01em;padding:1rem 1.1rem}
+  .cmp thead th:nth-child(1){background:#0d0d16;color:var(--muted);width:24%}
+  .cmp thead th:nth-child(2){background:linear-gradient(180deg,rgba(251,113,133,.22),rgba(251,113,133,.08));color:#ffd9df;width:38%}
+  .cmp thead th:nth-child(3){background:linear-gradient(180deg,rgba(163,230,53,.22),rgba(34,211,238,.1));color:#e7ffb0;width:38%}
+  .cmp thead th .em{font-size:1.15rem;margin-right:.35rem}
+  .cmp tbody td{background:var(--panel);border-bottom:1px solid var(--line)}
+  .cmp tbody tr:nth-child(even) td{background:var(--panel-soft)}
+  .cmp tbody tr:last-child td{border-bottom:none}
+  .cmp td:first-child{font-weight:700;color:var(--ink)}
+  .cmp .pdf{color:var(--red)}
+  .cmp .jdf{color:var(--lime);font-weight:600}
+  .cmp .x{color:var(--red);font-weight:800}
+  .cmp .ok{color:var(--lime);font-weight:800}
+  .cmp code{background:rgba(124,92,255,.16);color:#c9bbff;padding:.08em .42em;border-radius:6px;font-size:.86em;font-family:"SF Mono",ui-monospace,Menlo,monospace}
+
+  .surfaces{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3rem;margin-top:2.3rem}
+  .surf{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:1.85rem;position:relative;overflow:hidden}
+  .surf::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:var(--accent)}
+  .surf .ic{font-size:2.2rem}
+  .surf h3{margin:.75rem 0 .3rem;font-size:1.5rem}
+  .surf .role{font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    background:var(--accent);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .surf p{color:var(--ink-soft);font-size:1rem;line-height:1.45;margin-top:.65rem}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.3rem;margin-top:2.5rem}
+  .stat{text-align:center}
+  .stat .n{font-size:clamp(2.4rem,5.2vw,4rem);font-weight:850;letter-spacing:-.03em;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .l{color:var(--ink-soft);font-size:1rem;margin-top:.5rem}
+
+  .logo{display:flex;align-items:center;gap:.7rem;font-weight:800;font-size:1.15rem;letter-spacing:-.01em}
+  .logo .mark{width:38px;height:38px;border-radius:11px;background:var(--grad);display:grid;place-items:center;
+    color:#0a0a0f;font-size:.82rem;font-weight:850;transform:rotate(-6deg);box-shadow:0 6px 20px rgba(124,92,255,.4)}
+
+  .callout{margin-top:2rem;border-left:4px solid transparent;
+    border-image:var(--grad) 1;background:rgba(124,92,255,.08);
+    padding:1.3rem 1.6rem;border-radius:0 16px 16px 0;font-size:1.3rem;line-height:1.45;max-width:66ch}
+  .callout b{font-weight:800;color:#fff}
+
+  .pill{display:inline-flex;align-items:center;gap:.6rem;background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:.8rem 1.35rem;font-size:1.1rem;font-weight:600;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace;color:var(--ink)}
+  .pill .p{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
+  .pills{display:flex;flex-direction:column;gap:.8rem;align-items:flex-start;margin-top:1.8rem}
+
+  .footer{position:absolute;bottom:3.2vh;left:8vw;right:8vw;display:flex;justify-content:space-between;
+    align-items:center;font-size:.82rem;color:var(--muted)}
+  .progress{position:fixed;bottom:0;left:0;height:3px;background:var(--grad);transition:width .35s ease;z-index:50;box-shadow:0 0 14px rgba(124,92,255,.6)}
+  .nav{position:fixed;bottom:2.6vh;right:2vw;display:flex;gap:.5rem;z-index:60}
+  .nav button{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:var(--panel);
+    cursor:pointer;font-size:1.1rem;color:var(--ink);display:grid;place-items:center;transition:.15s}
+  .nav button:hover{background:var(--panel-soft);border-color:var(--v);color:#fff}
+  .counter{position:fixed;top:2.6vh;right:2.4vw;font-size:.82rem;color:var(--muted);z-index:60;font-variant-numeric:tabular-nums}
+
+  .active .stagger>*{animation:rise .5s ease both}
+  .active .stagger>*:nth-child(1){animation-delay:.05s}
+  .active .stagger>*:nth-child(2){animation-delay:.12s}
+  .active .stagger>*:nth-child(3){animation-delay:.19s}
+  .active .stagger>*:nth-child(4){animation-delay:.26s}
+  .active .stagger>*:nth-child(5){animation-delay:.33s}
+  .active .stagger>*:nth-child(6){animation-delay:.40s}
+  .active .rowin tbody tr{animation:rise .45s ease both}
+  .active .rowin tbody tr:nth-child(1){animation-delay:.08s}
+  .active .rowin tbody tr:nth-child(2){animation-delay:.14s}
+  .active .rowin tbody tr:nth-child(3){animation-delay:.20s}
+  .active .rowin tbody tr:nth-child(4){animation-delay:.26s}
+  .active .rowin tbody tr:nth-child(5){animation-delay:.32s}
+  .active .rowin tbody tr:nth-child(6){animation-delay:.38s}
+  .active .rowin tbody tr:nth-child(7){animation-delay:.44s}
+  .active .rowin tbody tr:nth-child(8){animation-delay:.50s}
+  .active .rowin tbody tr:nth-child(9){animation-delay:.56s}
+  .active .rowin tbody tr:nth-child(10){animation-delay:.62s}
+
+  @media (max-width:820px){
+    .g2,.g3,.surfaces,.stats{grid-template-columns:1fr!important}
+    .slide{padding:6vh 6vw}
+    .cmp{font-size:.72rem}
+  }
+
+  /* ── PRINT / PDF EXPORT — every slide becomes its own landscape page ── */
+  @media print{
+    @page{ size:1280px 720px; margin:0; }
+    html,body{ height:auto; overflow:visible; background:#0a0a0f; }
+    #deck{ position:static; }
+    .nav,.counter,.progress{ display:none !important; }
+    .slide{
+      position:relative !important; inset:auto !important;
+      display:flex !important; width:1280px; height:720px;
+      page-break-after:always; break-after:page;
+      animation:none !important;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    }
+    .slide:last-child{ page-break-after:auto; break-after:auto; }
+    /* kill entrance animations so printed content is fully visible */
+    .stagger>*,.rowin tbody tr{ animation:none !important; opacity:1 !important; transform:none !important; }
+    /* force multi-column layout — headless print reports a narrow width and would otherwise collapse the grids */
+    .g2{ grid-template-columns:1fr 1fr !important; }
+    .g3{ grid-template-columns:repeat(3,1fr) !important; }
+    .surfaces{ grid-template-columns:repeat(3,1fr) !important; }
+    .stats{ grid-template-columns:repeat(4,1fr) !important; }
+  }
+</style>
+</head>
+<body>
+<div id="deck">
+
+  <!-- 1 · COVER -->
+  <section class="slide active">
+    <div class="logo"><span class="mark">JDF</span> JSON Document Format</div>
+    <div class="center">
+      <div class="eyebrow">the AI-native document standard</div>
+      <h1><span class="hl">JDF</span><br>the JSON<br>document standard.</h1>
+      <p class="lede">Documents that carry their own meaning. Open them in any text editor, render them anywhere, feed them straight to AI. It's just JSON — the way documents should've been all along.</p>
+    </div>
+    <div class="footer"><span>by uurtech · github.com/uurtech/jdf</span><span>swipe →</span></div>
+  </section>
+
+  <!-- 2 · THE ROAST -->
+  <section class="slide">
+    <div class="eyebrow">real talk</div>
+    <h2>The document is smart.<br>The file is a <span class="hl2">brick.</span> 🧱</h2>
+    <p class="lede">You see headings, tables, a signed form. The PDF sees ink smeared at random coordinates. So every tool that opens it has to <em>reverse-engineer what it meant</em> — and that's where your tokens, your money and your Friday nights go to die.</p>
+    <div class="callout">Every "AI PDF" tool on the market is just a <b>duct-tape patch over a file that forgot what it was.</b> We can do better.</div>
+    <div class="footer"><span>JDF · kill the PDF</span><span>02</span></div>
+  </section>
+
+  <!-- 3 · HEADLINE TABLE -->
+  <section class="slide alt">
+    <div class="eyebrow">no cap, the receipts 🧾</div>
+    <h2>PDF vs JDF</h2>
+    <table class="cmp rowin">
+      <thead>
+        <tr>
+          <th></th>
+          <th><span class="em">📄</span>PDF</th>
+          <th><span class="em">📦</span>JDF</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Format</td><td class="pdf">Binary blob</td><td class="jdf">Human-readable JSON</td></tr>
+        <tr><td>Open with</td><td class="pdf">Adobe Reader (~250 MB 💀)</td><td class="jdf">Any text editor or JDF Reader (~14 MB)</td></tr>
+        <tr><td>Edit a typo</td><td class="pdf">Acrobat / Word roundtrip 🙄</td><td class="jdf">Double-click → type → done</td></tr>
+        <tr><td>Auto-save while editing</td><td class="pdf x">nope</td><td class="jdf"><span class="ok">✓</span> debounced, with a status dot</td></tr>
+        <tr><td>Raw view</td><td class="pdf x">lol no</td><td class="jdf">Live two-way JSON view</td></tr>
+        <tr><td>git diff</td><td class="pdf">Meaningless binary 🌫️</td><td class="jdf">Clean, line-level</td></tr>
+        <tr><td>Generate from code</td><td class="pdf">reportlab, pdfkit… good luck</td><td class="jdf"><code>JSON.stringify(doc)</code>. that's it.</td></tr>
+        <tr><td>Schema validation</td><td class="pdf x">none</td><td class="jdf">JSON Schema + Ajv CLI</td></tr>
+        <tr><td>Search it in code</td><td class="pdf">Custom binary parsing 😭</td><td class="jdf"><code>grep</code>, <code>jq</code>, <code>ripgrep</code></td></tr>
+        <tr><td>Vendor lock-in</td><td class="pdf">Adobe 🔒</td><td class="jdf">zero — it's just JSON 🕊️</td></tr>
+      </tbody>
+    </table>
+    <div class="footer"><span>JDF · kill the PDF</span><span>03</span></div>
+  </section>
+
+  <!-- 4 · THE SHIFT -->
+  <section class="slide">
+    <div class="center">
+      <div class="eyebrow">the whole thing in one line</div>
+      <p class="big">A document should <span class="hl">carry its own meaning</span> — not make every reader rebuild it from scratch. 🧠</p>
+      <div class="callout" style="margin-top:2.4rem">Giving AI a JDF is handing the builder the <b>blueprint</b> 📐. Giving it a PDF is handing over a <b>blurry photo of the building</b> 📸 and going "you figure it out."</div>
+    </div>
+    <div class="footer"><span>JDF · kill the PDF</span><span>04</span></div>
+  </section>
+
+  <!-- 5 · WHY AI LOVES IT -->
+  <section class="slide">
+    <div class="eyebrow">why AI eats this up 🤖</div>
+    <h2>It already speaks JSON. The friction just <span class="hl">disappears.</span></h2>
+    <div class="grid g3 stagger">
+      <div class="card"><span class="ic">🎯</span><h3>Actually accurate</h3><p>"What was Q2 revenue?" → the answer's right there. No scanning, no invented rows.</p></div>
+      <div class="card"><span class="ic">💸</span><h3>Cheaper every call</h3><p>Clean structure = shorter prompts. Stop paying to feed the model garbage.</p></div>
+      <div class="card"><span class="ic">🖼️</span><h3>Nothing goes missing</h3><p>Tables stay tables, images stay images, signatures stay signed. No <code>[image]</code> tombstones.</p></div>
+      <div class="card"><span class="ic">✍️</span><h3>AI writes it back</h3><p>Models read <em>and</em> generate JDF natively. Ask for a report, get a real valid doc — not vibes.</p></div>
+      <div class="card"><span class="ic">⚡</span><h3>Search that slaps</h3><p>Instant, exact retrieval against real structure — not a hopeful guess at one.</p></div>
+      <div class="card"><span class="ic">🔒</span><h3>Runs on your box</h3><p>It's a text file. No vendor, no cloud, no "call sales." Fully yours, fully auditable.</p></div>
+    </div>
+    <div class="footer"><span>JDF · kill the PDF</span><span>05</span></div>
+  </section>
+
+  <!-- 6 · RAG TABLE -->
+  <section class="slide alt">
+    <div class="eyebrow">for my RAG people 🛠️</div>
+    <h2>Half your pipeline just got deleted</h2>
+    <table class="cmp rowin" style="font-size:clamp(.78rem,1.15vw,.98rem)">
+      <thead>
+        <tr>
+          <th>Pipeline stage</th>
+          <th><span class="em">📄</span>PDF</th>
+          <th><span class="em">📦</span>JDF</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Parse / extract</td><td class="pdf">pdfplumber / pymupdf — layout analysis, font heuristics, OCR fallback</td><td class="jdf"><code>JSON.parse()</code> — structure's already in the file</td></tr>
+        <tr><td>Chunking</td><td class="pdf">Token-window splits that slice through tables, lists, footnotes</td><td class="jdf">Every element is a natural chunk — zero config</td></tr>
+        <tr><td>Metadata</td><td class="pdf">Synthesised after the fact — and usually wrong</td><td class="jdf">First-class on every element: type, heading, page, position</td></tr>
+        <tr><td>Embedding noise</td><td class="pdf">Repeated headers / footers / page numbers leak in</td><td class="jdf">Header &amp; footer live in their own tree — never in content</td></tr>
+        <tr><td>Re-index on edit</td><td class="pdf">Re-parse + re-chunk + re-embed the whole PDF</td><td class="jdf">Diff the JSON, re-embed only what changed</td></tr>
+        <tr><td>Tables</td><td class="pdf">Cells smear across columns; headers collapse</td><td class="jdf"><code>{ headers, rows }</code> — every cell at its real spot</td></tr>
+        <tr><td>Images / figures</td><td class="pdf">Dropped or stubbed as <code>[image]</code></td><td class="jdf">Stored with alt text + a stable anchor for vision steps</td></tr>
+      </tbody>
+    </table>
+    <div class="footer"><span>JDF · kill the PDF</span><span>06</span></div>
+  </section>
+
+  <!-- 7 · THREE SURFACES -->
+  <section class="slide">
+    <div class="eyebrow">one file, runs everywhere 🌍</div>
+    <h2>Write it once. It just works — <span class="hl">everywhere, identically.</span></h2>
+    <p class="lede">Same file on your desktop, in a website, and in your CI. No "export as", no conversion tax, no "well it looks different here."</p>
+    <div class="surfaces stagger">
+      <div class="surf" style="--accent:var(--grad)">
+        <span class="ic">🖥️</span>
+        <div class="role">Desktop</div>
+        <h3>The Reader</h3>
+        <p>Native app to read, edit, and turn any PDF or Markdown into JDF. Mac, Windows, Linux.</p>
+      </div>
+      <div class="surf" style="--accent:linear-gradient(115deg,#f472b6,#7c5cff)">
+        <span class="ic">🌐</span>
+        <div class="role">Web</div>
+        <h3>One tag</h3>
+        <p>Drop <code style="color:#c9bbff">&lt;jdf src&gt;</code> on any page — renders live, scrollable, searchable, fillable. No plugin.</p>
+      </div>
+      <div class="surf" style="--accent:linear-gradient(115deg,#a3e635,#22d3ee)">
+        <span class="ic">⚙️</span>
+        <div class="role">Automation</div>
+        <h3>Your pipeline</h3>
+        <p>Convert, validate, feed to AI. Built for agents and CI — zero clicking, ships in a script.</p>
+      </div>
+    </div>
+    <div class="footer"><span>JDF · kill the PDF</span><span>07</span></div>
+  </section>
+
+  <!-- 8 · FORMS -->
+  <section class="slide">
+    <div class="eyebrow">forms, but they don't suck ✨</div>
+    <h2>Fill it in the browser.<br>Get back <span class="hl">clean data.</span> 🎁</h2>
+    <ul class="feat stagger">
+      <li><span class="dot">1</span><span>Turn any doc into a <b>fillable form</b> — text, checkboxes, dropdowns, signatures. The lot.</span></li>
+      <li><span class="dot">2</span><span>User fills it on your site, hits save → you get back <b>structured data, ready to use.</b></span></li>
+      <li><span class="dot">3</span><span>No scraping PDF widget streams, no re-typing into a DB. The answers <b>are</b> the data.</span></li>
+      <li><span class="dot">4</span><span>Got legacy PDF forms? They come across with every field and value intact. ↩️</span></li>
+    </ul>
+    <div class="footer"><span>JDF · kill the PDF</span><span>08</span></div>
+  </section>
+
+  <!-- 9 · ENDGAME -->
+  <section class="slide alt">
+    <div class="center">
+      <div class="eyebrow">where this is going 🔮</div>
+      <p class="big">Documents stop being <span style="color:var(--muted);text-decoration:line-through;text-decoration-color:var(--red)">storage.</span><br>They become <span class="hl2">interfaces.</span></p>
+      <div class="grid g3 stagger" style="margin-top:2.3rem">
+        <div class="card"><h3>🎓 Education</h3><p>Content that's instantly interactive, not just readable.</p></div>
+        <div class="card"><h3>⚖️ Legal &amp; finance</h3><p>Contracts and filings you can actually query in real time.</p></div>
+        <div class="card"><h3>🔌 Every app</h3><p>One shared structure every tool understands out of the box.</p></div>
+      </div>
+      <div class="callout" style="margin-top:1.8rem">PDF fades out the way fax did once email showed up. 📠 → 📧 We're just early.</div>
+    </div>
+    <div class="footer"><span>JDF · kill the PDF</span><span>09</span></div>
+  </section>
+
+  <!-- 10 · CTA -->
+  <section class="slide">
+    <div class="logo"><span class="mark">JDF</span> JSON Document Format</div>
+    <div class="center">
+      <div class="eyebrow">your move 👋</div>
+      <h1>Ship it.<br><span class="hl">Today.</span></h1>
+      <div class="stats stagger">
+        <div class="stat"><div class="n">1</div><div class="l">file, everywhere</div></div>
+        <div class="stat"><div class="n">3</div><div class="l">ways to run it</div></div>
+        <div class="stat"><div class="n">$0</div><div class="l">open source, MIT</div></div>
+        <div class="stat"><div class="n">∞</div><div class="l">opens forever, no vendor</div></div>
+      </div>
+      <div class="pills">
+        <div class="pill"><span class="p">desktop</span> brew install jdf</div>
+        <div class="pill"><span class="p">web</span> &lt;jdf src="doc.jdf"&gt;&lt;/jdf&gt;</div>
+        <div class="pill"><span class="p">pipeline</span> npx @uurtech/jdf-cli convert paper.pdf</div>
+      </div>
+    </div>
+    <div class="footer"><span>github.com/uurtech/jdf</span><span>free &amp; open source ❤️ built by uurtech</span></div>
+  </section>
+
+</div>
+
+<div class="counter"><span id="cur">1</span> / <span id="total">10</span></div>
+<div class="progress" id="prog"></div>
+<div class="nav">
+  <button id="prev" aria-label="Previous">‹</button>
+  <button id="next" aria-label="Next">›</button>
+</div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  let i = 0;
+  const total = slides.length;
+  document.getElementById('total').textContent = total;
+  function show(n){
+    i = Math.max(0, Math.min(total-1, n));
+    slides.forEach((s,x)=>s.classList.toggle('active', x===i));
+    document.getElementById('cur').textContent = i+1;
+    document.getElementById('prog').style.width = ((i+1)/total*100)+'%';
+    location.hash = i+1;
+  }
+  const next=()=>show(i+1), prev=()=>show(i-1);
+  document.getElementById('next').onclick = next;
+  document.getElementById('prev').onclick = prev;
+  addEventListener('keydown', e=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); next() }
+    else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); prev() }
+    else if(e.key==='Home'){ show(0) }
+    else if(e.key==='End'){ show(total-1) }
+    else if(e.key==='f'||e.key==='F'){ document.documentElement.requestFullscreen?.() }
+  });
+  addEventListener('click', e=>{
+    if(e.target.closest('.nav')||e.target.closest('a')) return;
+    (e.clientX > innerWidth/2) ? next() : prev();
+  });
+  let tx=0;
+  addEventListener('touchstart', e=>tx=e.touches[0].clientX,{passive:true});
+  addEventListener('touchend', e=>{
+    const dx=e.changedTouches[0].clientX-tx;
+    if(Math.abs(dx)>50){ dx<0 ? next() : prev() }
+  },{passive:true});
+  show(parseInt(location.hash.slice(1))-1 || 0);
+</script>
+</body>
+</html>
