@@ -1,6 +1,6 @@
 cask "jdf" do
-  version "0.1.23"
-  sha256 "bb9232691b2c771d05e4dc837ebf66743c6c6033fcfa12d77e52b5bbbcc5eb1e"
+  version "0.1.24"
+  sha256 "13030f41de9c503c79659a2e0643bdff407e179441bb7b31deddb163fc44ee93"
 
   url "https://github.com/uurtech/jdf/releases/download/v#{version}/JDF.Reader_#{version}_aarch64.dmg"
   name "JDF Reader"
@@ -12,13 +12,8 @@ cask "jdf" do
 
   app "JDF Reader.app"
 
-  # The dmg is unsigned. Strip the macOS quarantine attribute so Gatekeeper
-  # does not show "JDF Reader is damaged and can't be opened" on first launch.
-  postflight do
-    system_command "/usr/bin/xattr",
-                   args: ["-cr", "#{appdir}/JDF Reader.app"],
-                   sudo: false
-  end
+  # The dmg is signed with a Developer ID cert and notarized by Apple, so it
+  # passes Gatekeeper without any quarantine-stripping workaround.
 
   zap trash: [
     "~/Library/Application Support/dev.jdf.viewer",
