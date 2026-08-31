@@ -784,7 +784,7 @@ Thanks to everyone who has helped shape JDF — code, design, docs, feedback.
     </td>
     <td align="center">
       <a href="https://github.com/nanda1505" title="nanda1505">
-        <img src="https://images.weserv.nl/?url=media.licdn.com/dms/image/v2/C4D03AQFRbXy2gcdv4Q/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1516253878455?e=1784764800%26v=beta%26t=WhcFqYUVXvfaDJ_lFFGJrg66nSYfG_AZidiX0roBR38&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="nanda1505" /><br />
+        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/7380934&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="nanda1505" /><br />
         <sub><b>nanda1505</b></sub>
       </a>
     </td>
