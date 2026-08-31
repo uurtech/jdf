@@ -225,7 +225,13 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
       const s = stack.pop();
       if (s) Object.assign(gs, s);
     } else if (fn === OPS.transform) {
-      gs.ctm = multiplyCtm(gs.ctm, args as number[]);
+      // PDF `cm` prepends: the new coordinate system is the operand applied
+      // FIRST, then the existing CTM (effectiveCTM = oldCTM ∘ M). That is
+      // multiplyCtm(M, oldCTM) — NOT multiplyCtm(oldCTM, M). The reversed order
+      // is a no-op for a single top-level transform but sends images and shapes
+      // thousands of units off-page once transforms nest (e.g. Chrome's
+      // 300-DPI→pt flip wrapping a local image placement matrix).
+      gs.ctm = multiplyCtm(args as number[], gs.ctm);
     } else if (fn === OPS.setFillRGBColor) {
       gs.fill = rgbToHex(args[0], args[1], args[2]);
     } else if (fn === OPS.setStrokeRGBColor) {

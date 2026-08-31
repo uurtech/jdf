@@ -12,7 +12,7 @@
 #        apps/reader/package.json  +  apps/reader/src-tauri/{Cargo.toml,tauri.conf.json}
 #        jdfjs/package.json
 #        tools/jdf-cli/package.json
-#   2. Builds the macOS .dmg (unsigned).
+#   2. Builds the macOS .dmg (signed + notarized when APPLE_* set in /.env).
 #   3. Updates Casks/jdf.rb (this repo, canonical) with new version + sha256;
 #      mirrors the full file (including postflight blocks) into ../homebrew-jdf
 #      and pushes the tap.
