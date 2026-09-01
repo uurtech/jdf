@@ -1,6 +1,6 @@
 cask "jdf" do
-  version "0.1.24"
-  sha256 "13030f41de9c503c79659a2e0643bdff407e179441bb7b31deddb163fc44ee93"
+  version "0.1.25"
+  sha256 "ee7098f8e4c64ba4db190edaffd122f79a9ec808416271e17550b0e9d5902f9c"
 
   url "https://github.com/uurtech/jdf/releases/download/v#{version}/JDF.Reader_#{version}_aarch64.dmg"
   name "JDF Reader"

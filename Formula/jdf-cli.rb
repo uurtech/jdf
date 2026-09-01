@@ -1,9 +1,9 @@
 class JdfCli < Formula
   desc "CLI for JDF (JSON Document Format) — validate and convert PDF/JSON/MD to JDF"
   homepage "https://github.com/uurtech/jdf"
-  url "https://registry.npmjs.org/@uurtech/jdf-cli/-/jdf-cli-0.1.24.tgz"
-  version "0.1.24"
-  sha256 "2cf2be332bfc6efb66a5886d8df78ed343aeb7bc4a7c859293517eed8715e0d3"
+  url "https://registry.npmjs.org/@uurtech/jdf-cli/-/jdf-cli-0.1.25.tgz"
+  version "0.1.25"
+  sha256 "38b992fada192c0ffad7b8be1db0314cc73ce82ee143112f2973aca444322798"
   license "MIT"
 
   depends_on "node"
