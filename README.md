@@ -17,7 +17,7 @@ JDF runs in three places:
 |---|---|---|
 | **JDF Reader** | Native macOS app — read, edit, import PDF/MD, export PDF | `brew tap uurtech/jdf && brew install jdf` |
 | **jdf.js** | JavaScript library — embed `.jdf` files on any web page | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf@0.1.24">` |
-| **`@uurtech/jdf-cli`** | CLI — validate, convert PDF/JSON/MD→JDF, and RAG-native `chunk` + `embed` | `brew install uurtech/jdf/jdf-cli`, `npm i -g @uurtech/jdf-cli`, or `npx @uurtech/jdf-cli convert paper.pdf` |
+| **`@uurtech/jdf-cli`** | CLI — validate, convert PDF/JSON/MD→JDF, and RAG-native `chunk` + `embed` | `brew tap uurtech/jdf && brew install jdf-cli`, `npm i -g @uurtech/jdf-cli`, or `npx @uurtech/jdf-cli convert paper.pdf` |
 
 ## Why JDF
 
@@ -81,7 +81,7 @@ brew upgrade --cask jdf
 
 The Cask formula lives in a separate tap repo: [`uurtech/homebrew-jdf/Casks/jdf.rb`](https://github.com/uurtech/homebrew-jdf/blob/main/Casks/jdf.rb). A reference copy is also kept in this repo at [`Casks/jdf.rb`](Casks/jdf.rb).
 
-The **CLI** ships through the same tap as a Homebrew Formula (`brew install uurtech/jdf/jdf-cli`), so you can grab it without Node/npm — the canonical recipe is [`Formula/jdf-cli.rb`](Formula/jdf-cli.rb), mirrored into the tap on every release.
+The **CLI** ships through the same tap as a Homebrew Formula (`brew tap uurtech/jdf && brew install jdf-cli`), so you can grab it without Node/npm — the canonical recipe is [`Formula/jdf-cli.rb`](Formula/jdf-cli.rb), mirrored into the tap on every release.
 
 Linux and Windows builds (`.deb`, `.AppImage`, `.rpm`, `.msi`, `.exe`) are produced by the GitHub Actions release workflow on every tag — see the [latest release](https://github.com/uurtech/jdf/releases/latest).
 
@@ -220,7 +220,7 @@ Editing lives in the desktop Reader only — jdf.js is a viewer, the CLI is non-
 | **JDF Reader** (macOS) | `brew tap uurtech/jdf && brew install jdf` — DMG / `.app`, signed via GitHub release |
 | **JDF Reader** (Linux / Windows) | `.deb` / `.AppImage` / `.rpm` / `.msi` / `.exe` from the [latest release](https://github.com/uurtech/jdf/releases/latest) |
 | **jdf.js** | `npm install @uurtech/jdf` or `<script src="https://unpkg.com/@uurtech/jdf@0.1.24">` |
-| **`@uurtech/jdf-cli`** | `brew install uurtech/jdf/jdf-cli`, `npm i -g @uurtech/jdf-cli`, or `npx @uurtech/jdf-cli validate file.jdf` (no install) |
+| **`@uurtech/jdf-cli`** | `brew tap uurtech/jdf && brew install jdf-cli`, `npm i -g @uurtech/jdf-cli`, or `npx @uurtech/jdf-cli validate file.jdf` (no install) |
 
 ## Page model
 
