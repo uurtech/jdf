@@ -1,0 +1,5 @@
+[
+  { "queryId": "pricing", "docId": "sec-pricing-table", "grade": 2 },
+  { "queryId": "pricing", "docId": "sec-pricing-notes", "grade": 1 },
+  { "queryId": "refund", "docId": "sec-refund-policy" }
+]

@@ -45,6 +45,7 @@
     "dev": "tsup --watch",
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {

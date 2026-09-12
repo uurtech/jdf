@@ -4,6 +4,7 @@ import { importPdf } from "./commands/import-pdf";
 import { importJson } from "./commands/import-json";
 import { chunkFile, type ChunkStrategy, type ChunkFormat } from "./commands/chunk";
 import { embedFile, type EmbeddingProvider } from "./commands/embed";
+import { evalRun } from "./commands/eval";
 
 const HELP = `jdf — JSON Document Format CLI
 
@@ -14,12 +15,14 @@ The CLI exists for these workflows:
                      into a validated .jdf (or .jdfx) you can ship.
   • JDF → chunks     turn a document into retrieval-ready chunks (RAG).
   • JDF → vectors    embed those chunks, incrementally, for a vector store.
+  • eval             score a retrieval run: Recall@K, MRR, nDCG@K (RAG eval).
 
 Usage:
   jdf validate <file.jdf>
   jdf convert  <file.{pdf,json,md}> [-o output.{jdf,jdfx}] [--json] [--password PW] [--drop-invisible-text]
   jdf chunk    <file.{jdf,jdfx}> [--strategy section|element|fixed] [--format jsonl|json|inline] [--max-tokens N] [-o out]
   jdf embed    <file.{jdf,jdfx}> [--provider ollama|openai] [--model NAME] [--strategy …] [--incremental] [-o out]
+  jdf eval     <qrels.json> <run.json> [--k N] [-o report.json]
   jdf --help
 
 Commands:
@@ -27,6 +30,7 @@ Commands:
   convert    Convert a PDF, JSON, or Markdown file into JDF (alias: import)
   chunk      Split a JDF document into retrieval-ready chunks (offline, deterministic)
   embed      Compute embeddings for the chunks (local via Ollama by default)
+  eval       Score a ranked run against relevance judgments (Recall@K, MRR, nDCG@K)
 
 Flags:
   -o, --output <path>   Explicit output path
@@ -46,6 +50,7 @@ Flags:
       --cache <path>    embed: sidecar to reuse vectors from (default: the
                         output path itself)
       --no-auto-start   embed(ollama): don't auto-launch Ollama via Docker
+      --k <n>           eval: cutoff rank for Recall@K / nDCG@K (default 10)
 
 Environment (embed):
   ollama:  OLLAMA_HOST (default http://localhost:11434)
@@ -59,6 +64,7 @@ Examples:
   jdf chunk report.jdf --format inline         # embed the chunk index into the .jdf
   jdf embed report.jdf                          # local embeddings via Ollama (auto-setup)
   jdf embed report.jdf --provider openai --incremental
+  jdf eval eval/qrels.json eval/run.json --k 10  # score a retrieval run
 `;
 
 // Flags that NEVER take a value, so the parser knows not to swallow the next
@@ -173,6 +179,16 @@ async function main() {
           autoStart: flags["no-auto-start"] !== true,
           output: typeof flags.output === "string" ? flags.output : undefined,
           cache: typeof flags.cache === "string" ? flags.cache : undefined,
+        });
+        process.exit(0);
+      }
+      case "eval": {
+        const qrelsFile = positional[0];
+        const runFile = positional[1];
+        if (!qrelsFile || !runFile) { console.error("Usage: jdf eval <qrels.json> <run.json> [--k N] [-o report.json]"); process.exit(1); }
+        await evalRun(qrelsFile, runFile, {
+          k: typeof flags.k === "string" ? parseInt(flags.k, 10) : undefined,
+          output: typeof flags.output === "string" ? flags.output : undefined,
         });
         process.exit(0);
       }
