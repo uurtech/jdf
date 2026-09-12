@@ -1,0 +1,4 @@
+[
+  { "queryId": "pricing", "ranking": ["sec-pricing-table", "sec-intro", "sec-pricing-notes"] },
+  { "queryId": "refund", "ranking": ["sec-shipping", "sec-refund-policy"] }
+]
