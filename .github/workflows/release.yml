@@ -6,6 +6,15 @@ on:
       - "v*.*.*"
   workflow_dispatch:
 
+# Default GITHUB_TOKEN is read-only here, so the "Attach to release" step
+# below (softprops/action-gh-release@v2) fails on every platform with
+# "Resource not accessible by integration" — every release from v0.1.0
+# through v0.2.1 shipped with only the macOS dmg attached (uploaded locally
+# via scripts/publish-dmg.sh) even though this workflow builds Linux +
+# Windows bundles too.
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build (${{ matrix.platform }})
