@@ -122,6 +122,16 @@ pnpm tauri build      # produces .app + .dmg in apps/reader/src-tauri/target/rel
 
 Requires Node 20+, pnpm 9+, Rust stable, Xcode CLT (macOS).
 
+On Linux, the `.deb`/`.rpm` bundle fine as-is, but on distros with a newer
+toolchain (Fedora, Arch, …) the AppImage step can fail — linuxdeploy's
+bundled `strip` predates glibc's `.relr.dyn` relocation section and chokes
+on every system library (`unknown type [0x13] section '.relr.dyn'`). Skip
+stripping to work around it:
+
+```bash
+NO_STRIP=true pnpm tauri build --bundles appimage
+```
+
 ## Open & edit
 
 **Open**: drag any `.jdf`, `.jdfx`, `.pdf`, or `.md` onto the welcome screen, double-click in Finder (file associations are registered for both `.jdf` and `.jdfx`), or `Cmd+O`.

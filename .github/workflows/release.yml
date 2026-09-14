@@ -59,7 +59,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build Tauri bundles
+        # linuxdeploy's bundled `strip` predates glibc's .relr.dyn relocation
+        # section and fails on every system library once the toolchain
+        # emits it (Fedora/Arch already do; ubuntu-22.04 doesn't yet). No-op
+        # on macOS/Windows.
         run: pnpm --filter @jdf/reader tauri build --target ${{ matrix.target }}
+        env:
+          NO_STRIP: true
 
       - name: Upload bundles
         uses: actions/upload-artifact@v4
