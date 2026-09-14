@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  shared-mime-info package definition for JDF Reader's file types.
+
+  Registered per-user at runtime (see register_linux_mime_types in lib.rs)
+  rather than shipped as a system /usr/share/mime/packages/ file at install
+  time: Tauri's rpm bundler has no post-install scriptlet hook (deb does),
+  and an AppImage has no install step at all, so there's no reliable place
+  to call `update-mime-database` for every packaging format. Registering on
+  first launch works identically for .deb, .rpm and AppImage.
+-->
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/jdf+json">
+    <comment>JDF Document</comment>
+    <glob pattern="*.jdf"/>
+  </mime-type>
+  <mime-type type="application/jdf+zip">
+    <comment>JDF Bundle</comment>
+    <glob pattern="*.jdfx"/>
+  </mime-type>
+</mime-info>

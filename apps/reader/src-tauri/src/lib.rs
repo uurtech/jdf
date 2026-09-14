@@ -57,8 +57,54 @@ fn open_in_new_window(app: tauri::AppHandle, path: String) -> Result<(), String>
     Ok(())
 }
 
+/// Registers the .jdf/.jdfx mime types in the current user's shared-mime-info
+/// db (~/.local/share/mime/packages/) so file managers recognize the
+/// extensions and offer JDF Reader in "Open With". The .desktop file's
+/// MimeType= entries (written by the deb/rpm bundler) declare that JDF
+/// Reader *handles* application/jdf+json and application/jdf+zip, but
+/// nothing ships the glob that maps *.jdf/*.jdfx to those custom types —
+/// Tauri's rpm bundler has no post-install scriptlet to call
+/// `update-mime-database`, and an AppImage has no install step at all. Doing
+/// it here on first launch covers all three packaging formats uniformly and
+/// needs no root. Idempotent: only rewrites + re-runs update-mime-database
+/// when the shipped XML actually changed.
+#[cfg(target_os = "linux")]
+fn register_linux_mime_types() {
+    use std::path::PathBuf;
+
+    const MIME_XML: &str = include_str!("../resources/linux-mime.xml");
+
+    let Some(data_home) = std::env::var_os("XDG_DATA_HOME")
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local/share")))
+    else {
+        return;
+    };
+
+    let packages_dir = data_home.join("mime/packages");
+    if std::fs::create_dir_all(&packages_dir).is_err() {
+        return;
+    }
+
+    let xml_path = packages_dir.join("dev.jdf.viewer.xml");
+    let up_to_date = std::fs::read_to_string(&xml_path)
+        .map(|existing| existing == MIME_XML)
+        .unwrap_or(false);
+    if up_to_date {
+        return;
+    }
+    if std::fs::write(&xml_path, MIME_XML).is_ok() {
+        let _ = std::process::Command::new("update-mime-database")
+            .arg(data_home.join("mime"))
+            .status();
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[cfg(target_os = "linux")]
+    register_linux_mime_types();
+
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
