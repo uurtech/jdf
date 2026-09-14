@@ -1,5 +1,6 @@
 import { For, Show, createMemo, createSignal } from "solid-js";
 import type { JdfDocument } from "@jdf/core";
+import { getPageDimensions, DEFAULT_MARGINS } from "@jdf/core";
 
 interface SidebarProps {
   document: JdfDocument;
@@ -11,12 +12,29 @@ interface SidebarProps {
 
 interface PreviewElement { type: string; top: number; left: number; width: number; height: number; color?: string }
 
-function previewForPage(page: JdfDocument["pages"][number], pageW: number, pageH: number): PreviewElement[] {
+// Mirrors PageRenderer's layout: pageSize/orientation/margins fall back
+// page -> document.meta -> defaults, and elements are positioned relative
+// to the content area (inset by margins + header height), not the raw
+// page origin. The thumbnail box must also match the real page's aspect
+// ratio, or every percentage below renders skewed regardless of the offset
+// math being right.
+function pageBox(document: JdfDocument, page: JdfDocument["pages"][number]) {
+  const dims = getPageDimensions(
+    page.pageSize ?? document.meta.pageSize ?? "A4",
+    page.pageOrientation ?? document.meta.pageOrientation ?? "portrait"
+  );
+  const margins = { ...DEFAULT_MARGINS, ...(document.meta.margins || {}), ...(page.margins || {}) };
+  const headerHeight = (page.header || document.header)?.height ?? 0;
+  return { width: dims.width, height: dims.height, marginLeft: margins.left!, marginTop: margins.top! + headerHeight };
+}
+
+function previewForPage(page: JdfDocument["pages"][number], pageW: number, pageH: number, offsetX: number, offsetY: number): PreviewElement[] {
+  const contentW = pageW - offsetX;
   const out: PreviewElement[] = [];
   for (const el of page.elements) {
-    const x = (el as any).position?.x ?? 0;
-    const y = (el as any).position?.y ?? 0;
-    const w = (el as any).width ?? pageW * 0.6;
+    const x = offsetX + ((el as any).position?.x ?? 0);
+    const y = offsetY + ((el as any).position?.y ?? 0);
+    const w = (el as any).width ?? contentW * 0.6;
     let h = (el as any).height ?? 4;
     let color = "#cbd5e1";
     switch (el.type) {
@@ -39,10 +57,13 @@ function previewForPage(page: JdfDocument["pages"][number], pageW: number, pageH
 
 export function Sidebar(props: SidebarProps) {
   const [hoverIdx, setHoverIdx] = createSignal<number | null>(null);
-  const previews = createMemo(() => {
-    const pageW = 166, pageH = 247;
-    return props.document.pages.map((p) => previewForPage(p, pageW, pageH));
-  });
+  const boxes = createMemo(() => props.document.pages.map((p) => pageBox(props.document, p)));
+  const previews = createMemo(() =>
+    props.document.pages.map((p, i) => {
+      const box = boxes()[i];
+      return previewForPage(p, box.width, box.height, box.marginLeft, box.marginTop);
+    })
+  );
   const canDelete = () => props.document.pages.length > 1 && !!props.onDeletePage;
 
   return (
@@ -76,8 +97,11 @@ export function Sidebar(props: SidebarProps) {
                 onClick={() => props.onPageChange(index())}
               >
                 <div
-                  class="w-full aspect-[210/297] relative overflow-hidden"
-                  style={{ "background-color": page.background || "#ffffff" }}
+                  class="w-full relative overflow-hidden"
+                  style={{
+                    "aspect-ratio": `${boxes()[index()].width} / ${boxes()[index()].height}`,
+                    "background-color": page.background || "#ffffff",
+                  }}
                 >
                   <For each={previews()[index()]}>
                     {(el) => (
