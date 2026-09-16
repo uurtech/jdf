@@ -80,11 +80,29 @@ export interface RichTextElement {
   height?: number;
 }
 
+/** One recognised text block of an image (OCR). `bbox` is in fractions of the image (0–1). */
+export interface OcrBlock { text: string; bbox?: { x: number; y: number; w: number; h: number }; confidence?: number; }
+/**
+ * Text recovered from an image — the image-side twin of VideoTranscript. Lives
+ * in document.json (text, not an asset). `jdf describe` writes it; `jdf chunk`
+ * indexes it; reader search finds it. Without it a scanned page or a chart is
+ * invisible to RAG, which is exactly what `jdf rag` reports as "media without text".
+ */
+export interface ImageOcr { language?: string; source?: string; created?: string; blocks: OcrBlock[]; }
+
 export interface ImageElement {
   type: "image";
+  /** Stable id — `jdf chunk` media references and `jdf describe --element` use it. */
+  id?: string;
   resource?: string;
   src?: string;
   alt?: string;
+  /** One-paragraph description of what the image shows (vision model or human). Indexed by RAG. */
+  caption?: string;
+  /** Where the caption came from: "ollama:moondream", "openai:gpt-4o", "manual", … */
+  captionSource?: string;
+  /** Recognised text (OCR) — see ImageOcr. */
+  ocr?: ImageOcr;
   position?: Position;
   width?: number;
   height?: number;

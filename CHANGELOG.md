@@ -5,7 +5,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · semantic-ish
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added — three-surface parity gate
+- `scripts/parity-check.mjs` (`pnpm parity`): for every element type in the schema, checks types, jdf.js renderer, reader renderer, Rust `valid_types`/`draw_element`/`extract_text`, reader insert + blank-element factory and `jdf chunk`; validates every fixture with the CLI and renders every fixture in Chrome through both jdf.js and the built desktop reader (Tauri IPC mocked), failing on page errors, `[unknown: …]` markers or a differing element set. `release.sh` runs it as Step 0 and aborts on red.
+- `spec/examples/elements-gallery.jdf` — one fixture that uses all 14 element types.
+- Reader Insert bar now offers the five form elements (Input, Textarea, Checkbox, Select, Signature) — `makeBlankElement` already knew them, the toolbar did not.
+- Both renderers tag element wrappers with `data-jdf-type`; jdf.js now renders `[unknown: <type>]` for unknown element types instead of silently dropping them (same fallback the reader has always shown).
+
+### Fixed
+- Reader search (`extract_text`) indexes form labels, values and placeholders — a filled form is findable by what was typed.
+- Reader `<video>` no longer requests CORS (`crossorigin="anonymous"`); a hosted mp4 without `Access-Control-Allow-Origin` played in jdf.js but stayed blank on desktop.
+- Homebrew cask: `depends_on macos: ">= :catalina"` — the bare-symbol form is disabled by current Homebrew, which made `brew upgrade --cask jdf` report the old install as up to date.
+
+### Added — images are no longer blind spots for RAG
+- `image.ocr` (`{language, source, created, blocks:[{text, bbox, confidence}]}`), `image.caption` / `captionSource`, `image.id` in types and schema — text in `document.json`, the picture stays an asset.
+- `jdf describe`: OCR via tesseract.js (local WASM, cached language data) and captions via a local Ollama vision model (default `qwen2.5vl:3b`) or OpenAI; per-element, `--force`, `--ocr-language`.
+- `jdf convert --ocr tesseract|openai`: pages without a text layer (scans) are detected and OCR'd during import; without the flag the CLI warns that RAG will skip them.
+- `jdf chunk` indexes alt + caption + OCR text and warns per file about media without text. `jdf rag` fills missing transcripts/OCR/captions when providers are given, prints a media-coverage report, lists every element still without text in `manifest.json → mediaWithoutText`, and `--strict` fails the run on blind spots. Reader search indexes caption + OCR text.
 
 ## [0.2.1] — 2026-09-13
 

@@ -1746,6 +1746,35 @@ fn extract_text(el: &serde_json::Value) -> String {
             }
         }
     }
+    // Form fields: the label and what the user typed/picked are document text
+    // ("Full name: Ada Lovelace" must be findable after the form is filled).
+    if let Some(l) = el.get("label").and_then(|l| l.as_str()) {
+        if !out.is_empty() { out.push(' '); }
+        out.push_str(l);
+    }
+    if let Some(v) = el.get("value").and_then(|v| v.as_str()) {
+        if !v.is_empty() && !v.starts_with("data:") {
+            if !out.is_empty() { out.push(' '); }
+            out.push_str(v);
+        }
+    }
+    if let Some(p) = el.get("placeholder").and_then(|p| p.as_str()) {
+        if !out.is_empty() { out.push(' '); }
+        out.push_str(p);
+    }
+    // Image caption + OCR blocks: a chart or scanned page must be searchable.
+    if let Some(c) = el.get("caption").and_then(|c| c.as_str()) {
+        if !out.is_empty() { out.push(' '); }
+        out.push_str(c);
+    }
+    if let Some(blocks) = el.get("ocr").and_then(|o| o.get("blocks")).and_then(|b| b.as_array()) {
+        for b in blocks {
+            if let Some(t) = b.get("text").and_then(|t| t.as_str()) {
+                if !out.is_empty() { out.push(' '); }
+                out.push_str(t);
+            }
+        }
+    }
     if let Some(chs) = el.get("chapters").and_then(|c| c.as_array()) {
         for ch in chs {
             if let Some(t) = ch.get("title").and_then(|t| t.as_str()) {

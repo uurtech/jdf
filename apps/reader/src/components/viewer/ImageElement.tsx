@@ -60,7 +60,8 @@ export function ImageElementView(props: ImageElementViewProps) {
     <div style={{ width: "100%", height: "100%" }}>
       <img
         src={src()}
-        alt={props.element.alt || ""}
+        alt={props.element.alt || props.element.caption || ""}
+        title={props.element.caption || undefined}
         class={`${fitClass()} block`}
         style={{ ...css(), width: "100%", height: "100%" }}
       />

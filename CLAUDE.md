@@ -21,6 +21,19 @@ When you add or change a feature, walk this checklist before declaring done:
 
 If you add it to one surface and skip another, the assistant has failed the user. Code review for any change must verify every checklist item — silent omissions are the #1 source of bugs in this repo.
 
+### Enforcement — the parity gate is the definition of "done"
+
+Words are not enough; the rule is enforced by `scripts/parity-check.mjs` (`pnpm parity`). It fails the build when, for **any** element type in `spec/jdf-schema.json`, any of these does not know it: `types.ts`, the jdf.js renderer, the reader renderer, Rust `valid_types` / `draw_element` / `extract_text` fields, the reader `makeBlankElement` + Insert bar, `jdf chunk`; or when a type has no fixture in `spec/examples/`; or when any fixture in `spec/examples/` + `docs/examples/` fails `jdf validate`, or renders in Chrome with a page error, an `[unknown: …]` marker, or a different top-level element set in jdf.js vs the reader (`apps/reader/dist` driven through a mocked Tauri IPC).
+
+Non-negotiable:
+
+1. **A feature is not done until `pnpm parity` is green.** Never report a feature as finished, never commit "for now in one surface", never leave a TODO for another surface. If you cannot finish a surface, the feature does not ship — tell the user, do not ship a partial.
+2. **`scripts/release.sh` runs the gate first (Step 0) and aborts on red.** Do not bypass it, do not `--static` it in a release, do not comment it out.
+3. **New element type or new field → extend `spec/examples/elements-gallery.jdf` in the same change.** The gallery is the one fixture guaranteed to touch every type; the gate requires every schema type to appear in a spec fixture.
+4. **Unknown types are loud in both renderers.** jdf.js and the reader both render `[unknown: <type>]` (class `jdfjs-unknown` / reader fallback) — never `return null`, never skip. An element that silently vanishes on one surface is exactly the bug this gate exists to catch.
+5. **Renderer changes must be verified in the *built* app, not just source.** The gate renders `apps/reader/dist` (what the dmg ships) and `jdfjs/dist`; after touching a renderer, rebuild (`pnpm --filter @jdf/reader build`, `pnpm --filter @uurtech/jdf build`) and run the gate. "It's in the source" is not evidence.
+6. **When the user reports a surface-specific bug ("works on web, broken in reader"), reproduce it with the actual downloaded file in the actual installed app** (`open -a "JDF Reader" file.jdf` + screenshot) before touching code, and add a fixture that captures it.
+
 ## The repo is a 4-arm thing
 
 JDF lives in **four runnable surfaces** that all consume the same JSON format. They MUST stay in feature parity. PDF→JDF conversion lives in a fifth, shared package — both the desktop reader and the CLI import it.
@@ -145,6 +158,8 @@ Do not add `<jdf-viewer>` or `data-jdf` variants — kullanıcı kararı, `<jdf>
 
 ```bash
 pnpm typecheck          # TS across reader, jdfjs, jdf-cli, jdf-pdf-import
+pnpm --filter @uurtech/jdf build && pnpm --filter @jdf/reader build
+pnpm parity             # three-surface parity gate — MUST be green (release.sh runs it as Step 0)
 cd apps/reader/src-tauri && cargo check
 pnpm --filter @uurtech/jdf build   # jdf.js embed (package name is @uurtech/jdf, not "jdfjs")
 pnpm --filter @uurtech/jdf-cli start validate spec/examples/hello-world.jdf
@@ -190,6 +205,8 @@ User talks Turkish. Replies in Turkish. Code comments, file paths, commit messag
 - **`flow` is a PDF-export layout concern, not a renderer feature.** `page.flow` (default `meta.flow`) makes the Rust exporter (`export_pdf` / `measure_element` in `commands/mod.rs`) lay elements out top-to-bottom and auto-paginate overflow. The HTML renderers (jdf.js + reader) still position elements absolutely by `position.y` — flow is intentionally export-only, like edit/IO. When you touch flow, keep `measure_element` in sync with `draw_element`'s wrap/line-height maths or the page breaks land in the wrong place. Fixture: `spec/examples/flow-report.jdf`.
 - **CLI markdown parity is hand-maintained, not shared.** `tools/jdf-cli/src/commands/import-md.ts` (TS, regex-based) and the reader's `markdown_to_jdf` (Rust `pulldown_cmark`) are two implementations of one spec — like the two renderers. They must emit the same element set (richtext/table/blockquote/nested-list/hr). If you add a markdown feature to one, add it to the other.
 - **`jdf chunk` / `jdf embed` are CLI-only, and `index` is data-only.** RAG lives entirely in the CLI (`tools/jdf-cli/src/commands/chunk.ts` + `embed.ts`); `convert` never chunks or embeds — it stays pure/offline. The optional top-level `index` block (from `chunk --format inline`) and the `.embeddings.json` sidecar are DERIVED CACHE, not source of truth: renderers (jdf.js, reader, Rust) ignore `index` entirely, so it only needs types + schema, not the six-location element treatment. Chunking must stay DETERMINISTIC (same doc+opts → identical hashes) or `embed --incremental` breaks. Embedding is the only step allowed to touch the network, and only when the user opts in (`ollama` default = local; `openai` = remote).
+- **Homebrew cask `depends_on macos:` must be the `">= :catalina"` form.** The bare-symbol form (`depends_on macos: :catalina`) was disabled by Homebrew in 2026; with it the cask fails to load, so `brew upgrade`/`brew outdated` silently treat the old install as current and users stay on stale builds. `Casks/jdf.rb` in this repo is canonical and is mirrored to the tap by `release.sh`.
+- **Media coverage is a first-class check.** `mediaCoverage()` in `chunk.ts` defines "has text": image = caption or OCR (alt alone doesn't count), video = transcript. `jdf chunk` warns, `jdf rag` reports/fills/`--strict`-fails. Any new media element type must be added there or it becomes a silent RAG blind spot.
 - **Video transcripts are text, not assets.** `video.transcript` lives in document.json; `shouldUseJdfx` must keep ignoring it. `jdf chunk` emits transcript windows via `transcriptChunks()` with `media`; jdf.js and the reader render the same WebVTT track from it; Rust `extract_text` indexes it. `jdf rag` config is `jdf.rag.json` (JSON, not YAML — no new parser dep).
 - **Binary assets bind by MIME.** `.jdfx` unpackers (reader `jdfx.ts` + `App.tsx`, jdf.js `jdfx.ts`) put `video/*` assets into `resources.videos` and everything else into `resources.images`; packers (reader + CLI `jdfx.ts`) drain both buckets and both `image`/`video` elements with `data:` src. Renderers look `resource` ids up in both buckets. Add a new media type the same way — don't invent a third store.
 - **Table/cell rendering must tolerate malformed shapes.** jdf.js `renderTable` and the reader's `TableElement` both defend against non-array `rows`, non-array rows, and null/non-object cells (`cellText`/`cellAttrs`/`cellAlign`/`cellCss` all null-guard). The web embed used to throw on `null.content` and abort the whole page render while the reader's `<For>` tolerated it — a silent one-surface divergence. Keep both lenient and identical.

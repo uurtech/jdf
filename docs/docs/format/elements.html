@@ -75,6 +75,9 @@
           <tr><td><code>resource</code></td><td>string — id of an asset. In a <code>.jdfx</code> bundle this points to <code>assets/&lt;id&gt;.&lt;ext&gt;</code>. In a plain <code>.jdf</code> it keys into <code>resources.images</code>.</td></tr>
           <tr><td><code>src</code></td><td>string — <code>https://</code> URL or <code>data:</code> URI. Relative file paths are not portable and will not render — Markdown imports rewrite them to one of the other forms automatically.</td></tr>
           <tr><td><code>alt</code></td><td>string</td></tr>
+          <tr><td><code>id</code></td><td>string — stable id; <code>jdf describe --element</code> and chunk media references use it.</td></tr>
+          <tr><td><code>caption</code> · <code>captionSource</code></td><td>string — what the image shows, from a vision model or a human (<code>jdf describe</code>). Indexed by <code>jdf chunk</code> and reader search.</td></tr>
+          <tr><td><code>ocr</code></td><td><code>{ language?, source?, created?, blocks: [{ text, bbox?, confidence? }] }</code> — text recognised in the image; <code>bbox</code> in fractions of the image. Text in <code>document.json</code>, not an asset. Without <code>caption</code>/<code>ocr</code> the image is a blind spot for RAG — <code>jdf rag</code> reports it.</td></tr>
           <tr><td><code>fit</code></td><td><code>"contain"</code> · <code>"cover"</code> · <code>"fill"</code> · <code>"none"</code></td></tr>
           <tr><td><code>link</code></td><td>same as text</td></tr>
         </tbody>

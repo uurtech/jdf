@@ -1,0 +1,32 @@
+{
+  "$jdf": "1.0.0",
+  "meta": {
+    "title": "Elements gallery — every JDF element type on one page",
+    "author": "JDF maintainers",
+    "pageSize": "A4",
+    "unit": "mm",
+    "margins": { "top": 12, "right": 14, "bottom": 12, "left": 14 }
+  },
+  "pages": [
+    {
+      "id": "page-1",
+      "elements": [
+        { "type": "text", "id": "h1", "content": "Elements gallery", "heading": 1, "position": { "x": 0, "y": 0 }, "width": 182, "style": { "fontSize": 20, "fontWeight": "bold" } },
+        { "type": "text", "content": "One fixture that uses every element type in the schema. scripts/parity-check.mjs renders it in jdf.js and the desktop reader and validates it with the CLI — if any surface drops or mislabels an element, the release is blocked.", "position": { "x": 0, "y": 10 }, "width": 182, "style": { "fontSize": 10, "color": "#334155" } },
+        { "type": "toc", "depth": 2, "position": { "x": 0, "y": 24 }, "width": 182, "style": { "fontSize": 9, "color": "#334155" } },
+        { "type": "richtext", "runs": [ { "text": "Rich text with " }, { "text": "bold", "bold": true }, { "text": ", " }, { "text": "italic", "italic": true }, { "text": " and a " }, { "text": "link", "link": "https://uurtech.github.io/jdf/" }, { "text": "." } ], "position": { "x": 0, "y": 34 }, "width": 182, "style": { "fontSize": 10 } },
+        { "type": "list", "listType": "unordered", "items": [ { "content": "First item" }, { "content": "Second item", "items": [ { "content": "Nested item" } ] } ], "position": { "x": 0, "y": 42 }, "width": 90, "style": { "fontSize": 10 } },
+        { "type": "table", "headers": [ "Region", "Revenue", "Churn" ], "rows": [ [ "EMEA", "1,204", "2.1%" ], [ "APAC", "980", "3.4%" ] ], "columns": [ { "width": 40 }, { "width": 30, "align": "right" }, { "width": 20, "align": "right" } ], "borders": true, "position": { "x": 92, "y": 42 }, "width": 90, "style": { "fontSize": 9 } },
+        { "type": "shape", "shape": "rect", "position": { "x": 0, "y": 62 }, "width": 40, "height": 12, "fill": "#dbeafe", "stroke": "#2563eb", "strokeWidth": 0.5 },
+        { "type": "image", "id": "img-1", "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "alt": "One blue pixel", "caption": "A 1×1 PNG carried inline — the smallest possible image element.", "captionSource": "author", "fit": "contain", "position": { "x": 44, "y": 62 }, "width": 40, "height": 12 },
+        { "type": "video", "id": "vid-1", "src": "https://uurtech.github.io/jdf/demos/rag-benchmark.mp4", "title": "Benchmark trailer", "controls": true, "fit": "contain", "position": { "x": 88, "y": 62 }, "width": 94, "height": 53, "transcript": { "language": "en", "source": "manual", "segments": [ { "t0": 0, "t1": 3, "text": "PDF versus JDF, same pipeline." } ] } },
+        { "type": "collapsible", "title": "Collapsible section", "expanded": true, "position": { "x": 0, "y": 78 }, "width": 84, "elements": [ { "type": "text", "content": "Text nested inside a collapsible.", "position": { "x": 0, "y": 0 }, "width": 80, "style": { "fontSize": 9 } } ] },
+        { "type": "input", "name": "full_name", "label": "Full name", "inputType": "text", "value": "Ada Lovelace", "position": { "x": 0, "y": 120 }, "width": 88, "height": 14 },
+        { "type": "select", "name": "country", "label": "Country", "options": [ { "value": "tr", "label": "Turkey" }, { "value": "us", "label": "United States" } ], "value": "tr", "position": { "x": 94, "y": 120 }, "width": 88, "height": 14 },
+        { "type": "textarea", "name": "notes", "label": "Notes", "rows": 3, "value": "", "placeholder": "Anything else?", "position": { "x": 0, "y": 138 }, "width": 182, "height": 24 },
+        { "type": "checkbox", "name": "agree", "label": "I agree to the terms", "checked": true, "position": { "x": 0, "y": 166 }, "width": 88, "height": 8 },
+        { "type": "signature", "name": "signature", "label": "Sign here", "value": "", "position": { "x": 0, "y": 178 }, "width": 88, "height": 30 }
+      ]
+    }
+  ]
+}

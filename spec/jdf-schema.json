@@ -343,7 +343,17 @@
       "anyOf": [{ "required": ["resource"] }, { "required": ["src"] }],
       "properties": {
         "type": { "const": "image" },
+        "id": { "type": "string" },
         "resource": { "type": "string" }, "src": { "type": "string" }, "alt": { "type": "string" },
+        "caption": { "type": "string" }, "captionSource": { "type": "string" },
+        "ocr": {
+          "type": "object",
+          "required": ["blocks"],
+          "properties": {
+            "language": { "type": "string" }, "source": { "type": "string" }, "created": { "type": "string" },
+            "blocks": { "type": "array", "items": { "type": "object", "required": ["text"], "properties": { "text": { "type": "string" }, "confidence": { "type": "number" }, "bbox": { "type": "object", "properties": { "x": { "type": "number" }, "y": { "type": "number" }, "w": { "type": "number" }, "h": { "type": "number" } } } } } }
+          }
+        },
         "position": { "$ref": "#/definitions/Position" },
         "width": { "type": "number" }, "height": { "type": "number" },
         "fit": { "type": "string", "enum": ["contain","cover","fill","none"] },

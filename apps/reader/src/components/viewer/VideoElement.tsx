@@ -81,7 +81,6 @@ export function VideoElementView(props: VideoElementViewProps) {
         class={`${fitClass()} block bg-black`}
         style={{ ...css(), width: "100%", height: "100%" }}
         data-jdf-video={props.element.id || undefined}
-        crossorigin="anonymous"
       >
         <Show when={vtt()}>
           <track kind="captions" src={vtt()} srclang={props.element.transcript?.language || "en"} label="Transcript" default />

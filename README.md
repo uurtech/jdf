@@ -573,7 +573,8 @@ jdf validate doc.jdf
 | `jdf chunk <file>` | Split a JDF document into retrieval-ready chunks. Offline, deterministic. |
 | `jdf embed <file>` | Compute embeddings for the chunks. Local (Ollama) by default; incremental. |
 | `jdf transcribe <file>` | Attach a time-stamped transcript to a `video` element — import SRT/VTT/JSON, or run Whisper (local `whisper-cli` or OpenAI). Stored as text in the document; `jdf chunk` turns it into time-windowed chunks with `media: {element, t0, t1}`. |
-| `jdf rag <dir>` | Whole folder → retrieval-ready: finds `.jdf`/`.jdfx`, transcribes videos (if a provider is given), chunks, embeds incrementally, writes `.jdf-rag/index.jsonl` + `manifest.json`. Reads `jdf.rag.json` in the folder for defaults. |
+| `jdf describe <file>` | Give every image text RAG can use: OCR blocks (tesseract.js, local) + a caption (local Ollama vision model, or OpenAI). `jdf convert --ocr tesseract` does the same for scanned PDF pages. |
+| `jdf rag <dir>` | Whole folder → retrieval-ready: finds `.jdf`/`.jdfx`, transcribes videos and OCRs/captions images that lack text (when providers are given), chunks, embeds incrementally, writes `.jdf-rag/index.jsonl` + `manifest.json` with a media-coverage report; `--strict` fails if any image/video is still without text. Reads `jdf.rag.json` in the folder for defaults. |
 
 ### Why this CLI exists
 
@@ -603,6 +604,9 @@ jdf validate doc.jdf
 | `--prompt <text>` | transcribe / rag | Whisper vocabulary hint (names, acronyms) — a spelling bias, not an instruction. |
 | `--chapters <file>` | transcribe | `[{t,title}]` JSON or `mm:ss Title` lines → chapter breadcrumbs. |
 | `--transcribe none\|whisper-cli\|openai` | rag | Transcribe videos that have no transcript yet (default `none` = count and report). |
+| `--ocr tesseract\|openai\|none` | describe / rag / convert | OCR images (or scanned PDF pages) that have no text yet. |
+| `--caption ollama\|openai\|none` · `--caption-model` | describe / rag | Vision caption for images without text (default local `qwen2.5vl:3b`). |
+| `--strict` | rag | Exit 1 when any image/video still has no text after the run. |
 | `--no-embed` · `--dry-run` · `--out <dir>` | rag | Chunk-only; preview; index folder (default `<dir>/.jdf-rag`). |
 
 ### RAG ingestion, incrementally

@@ -8,6 +8,7 @@
     "build": "pnpm --filter @jdf/reader build",
     "tauri": "pnpm --filter @jdf/reader tauri",
     "typecheck": "pnpm -r typecheck",
+    "parity": "node scripts/parity-check.mjs",
     "bench:render": "pnpm --filter @jdf/bench render"
   }
 }

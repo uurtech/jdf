@@ -169,8 +169,16 @@ export function serializeElement(el: Element): string {
     }
     case "checkbox":
       return `${e.checked ? "[x]" : "[ ]"} ${e.label ?? ""}`.trim();
-    case "image":
-      return e.alt ? `[image: ${e.alt}]` : "";
+    case "image": {
+      // Everything we know about the picture, so a chart or a scanned page is
+      // retrievable: alt, the vision caption, then the OCR text.
+      const parts: string[] = [];
+      if (e.alt) parts.push(`[image: ${e.alt}]`);
+      if (e.caption) parts.push(String(e.caption).trim());
+      const ocr = (e.ocr?.blocks || []).map((b: any) => String(b.text ?? "").trim()).filter(Boolean).join("\n");
+      if (ocr) parts.push(ocr);
+      return parts.join("\n");
+    }
     case "video":
       return e.title ? `[video: ${e.title}]` : "";
     case "toc":
@@ -336,6 +344,40 @@ async function loadJdf(filePath: string): Promise<JdfDocument> {
   return JSON.parse(fs.readFileSync(filePath, "utf-8"));
 }
 
+/**
+ * Media coverage: which images/videos carry text RAG can index. An image counts
+ * as covered when it has a caption or OCR text (alt alone is usually a filename);
+ * a video when it has a transcript. `jdf chunk` warns, `jdf rag` fills or fails.
+ */
+export interface MediaCoverage {
+  images: { total: number; covered: number; missing: { id?: string; page: number; alt?: string }[] };
+  videos: { total: number; covered: number; missing: { id?: string; page: number; title?: string }[] };
+}
+export function mediaCoverage(doc: JdfDocument): MediaCoverage {
+  const cov: MediaCoverage = { images: { total: 0, covered: 0, missing: [] }, videos: { total: 0, covered: 0, missing: [] } };
+  const walk = (els: any[] | undefined, page: number) => {
+    for (const el of els ?? []) {
+      if (el?.type === "image") {
+        cov.images.total++;
+        const has = !!(el.caption && String(el.caption).trim()) || !!(el.ocr?.blocks?.some((b: any) => String(b.text ?? "").trim()));
+        if (has) cov.images.covered++; else cov.images.missing.push({ id: el.id, page, alt: el.alt });
+      } else if (el?.type === "video") {
+        cov.videos.total++;
+        if (el.transcript?.segments?.length) cov.videos.covered++; else cov.videos.missing.push({ id: el.id, page, title: el.title });
+      }
+      if (el?.elements) walk(el.elements, page);
+    }
+  };
+  doc.pages.forEach((p, i) => walk(p.elements as any[], i + 1));
+  return cov;
+}
+export function coverageSummary(cov: MediaCoverage): string | null {
+  const parts: string[] = [];
+  if (cov.images.missing.length) parts.push(`${cov.images.missing.length} of ${cov.images.total} image(s) have no caption/OCR text → jdf describe`);
+  if (cov.videos.missing.length) parts.push(`${cov.videos.missing.length} of ${cov.videos.total} video(s) have no transcript → jdf transcribe`);
+  return parts.length ? parts.join("; ") : null;
+}
+
 export interface ChunkCliOptions extends ChunkOptions {
   format?: ChunkFormat;
   output?: string;
@@ -351,6 +393,8 @@ export async function chunkFile(inputPath: string, opts: ChunkCliOptions = {}): 
   const doc = await loadJdf(input);
   const strategy = opts.strategy ?? "section";
   const chunks = chunkDocument(doc, { strategy, maxTokens: opts.maxTokens, transcriptWindowSec: opts.transcriptWindowSec });
+  const gap = coverageSummary(mediaCoverage(doc));
+  if (gap) console.warn(`  ! media without text (skipped by retrieval): ${gap}`);
 
   const format = opts.format ?? "jsonl";
   console.log(`Chunking:  ${input}`);

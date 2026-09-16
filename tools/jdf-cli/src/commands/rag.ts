@@ -4,6 +4,8 @@ import type { ChunkStrategy } from "./chunk";
 import { chunkFile } from "./chunk";
 import { embedFile, type EmbeddingProvider } from "./embed";
 import { transcribeFile } from "./transcribe";
+import { describeFile, type OcrProvider, type CaptionProvider } from "./describe";
+import { mediaCoverage } from "./chunk";
 import JSZip from "jszip";
 import { JDFX_DOCUMENT_PATH } from "@jdf/core";
 
@@ -34,6 +36,13 @@ export interface RagOptions {
   transcribeModel?: string;
   language?: string;
   prompt?: string;
+  /** Image OCR for images without text: "none" (default) | "tesseract" | "openai". */
+  ocr?: OcrProvider;
+  /** Image captions for images without text: "none" (default) | "ollama" | "openai". */
+  caption?: CaptionProvider;
+  captionModel?: string;
+  /** Exit 1 when any image/video is still without text after the run. */
+  strict?: boolean;
   /** Skip embedding (chunk + index only). */
   noEmbed?: boolean;
   dryRun?: boolean;
@@ -78,11 +87,16 @@ export async function ragFolder(dirPath: string, cli: RagOptions = {}): Promise<
   const transcribe = opts.transcribe ?? "none";
   const outDir = path.resolve(opts.out ?? path.join(dir, OUT_DIR));
 
+  const ocr = opts.ocr ?? "none";
+  const caption = opts.caption ?? "none";
   const files = walk(dir);
-  console.log(`jdf rag: ${dir}\n  files:      ${files.length} (.jdf/.jdfx)${fs.existsSync(cfgPath) ? `\n  config:     ${CONFIG_NAME}` : ""}\n  embeddings: ${opts.noEmbed ? "skipped (--no-embed)" : `${provider}${opts.model ? " / " + opts.model : ""}`}\n  transcribe: ${transcribe}${opts.dryRun ? "\n  DRY RUN — nothing written" : ""}\n`);
+  console.log(`jdf rag: ${dir}\n  files:      ${files.length} (.jdf/.jdfx)${fs.existsSync(cfgPath) ? `\n  config:     ${CONFIG_NAME}` : ""}\n  embeddings: ${opts.noEmbed ? "skipped (--no-embed)" : `${provider}${opts.model ? " / " + opts.model : ""}`}\n  transcribe: ${transcribe}   ocr: ${ocr}   caption: ${caption}${opts.dryRun ? "\n  DRY RUN — nothing written" : ""}\n`);
   if (!files.length) { console.log("Nothing to do."); return; }
 
-  const manifest: any = { dir, created: new Date().toISOString(), provider: opts.noEmbed ? null : provider, model: opts.model ?? null, strategy: opts.strategy ?? "section", transcribe, files: [] as any[], totals: { files: files.length, chunks: 0, videoChunks: 0, videos: 0, transcribed: 0, untranscribed: 0 } };
+  const manifest: any = { dir, created: new Date().toISOString(), provider: opts.noEmbed ? null : provider, model: opts.model ?? null, strategy: opts.strategy ?? "section", transcribe, ocr, caption, files: [] as any[],
+    totals: { files: files.length, chunks: 0, videoChunks: 0, videos: 0, transcribed: 0, untranscribed: 0, images: 0, described: 0, imagesWithoutText: 0 },
+    /** Every media element that retrieval would still skip, by file — the thing to fix before shipping an index. */
+    mediaWithoutText: [] as any[] };
   const indexLines: string[] = [];
 
   for (const file of files) {
@@ -104,6 +118,23 @@ export async function ragFolder(dirPath: string, cli: RagOptions = {}): Promise<
     }
     manifest.totals.videos += vids.length;
     manifest.totals.transcribed += transcribedHere;
+
+    // Images: OCR + caption for the ones that have no text yet (only when a provider is on).
+    const covBefore = mediaCoverage(doc);
+    let describedHere = 0;
+    if (covBefore.images.missing.length && (ocr !== "none" || caption !== "none") && !opts.dryRun) {
+      try {
+        await describeFile(file, { ocr, caption, captionModel: opts.captionModel, quiet: true });
+        describedHere = covBefore.images.missing.length;
+      } catch (e: any) { console.warn(`  ! ${rel}: describe failed: ${e.message}`); }
+    }
+    // Re-read so coverage reflects what transcribe/describe just wrote.
+    const covAfter = (transcribedHere || describedHere) ? mediaCoverage(await readDoc(file)) : covBefore;
+    manifest.totals.images += covAfter.images.total;
+    manifest.totals.described += describedHere;
+    manifest.totals.imagesWithoutText += covAfter.images.missing.length;
+    for (const m of covAfter.images.missing) manifest.mediaWithoutText.push({ file: rel, type: "image", ...m });
+    for (const m of covAfter.videos.missing) manifest.mediaWithoutText.push({ file: rel, type: "video", ...m });
 
     if (opts.dryRun) { manifest.files.push({ file: rel, videos: vids.length, wouldTranscribe: transcribedHere }); continue; }
 
@@ -132,6 +163,14 @@ export async function ragFolder(dirPath: string, cli: RagOptions = {}): Promise<
     fs.writeFileSync(path.join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
   }
   const t = manifest.totals;
-  console.log(`\nDone. ${t.files} files → ${t.chunks} chunks (${t.videoChunks} from video transcripts); videos ${t.videos}, transcribed now ${t.transcribed}, still without transcript ${t.untranscribed}${t.untranscribed && transcribe === "none" ? " (pass --transcribe whisper-cli|openai, or jdf transcribe --from subs.srt)" : ""}.`);
+  console.log(`\nDone. ${t.files} files → ${t.chunks} chunks (${t.videoChunks} from video transcripts).`);
+  console.log(`Media coverage: videos ${t.videos - t.untranscribed}/${t.videos} with transcript (transcribed now ${t.transcribed}), images ${t.images - t.imagesWithoutText}/${t.images} with caption/OCR (described now ${t.described}).`);
+  if (manifest.mediaWithoutText.length) {
+    console.log(`\n! ${manifest.mediaWithoutText.length} media element(s) still have NO text — retrieval will skip them:`);
+    for (const m of manifest.mediaWithoutText.slice(0, 12)) console.log(`    ${m.file} · ${m.type} ${m.id ?? ""} (page ${m.page})${m.title ? ` "${m.title}"` : m.alt ? ` alt="${m.alt}"` : ""}`);
+    if (manifest.mediaWithoutText.length > 12) console.log(`    … ${manifest.mediaWithoutText.length - 12} more in manifest.json`);
+    console.log(`  fix: jdf rag <dir> --transcribe whisper-cli|openai --ocr tesseract --caption ollama   (or jdf transcribe / jdf describe per file)`);
+    if (opts.strict) { console.error(`--strict: failing because media without text remains.`); process.exitCode = 1; }
+  }
   if (!opts.dryRun) console.log(`Index:  ${path.join(outDir, "index.jsonl")}\nReport: ${path.join(outDir, "manifest.json")}${opts.noEmbed ? "" : `\nVectors: one <file>.embeddings.json next to each document (incremental — re-run any time)`}`);
 }

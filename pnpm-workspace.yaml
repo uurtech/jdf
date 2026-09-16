@@ -7,5 +7,6 @@ packages:
   - "bench"
 allowBuilds:
   esbuild: true
+  tesseract.js: false
 onlyBuiltDependencies:
   - esbuild

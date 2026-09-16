@@ -360,3 +360,6 @@ select.jdfjs-form-control {
 .jdfjs-dark .jdfjs-form-control:disabled {
   background: #1f2937;
 }
+
+/* Unknown element type — same visible fallback as the desktop reader, never a silent drop. */
+.jdfjs-unknown { font-size: 10px; color: #9ca3af; font-family: ui-monospace, Menlo, monospace; }

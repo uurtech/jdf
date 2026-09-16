@@ -41,6 +41,17 @@ if [[ -n "$BUMP" && ! "$BUMP" =~ ^(patch|minor|major)$ ]]; then
 fi
 
 echo "═══════════════════════════════════════════════════════════"
+echo "Step 0/4: Three-surface parity gate (CLI · jdf.js · reader)"
+echo "═══════════════════════════════════════════════════════════"
+# Every element type in the schema must be handled by every surface and every
+# fixture must render identically in jdf.js and the reader. Red here = no release.
+pnpm typecheck
+pnpm --filter @uurtech/jdf build
+pnpm --filter @jdf/reader build
+node scripts/parity-check.mjs
+
+echo ""
+echo "═══════════════════════════════════════════════════════════"
 echo "Step 1/4: Desktop bundle + GitHub release + Homebrew Cask"
 echo "═══════════════════════════════════════════════════════════"
 bash scripts/publish-dmg.sh "$BUMP"

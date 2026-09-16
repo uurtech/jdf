@@ -52,7 +52,8 @@
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "jszip": "^3.10.1",
-    "pdfjs-dist": "^4.10.38"
+    "pdfjs-dist": "^4.10.38",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@jdf/core": "workspace:*",

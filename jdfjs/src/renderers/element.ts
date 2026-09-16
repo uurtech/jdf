@@ -47,8 +47,15 @@ export function renderElement(el: Element, ctx: RenderContext): HTMLElement | nu
     case "checkbox": inner = renderFormCheckbox(el, ctx); break;
     case "select": inner = renderFormSelect(el, ctx); break;
     case "signature": inner = renderFormSignature(el, ctx); break;
+    default: {
+      // Same visible fallback as the desktop reader — an element must never vanish silently.
+      inner = document.createElement("div");
+      inner.className = "jdfjs-unknown";
+      inner.textContent = `[unknown: ${(el as any).type}]`;
+    }
   }
   if (!inner) return null;
+  wrap.dataset.jdfType = String((el as any).type);
   wrap.appendChild(inner);
   return wrap;
 }
@@ -234,7 +241,9 @@ function renderImage(el: ImageElement, ctx: RenderContext): HTMLElement {
   wrap.style.height = "100%";
   const img = document.createElement("img");
   img.src = imageSrc(el, ctx.resources);
-  img.alt = el.alt || "";
+  // A caption written by `jdf describe` doubles as accessible text and hover title, so the text RAG indexes is the text the reader sees.
+  img.alt = el.alt || el.caption || "";
+  if (el.caption) img.title = el.caption;
   img.style.display = "block";
   img.style.width = "100%";
   img.style.height = "100%";

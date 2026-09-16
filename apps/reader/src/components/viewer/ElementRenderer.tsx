@@ -46,6 +46,7 @@ export function ElementRenderer(props: ElementRendererProps) {
       onMouseEnter={() => edit.enabled() && setHover(true)}
       onMouseLeave={() => setHover(false)}
       data-element-path={JSON.stringify(props.path)}
+      data-jdf-type={(props.element as any).type}
     >
       <Switch fallback={<div class="text-xs text-gray-400">[unknown: {(props.element as any).type}]</div>}>
         <Match when={props.element.type === "text"}>
