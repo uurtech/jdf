@@ -14,7 +14,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · semantic-ish
 ### Fixed
 - Reader search (`extract_text`) indexes form labels, values and placeholders — a filled form is findable by what was typed.
 - Reader `<video>` no longer requests CORS (`crossorigin="anonymous"`); a hosted mp4 without `Access-Control-Allow-Origin` played in jdf.js but stayed blank on desktop.
-- Homebrew cask: `depends_on macos: ">= :catalina"` — the bare-symbol form is disabled by current Homebrew, which made `brew upgrade --cask jdf` report the old install as up to date.
+- Homebrew cask: dropped `depends_on macos: :catalina` — current Homebrew rejects it (and rewrites the `">= :catalina"` string form to the same rejected call), so the cask failed to load and `brew upgrade --cask jdf` reported the old install as up to date.
 
 ### Added — images are no longer blind spots for RAG
 - `image.ocr` (`{language, source, created, blocks:[{text, bbox, confidence}]}`), `image.caption` / `captionSource`, `image.id` in types and schema — text in `document.json`, the picture stays an asset.

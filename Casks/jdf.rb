@@ -8,7 +8,6 @@ cask "jdf" do
   homepage "https://github.com/uurtech/jdf"
 
   depends_on arch: :arm64
-  depends_on macos: ">= :catalina"
 
   app "JDF Reader.app"
 
