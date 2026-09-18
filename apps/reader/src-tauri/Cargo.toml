@@ -1,6 +1,6 @@
 [package]
 name = "jdf-reader"
-version = "0.2.2"
+version = "0.2.3"
 description = "JDF (JSON Document Format) Reader"
 edition = "2021"
 
