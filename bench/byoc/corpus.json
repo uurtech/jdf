@@ -1,0 +1,9 @@
+{
+  "_comment": "Public PDFs for bench/byoc.py. Downloaded at run time into bench/byoc/cache/ (gitignored) — nothing here is redistributed. Add your own entries or point --pdf at a folder.",
+  "documents": [
+    { "id": "bert", "title": "BERT: Pre-training of Deep Bidirectional Transformers (arXiv 1810.04805)", "url": "https://arxiv.org/pdf/1810.04805", "layout": "two-column (ACL), 16 pages, tables" },
+    { "id": "attention", "title": "Attention Is All You Need (arXiv 1706.03762)", "url": "https://arxiv.org/pdf/1706.03762", "layout": "single-column (NeurIPS), 15 pages, tables" },
+    { "id": "aws-overview", "title": "Overview of Amazon Web Services (AWS whitepaper)", "url": "https://docs.aws.amazon.com/pdfs/whitepapers/latest/aws-overview/aws-overview.pdf", "layout": "single-column, 162 pages, headings + lists" },
+    { "id": "aws-serverless-lens", "title": "Serverless Applications Lens — AWS Well-Architected Framework", "url": "https://docs.aws.amazon.com/pdfs/wellarchitected/latest/serverless-applications-lens/wellarchitected-serverless-applications-lens.pdf", "layout": "single-column, 104 pages, headings + lists" }
+  ]
+}

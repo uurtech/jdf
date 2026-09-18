@@ -161,7 +161,11 @@ function columnBands(rows: Row[]): { x0: number; x1: number }[] | null {
 
 const numeric = (s: string) => /^[\s$€£¥+\-−–]*[\d.,]+\s*(%|ms|s|k|m|b|M|K|B|x|×)?\s*(\/\w+)?$/i.test(s.trim()) || /^[+\-−]?\d/.test(s.trim()) && /\d$/.test(s.trim().replace(/[%)]$/, ""));
 
-export function detectTables(runs: TRun[], shapes: TShape[], pageWidthMm: number): DetectedTable[] {
+/** Column gutters of a multi-column page (see columns.ts); a candidate whose
+ *  bands sit on both sides of a gutter with prose-wide cells is column text. */
+export interface GutterHint { x0: number; x1: number; }
+
+export function detectTables(runs: TRun[], shapes: TShape[], pageWidthMm: number, gutters: GutterHint[] = []): DetectedTable[] {
   const out: DetectedTable[] = [];
   const used = new Set<number>();
   const rows = groupRows(runs, () => false);
@@ -209,6 +213,15 @@ export function detectTables(runs: TRun[], shapes: TShape[], pageWidthMm: number
     const hasLattice = gridShapes.length >= 3;
 
     if (!best || multiRows < (hasLattice ? 2 : 3) || best.bands.length < 2) { i++; continue; }
+    // Two columns of justified prose form perfectly consistent x-bands. If a
+    // gutter runs between two adjacent bands and both bands are wide enough to
+    // hold a sentence (> 30 mm), this is column text, not a table. Genuine
+    // full-width tables have narrow cells on at least one side.
+    if (gutters.length && !hasLattice) {
+      const b = best.bands;
+      const straddles = b.some((band, k) => k < b.length - 1 && gutters.some((g) => band.x1 <= g.x1 + 1 && b[k + 1].x0 >= g.x0 - 1) && (band.x1 - band.x0) > 30 && (b[k + 1].x1 - b[k + 1].x0) > 30);
+      if (straddles) { i++; continue; }
+    }
 
     // ── build the element ──────────────────────────────────────────────────
     const bands = best.bands;

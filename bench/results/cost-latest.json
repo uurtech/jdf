@@ -1,5 +1,5 @@
 {
-  "date": "2026-09-13",
+  "date": "2026-09-18",
   "machine": {
     "cpu": "Apple M5",
     "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
@@ -19,8 +19,8 @@
     "version": "sentence-transformers 6.0.1",
     "measuredOn": "first 2000 unique chunks per pipeline",
     "tokensPerSecond": {
-      "jdf": 29793.324811681367,
-      "pypdf": 42936.99088500124
+      "jdf": 32222.466201683284,
+      "pypdf": 41423.207023653864
     }
   },
   "prices": {
@@ -76,7 +76,7 @@
     {
       "id": "jdf",
       "label": "JDF \u00b7 jdf chunk (section)",
-      "version": "0.1.26",
+      "version": "0.2.2",
       "files": 1000,
       "perDoc": {
         "d01": {
@@ -215,7 +215,7 @@
         "openai-text-embedding-3-large": 0.1697566,
         "cohere-embed-v4": 0.1566984
       },
-      "localEmbedSeconds": 43.829280828973275,
+      "localEmbedSeconds": 40.525141428553496,
       "reindex": {
         "chunksPerEditedDoc": 1,
         "tokensPerEditedDoc": 91,
@@ -380,7 +380,7 @@
         "openai-text-embedding-3-large": 0.18078398,
         "cohere-embed-v4": 0.16687752
       },
-      "localEmbedSeconds": 32.38806379619352,
+      "localEmbedSeconds": 33.57166428967946,
       "reindex": {
         "chunksPerEditedDoc": 7,
         "tokensPerEditedDoc": 1461,

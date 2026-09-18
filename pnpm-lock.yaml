@@ -224,6 +224,9 @@ importers:
       pdfjs-dist:
         specifier: ^4.10.38
         version: 4.10.38
+      playwright:
+        specifier: ^1.63.0
+        version: 1.63.0
       tsx:
         specifier: ^4.19.2
         version: 4.22.4

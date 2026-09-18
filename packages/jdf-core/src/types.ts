@@ -17,6 +17,8 @@ export interface Style {
   fontFamily?: string; fontSize?: number; fontWeight?: FontWeight; fontStyle?: "normal" | "italic";
   textDecoration?: "none" | "underline" | "strikethrough" | "underline strikethrough" | "line-through";
   color?: string; backgroundColor?: string; textAlign?: TextAlign; lineHeight?: number;
+  /** First-line indent in the document unit (mm by default) — written by the PDF importer for indented paragraphs. */
+  textIndent?: number;
   letterSpacing?: number | string; padding?: number | string | Margins;
   margin?: number | string | Margins; marginTop?: number; marginBottom?: number;
   border?: string; borderRadius?: number | string; opacity?: number;

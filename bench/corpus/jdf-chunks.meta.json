@@ -1,6 +1,6 @@
 {
   "tool": "jdf chunk",
-  "cli_version": "0.1.26",
+  "cli_version": "0.2.2",
   "strategy": "section",
   "max_tokens": 512,
   "chunks": 192,

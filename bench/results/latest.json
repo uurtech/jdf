@@ -1,5 +1,5 @@
 {
-  "date": "2026-09-13",
+  "date": "2026-09-18",
   "machine": {
     "cpu": "Apple M5",
     "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
@@ -10,25 +10,25 @@
       "provider": "ollama",
       "model": "nomic-embed-text",
       "version": "Ollama 0.32.6",
-      "embedCalls": 192
+      "embedCalls": 195
     },
     {
       "provider": "st",
       "model": "BAAI/bge-small-en-v1.5",
       "version": "sentence-transformers 6.0.1",
-      "embedCalls": 192
+      "embedCalls": 195
     },
     {
       "provider": "st",
       "model": "sentence-transformers/all-MiniLM-L6-v2",
       "version": "sentence-transformers 6.0.1",
-      "embedCalls": 192
+      "embedCalls": 195
     },
     {
       "provider": "st",
       "model": "BAAI/bge-base-en-v1.5",
       "version": "sentence-transformers 6.0.1",
-      "embedCalls": 192
+      "embedCalls": 195
     }
   ],
   "headline": "dense:nomic-embed-text",
@@ -74,7 +74,7 @@
       "label": "JDF \u00b7 jdf chunk (section, 512 tok)",
       "format": "jdf",
       "tool": "jdf chunk",
-      "version": "0.1.26",
+      "version": "0.2.2",
       "chunks": 192,
       "avgChunkTokens": 163,
       "retrievers": {
@@ -2601,9 +2601,9 @@
       "label": "PDF \u2192 jdf convert \u2192 jdf chunk (section, 512 tok)",
       "format": "jdf-converted",
       "tool": "jdf convert + chunk",
-      "version": "0.1.26",
+      "version": "0.2.2",
       "chunks": 216,
-      "avgChunkTokens": 159,
+      "avgChunkTokens": 158,
       "retrievers": {
         "bm25": {
           "all": {
@@ -2612,7 +2612,7 @@
             "recall3": 0.9947916666666666,
             "recall5": 0.9947916666666666,
             "mrr10": 0.9253472222222222,
-            "ctxTokensTop5": 848.3802083333334,
+            "ctxTokensTop5": 844.8645833333334,
             "recallAt1000Tok": 1.0,
             "recallAt2000Tok": 1.0
           },
@@ -2622,7 +2622,7 @@
             "recall3": 0.9916666666666667,
             "recall5": 0.9916666666666667,
             "mrr10": 0.9222222222222223,
-            "ctxTokensTop5": 917.8,
+            "ctxTokensTop5": 915.1916666666667,
             "recallAt1000Tok": 1.0,
             "recallAt2000Tok": 1.0
           },
@@ -2632,7 +2632,7 @@
             "recall3": 1.0,
             "recall5": 1.0,
             "mrr10": 0.96875,
-            "ctxTokensTop5": 665.6041666666666,
+            "ctxTokensTop5": 661.2083333333334,
             "recallAt1000Tok": 1.0,
             "recallAt2000Tok": 1.0
           },
@@ -2642,7 +2642,7 @@
             "recall3": 1.0,
             "recall5": 1.0,
             "mrr10": 0.8541666666666666,
-            "ctxTokensTop5": 866.8333333333334,
+            "ctxTokensTop5": 860.5416666666666,
             "recallAt1000Tok": 1.0,
             "recallAt2000Tok": 1.0
           }
@@ -2654,7 +2654,7 @@
             "recall3": 0.9583333333333334,
             "recall5": 0.984375,
             "mrr10": 0.8839905753968255,
-            "ctxTokensTop5": 720.8020833333334,
+            "ctxTokensTop5": 717.5260416666666,
             "recallAt1000Tok": 0.9895833333333334,
             "recallAt2000Tok": 0.9947916666666666
           },
@@ -2664,7 +2664,7 @@
             "recall3": 0.9333333333333333,
             "recall5": 0.975,
             "mrr10": 0.8574404761904761,
-            "ctxTokensTop5": 735.8583333333333,
+            "ctxTokensTop5": 733.0666666666667,
             "recallAt1000Tok": 0.9833333333333333,
             "recallAt2000Tok": 0.9916666666666667
           },
@@ -2674,7 +2674,7 @@
             "recall3": 1.0,
             "recall5": 1.0,
             "mrr10": 0.9444444444444445,
-            "ctxTokensTop5": 659.7916666666666,
+            "ctxTokensTop5": 656.2916666666666,
             "recallAt1000Tok": 1.0,
             "recallAt2000Tok": 1.0
           },
@@ -2684,7 +2684,7 @@
             "recall3": 1.0,
             "recall5": 1.0,
             "mrr10": 0.8958333333333334,
-            "ctxTokensTop5": 767.5416666666666,
+            "ctxTokensTop5": 762.2916666666666,
             "recallAt1000Tok": 1.0,
             "recallAt2000Tok": 1.0
           }
@@ -2696,7 +2696,7 @@
             "recall3": 0.734375,
             "recall5": 0.9166666666666666,
             "mrr10": 0.6014818948412698,
-            "ctxTokensTop5": 522.9791666666666,
+            "ctxTokensTop5": 520.65625,
             "recallAt1000Tok": 0.9583333333333334,
             "recallAt2000Tok": 0.984375
           },
@@ -2706,7 +2706,7 @@
             "recall3": 0.7,
             "recall5": 0.9,
             "mrr10": 0.5726488095238095,
-            "ctxTokensTop5": 546.5583333333333,
+            "ctxTokensTop5": 544.6083333333333,
             "recallAt1000Tok": 0.9416666666666667,
             "recallAt2000Tok": 0.975
           },
@@ -2716,7 +2716,7 @@
             "recall3": 0.9791666666666666,
             "recall5": 1.0,
             "mrr10": 0.7899305555555555,
-            "ctxTokensTop5": 431.7916666666667,
+            "ctxTokensTop5": 429.4583333333333,
             "recallAt1000Tok": 1.0,
             "recallAt2000Tok": 1.0
           },
@@ -2726,7 +2726,7 @@
             "recall3": 0.4166666666666667,
             "recall5": 0.8333333333333334,
             "mrr10": 0.36874999999999997,
-            "ctxTokensTop5": 587.4583333333334,
+            "ctxTokensTop5": 583.2916666666666,
             "recallAt1000Tok": 0.9583333333333334,
             "recallAt2000Tok": 1.0
           }
@@ -2738,7 +2738,7 @@
             "recall3": 0.6770833333333334,
             "recall5": 0.78125,
             "mrr10": 0.536729083994709,
-            "ctxTokensTop5": 528.7552083333334,
+            "ctxTokensTop5": 526.1875,
             "recallAt1000Tok": 0.9635416666666666,
             "recallAt2000Tok": 1.0
           },
@@ -2748,7 +2748,7 @@
             "recall3": 0.55,
             "recall5": 0.6833333333333333,
             "mrr10": 0.448667328042328,
-            "ctxTokensTop5": 559.4666666666667,
+            "ctxTokensTop5": 557.0666666666667,
             "recallAt1000Tok": 0.9416666666666667,
             "recallAt2000Tok": 1.0
           },
@@ -2758,7 +2758,7 @@
             "recall3": 1.0,
             "recall5": 1.0,
             "mrr10": 0.7534722222222222,
-            "ctxTokensTop5": 436.375,
+            "ctxTokensTop5": 434.0,
             "recallAt1000Tok": 1.0,
             "recallAt2000Tok": 1.0
           },
@@ -2768,7 +2768,7 @@
             "recall3": 0.6666666666666666,
             "recall5": 0.8333333333333334,
             "mrr10": 0.5435515873015874,
-            "ctxTokensTop5": 559.9583333333334,
+            "ctxTokensTop5": 556.1666666666666,
             "recallAt1000Tok": 1.0,
             "recallAt2000Tok": 1.0
           }
@@ -2780,7 +2780,7 @@
             "recall3": 0.796875,
             "recall5": 0.9479166666666666,
             "mrr10": 0.6941096230158731,
-            "ctxTokensTop5": 552.0260416666666,
+            "ctxTokensTop5": 549.5104166666666,
             "recallAt1000Tok": 0.9947916666666666,
             "recallAt2000Tok": 0.9947916666666666
           },
@@ -2790,7 +2790,7 @@
             "recall3": 0.725,
             "recall5": 0.925,
             "mrr10": 0.6599404761904761,
-            "ctxTokensTop5": 576.275,
+            "ctxTokensTop5": 574.125,
             "recallAt1000Tok": 0.9916666666666667,
             "recallAt2000Tok": 0.9916666666666667
           },
@@ -2800,7 +2800,7 @@
             "recall3": 1.0,
             "recall5": 1.0,
             "mrr10": 0.8368055555555555,
-            "ctxTokensTop5": 448.625,
+            "ctxTokensTop5": 446.1875,
             "recallAt1000Tok": 1.0,
             "recallAt2000Tok": 1.0
           },
@@ -2810,7 +2810,7 @@
             "recall3": 0.75,
             "recall5": 0.9583333333333334,
             "mrr10": 0.5795634920634921,
-            "ctxTokensTop5": 637.5833333333334,
+            "ctxTokensTop5": 633.0833333333334,
             "recallAt1000Tok": 1.0,
             "recallAt2000Tok": 1.0
           }
@@ -2819,15 +2819,15 @@
       "perQuestion": {
         "q001": {
           "bm25": 1,
-          "top1:bm25": "d01-p1e2",
+          "top1:bm25": "d01-p1e1",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d01-p1e2",
+          "top1:dense:nomic-embed-text": "d01-p1e1",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d01-p1e2",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d01-p1e1",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d01-p1e2",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d01-p1e1",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d01-p1e2"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d01-p1e1"
         },
         "q002": {
           "bm25": 1,
@@ -2843,21 +2843,21 @@
         },
         "q003": {
           "bm25": 2,
-          "top1:bm25": "d01-p1e2",
+          "top1:bm25": "d01-p1e1",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d01-p5e26",
+          "top1:dense:nomic-embed-text": "d01-p5e24",
           "dense:BAAI/bge-small-en-v1.5": 3,
           "top1:dense:BAAI/bge-small-en-v1.5": "d01-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d01-p5e26",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d01-p5e24",
           "dense:BAAI/bge-base-en-v1.5": 2,
           "top1:dense:BAAI/bge-base-en-v1.5": "d01-p1e0"
         },
         "q004": {
           "bm25": 1,
-          "top1:bm25": "d01-p1e11",
+          "top1:bm25": "d01-p1e6",
           "dense:nomic-embed-text": 3,
-          "top1:dense:nomic-embed-text": "d01-p1e2",
+          "top1:dense:nomic-embed-text": "d01-p1e1",
           "dense:BAAI/bge-small-en-v1.5": 4,
           "top1:dense:BAAI/bge-small-en-v1.5": "d01-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 9,
@@ -2867,9 +2867,9 @@
         },
         "q005": {
           "bm25": 1,
-          "top1:bm25": "d01-p2e4",
+          "top1:bm25": "d01-p2e3",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d01-p2e4",
+          "top1:dense:nomic-embed-text": "d01-p2e3",
           "dense:BAAI/bge-small-en-v1.5": 3,
           "top1:dense:BAAI/bge-small-en-v1.5": "d01-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 8,
@@ -2891,9 +2891,9 @@
         },
         "q007": {
           "bm25": 1,
-          "top1:bm25": "d01-p3e25",
+          "top1:bm25": "d01-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d01-p3e25",
+          "top1:dense:nomic-embed-text": "d01-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 4,
           "top1:dense:BAAI/bge-small-en-v1.5": "d01-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 8,
@@ -2915,15 +2915,15 @@
         },
         "q009": {
           "bm25": 1,
-          "top1:bm25": "d02-p1e2",
+          "top1:bm25": "d02-p1e1",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d02-p1e2",
+          "top1:dense:nomic-embed-text": "d02-p1e1",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d02-p1e2",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d02-p1e1",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 3,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d02-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d02-p1e2"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d02-p1e1"
         },
         "q010": {
           "bm25": 1,
@@ -2939,21 +2939,21 @@
         },
         "q011": {
           "bm25": 1,
-          "top1:bm25": "d02-p5e26",
+          "top1:bm25": "d02-p5e24",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d02-p5e26",
+          "top1:dense:nomic-embed-text": "d02-p5e24",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d02-p5e26",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d02-p5e24",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d02-p5e26",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d02-p5e24",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d02-p5e26"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d02-p5e24"
         },
         "q012": {
           "bm25": 2,
-          "top1:bm25": "d02-p1e2",
+          "top1:bm25": "d02-p1e1",
           "dense:nomic-embed-text": 4,
-          "top1:dense:nomic-embed-text": "d02-p1e2",
+          "top1:dense:nomic-embed-text": "d02-p1e1",
           "dense:BAAI/bge-small-en-v1.5": 5,
           "top1:dense:BAAI/bge-small-en-v1.5": "d02-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 8,
@@ -2963,9 +2963,9 @@
         },
         "q013": {
           "bm25": 1,
-          "top1:bm25": "d02-p2e4",
+          "top1:bm25": "d02-p2e3",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d02-p2e4",
+          "top1:dense:nomic-embed-text": "d02-p2e3",
           "dense:BAAI/bge-small-en-v1.5": 4,
           "top1:dense:BAAI/bge-small-en-v1.5": "d02-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 6,
@@ -2987,15 +2987,15 @@
         },
         "q015": {
           "bm25": 1,
-          "top1:bm25": "d02-p3e25",
+          "top1:bm25": "d02-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d02-p3e25",
+          "top1:dense:nomic-embed-text": "d02-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d02-p3e25",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d02-p3e22",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 4,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d02-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d02-p3e25"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d02-p3e22"
         },
         "q016": {
           "bm25": 1,
@@ -3047,15 +3047,15 @@
         },
         "q020": {
           "bm25": 1,
-          "top1:bm25": "d03-p1e11",
+          "top1:bm25": "d03-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d03-p1e11",
+          "top1:dense:nomic-embed-text": "d03-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d03-p1e11",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d03-p1e6",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d03-p1e11",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d03-p1e6",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d03-p1e11"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d03-p1e6"
         },
         "q021": {
           "bm25": 1,
@@ -3071,7 +3071,7 @@
         },
         "q022": {
           "bm25": 2,
-          "top1:bm25": "d04-p2e6",
+          "top1:bm25": "d04-p2e5",
           "dense:nomic-embed-text": 1,
           "top1:dense:nomic-embed-text": "d03-p3e18",
           "dense:BAAI/bge-small-en-v1.5": 1,
@@ -3083,9 +3083,9 @@
         },
         "q023": {
           "bm25": 1,
-          "top1:bm25": "d03-p3e24",
+          "top1:bm25": "d03-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d03-p3e24",
+          "top1:dense:nomic-embed-text": "d03-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 4,
           "top1:dense:BAAI/bge-small-en-v1.5": "d03-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 3,
@@ -3095,7 +3095,7 @@
         },
         "q024": {
           "bm25": 1,
-          "top1:bm25": "d03-p4e19",
+          "top1:bm25": "d03-p4e13",
           "dense:nomic-embed-text": 2,
           "top1:dense:nomic-embed-text": "d03-p1e0",
           "dense:BAAI/bge-small-en-v1.5": 2,
@@ -3143,9 +3143,9 @@
         },
         "q028": {
           "bm25": 1,
-          "top1:bm25": "d04-p1e9",
+          "top1:bm25": "d04-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d04-p1e9",
+          "top1:dense:nomic-embed-text": "d04-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 3,
           "top1:dense:BAAI/bge-small-en-v1.5": "d04-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 7,
@@ -3167,15 +3167,15 @@
         },
         "q030": {
           "bm25": 1,
-          "top1:bm25": "d04-p2e6",
+          "top1:bm25": "d04-p2e5",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d04-p2e6",
+          "top1:dense:nomic-embed-text": "d04-p2e5",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d04-p2e6",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d04-p2e5",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d04-p2e6",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d04-p2e5",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d04-p2e6"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d04-p2e5"
         },
         "q031": {
           "bm25": 1,
@@ -3191,15 +3191,15 @@
         },
         "q032": {
           "bm25": 1,
-          "top1:bm25": "d04-p4e18",
+          "top1:bm25": "d04-p4e12",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d04-p4e18",
+          "top1:dense:nomic-embed-text": "d04-p4e12",
           "dense:BAAI/bge-small-en-v1.5": 3,
           "top1:dense:BAAI/bge-small-en-v1.5": "d04-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 4,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d04-p1e1",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d04-p4e18"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d04-p4e12"
         },
         "q033": {
           "bm25": 1,
@@ -3227,39 +3227,39 @@
         },
         "q035": {
           "bm25": 1,
-          "top1:bm25": "d05-p5e26",
+          "top1:bm25": "d05-p5e24",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d05-p5e26",
+          "top1:dense:nomic-embed-text": "d05-p5e24",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d05-p5e26",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d05-p5e24",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d05-p5e26",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d05-p5e24",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d05-p5e26"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d05-p5e24"
         },
         "q036": {
           "bm25": 1,
-          "top1:bm25": "d05-p1e11",
+          "top1:bm25": "d05-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d05-p1e11",
+          "top1:dense:nomic-embed-text": "d05-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d05-p1e11",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d05-p1e6",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d05-p1e11",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d05-p1e6",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d05-p1e11"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d05-p1e6"
         },
         "q037": {
           "bm25": 1,
-          "top1:bm25": "d05-p2e4",
+          "top1:bm25": "d05-p2e3",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d05-p2e4",
+          "top1:dense:nomic-embed-text": "d05-p2e3",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d05-p2e4",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d05-p2e3",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 6,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d05-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d05-p2e4"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d05-p2e3"
         },
         "q038": {
           "bm25": 2,
@@ -3275,11 +3275,11 @@
         },
         "q039": {
           "bm25": 1,
-          "top1:bm25": "d05-p3e24",
+          "top1:bm25": "d05-p3e22",
           "dense:nomic-embed-text": 2,
-          "top1:dense:nomic-embed-text": "d06-p3e23",
+          "top1:dense:nomic-embed-text": "d06-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d05-p3e24",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d05-p3e22",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 7,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d05-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 2,
@@ -3287,15 +3287,15 @@
         },
         "q040": {
           "bm25": 2,
-          "top1:bm25": "d06-p4e19",
+          "top1:bm25": "d06-p4e13",
           "dense:nomic-embed-text": 2,
-          "top1:dense:nomic-embed-text": "d06-p4e19",
+          "top1:dense:nomic-embed-text": "d06-p4e13",
           "dense:BAAI/bge-small-en-v1.5": 8,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d06-p4e19",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d06-p4e13",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 4,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d05-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 4,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d06-p4e19"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d06-p4e13"
         },
         "q041": {
           "bm25": 1,
@@ -3335,15 +3335,15 @@
         },
         "q044": {
           "bm25": 1,
-          "top1:bm25": "d06-p1e11",
+          "top1:bm25": "d06-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d06-p1e11",
+          "top1:dense:nomic-embed-text": "d06-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d06-p1e11",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d06-p1e6",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d06-p1e11",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d06-p1e6",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d06-p1e11"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d06-p1e6"
         },
         "q045": {
           "bm25": 1,
@@ -3351,9 +3351,9 @@
           "dense:nomic-embed-text": 1,
           "top1:dense:nomic-embed-text": "d06-p2e3",
           "dense:BAAI/bge-small-en-v1.5": 3,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d05-p2e4",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d05-p2e3",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d05-p2e4",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d05-p2e3",
           "dense:BAAI/bge-base-en-v1.5": 1,
           "top1:dense:BAAI/bge-base-en-v1.5": "d06-p2e3"
         },
@@ -3371,9 +3371,9 @@
         },
         "q047": {
           "bm25": 1,
-          "top1:bm25": "d06-p3e23",
+          "top1:bm25": "d06-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d06-p3e23",
+          "top1:dense:nomic-embed-text": "d06-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 5,
           "top1:dense:BAAI/bge-small-en-v1.5": "d06-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 6,
@@ -3383,15 +3383,15 @@
         },
         "q048": {
           "bm25": 1,
-          "top1:bm25": "d06-p4e19",
+          "top1:bm25": "d06-p4e13",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d06-p4e19",
+          "top1:dense:nomic-embed-text": "d06-p4e13",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d06-p4e19",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d06-p4e13",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d06-p4e19",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d06-p4e13",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d06-p4e19"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d06-p4e13"
         },
         "q049": {
           "bm25": 1,
@@ -3431,19 +3431,19 @@
         },
         "q052": {
           "bm25": 1,
-          "top1:bm25": "d07-p1e10",
+          "top1:bm25": "d07-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d07-p1e10",
+          "top1:dense:nomic-embed-text": "d07-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 2,
           "top1:dense:BAAI/bge-small-en-v1.5": "d07-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 4,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d07-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d07-p1e10"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d07-p1e6"
         },
         "q053": {
           "bm25": 2,
-          "top1:bm25": "d08-p2e4",
+          "top1:bm25": "d08-p2e3",
           "dense:nomic-embed-text": 1,
           "top1:dense:nomic-embed-text": "d07-p2e2",
           "dense:BAAI/bge-small-en-v1.5": 0,
@@ -3455,9 +3455,9 @@
         },
         "q054": {
           "bm25": 1,
-          "top1:bm25": "d07-p2e6",
+          "top1:bm25": "d07-p2e5",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d07-p2e6",
+          "top1:dense:nomic-embed-text": "d07-p2e5",
           "dense:BAAI/bge-small-en-v1.5": 2,
           "top1:dense:BAAI/bge-small-en-v1.5": "d07-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 3,
@@ -3467,27 +3467,27 @@
         },
         "q055": {
           "bm25": 1,
-          "top1:bm25": "d07-p3e21",
+          "top1:bm25": "d07-p3e20",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d07-p3e21",
+          "top1:dense:nomic-embed-text": "d07-p3e20",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d07-p3e21",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d07-p3e20",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 3,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d07-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d07-p3e21"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d07-p3e20"
         },
         "q056": {
           "bm25": 1,
-          "top1:bm25": "d07-p4e18",
+          "top1:bm25": "d07-p4e12",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d07-p4e18",
+          "top1:dense:nomic-embed-text": "d07-p4e12",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d07-p4e18",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d07-p4e12",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d08-p4e18",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d08-p4e13",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d07-p4e18"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d07-p4e12"
         },
         "q057": {
           "bm25": 1,
@@ -3527,23 +3527,23 @@
         },
         "q060": {
           "bm25": 1,
-          "top1:bm25": "d08-p1e10",
+          "top1:bm25": "d08-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d08-p1e10",
+          "top1:dense:nomic-embed-text": "d08-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d08-p1e10",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d08-p1e6",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d07-p1e10",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d07-p1e6",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d08-p1e10"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d08-p1e6"
         },
         "q061": {
           "bm25": 1,
-          "top1:bm25": "d08-p2e4",
+          "top1:bm25": "d08-p2e3",
           "dense:nomic-embed-text": 2,
           "top1:dense:nomic-embed-text": "d07-p2e2",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d08-p2e4",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d08-p2e3",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 4,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d07-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 2,
@@ -3551,7 +3551,7 @@
         },
         "q062": {
           "bm25": 2,
-          "top1:bm25": "d07-p2e6",
+          "top1:bm25": "d07-p2e5",
           "dense:nomic-embed-text": 1,
           "top1:dense:nomic-embed-text": "d08-p3e18",
           "dense:BAAI/bge-small-en-v1.5": 1,
@@ -3563,27 +3563,27 @@
         },
         "q063": {
           "bm25": 1,
-          "top1:bm25": "d08-p3e24",
+          "top1:bm25": "d08-p3e22",
           "dense:nomic-embed-text": 2,
-          "top1:dense:nomic-embed-text": "d07-p3e21",
+          "top1:dense:nomic-embed-text": "d07-p3e20",
           "dense:BAAI/bge-small-en-v1.5": 2,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d07-p3e21",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d07-p3e20",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 3,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d07-p1e1",
           "dense:BAAI/bge-base-en-v1.5": 2,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d07-p3e21"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d07-p3e20"
         },
         "q064": {
           "bm25": 1,
-          "top1:bm25": "d08-p4e18",
+          "top1:bm25": "d08-p4e13",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d08-p4e18",
+          "top1:dense:nomic-embed-text": "d08-p4e13",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d08-p4e18",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d08-p4e13",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 3,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d08-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d08-p4e18"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d08-p4e13"
         },
         "q065": {
           "bm25": 1,
@@ -3623,21 +3623,21 @@
         },
         "q068": {
           "bm25": 1,
-          "top1:bm25": "d09-p1e10",
+          "top1:bm25": "d09-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d09-p1e10",
+          "top1:dense:nomic-embed-text": "d09-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 4,
           "top1:dense:BAAI/bge-small-en-v1.5": "d09-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 8,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d09-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 3,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d10-p1e10"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d10-p1e6"
         },
         "q069": {
           "bm25": 2,
-          "top1:bm25": "d10-p2e4",
+          "top1:bm25": "d10-p2e3",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d09-p2e3",
+          "top1:dense:nomic-embed-text": "d09-p2e2",
           "dense:BAAI/bge-small-en-v1.5": 8,
           "top1:dense:BAAI/bge-small-en-v1.5": "d09-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 5,
@@ -3647,39 +3647,39 @@
         },
         "q070": {
           "bm25": 1,
-          "top1:bm25": "d09-p2e7",
+          "top1:bm25": "d09-p2e5",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d09-p2e7",
+          "top1:dense:nomic-embed-text": "d09-p2e5",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d09-p2e7",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d09-p2e5",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d09-p2e7",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d09-p2e5",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d09-p2e7"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d09-p2e5"
         },
         "q071": {
           "bm25": 1,
-          "top1:bm25": "d09-p3e21",
+          "top1:bm25": "d09-p3e20",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d09-p3e21",
+          "top1:dense:nomic-embed-text": "d09-p3e20",
           "dense:BAAI/bge-small-en-v1.5": 3,
           "top1:dense:BAAI/bge-small-en-v1.5": "d09-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d09-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d09-p3e21"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d09-p3e20"
         },
         "q072": {
           "bm25": 1,
-          "top1:bm25": "d09-p4e37",
+          "top1:bm25": "d09-p4e32",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d09-p4e37",
+          "top1:dense:nomic-embed-text": "d09-p4e32",
           "dense:BAAI/bge-small-en-v1.5": 5,
           "top1:dense:BAAI/bge-small-en-v1.5": "d09-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 3,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d09-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d09-p4e37"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d09-p4e32"
         },
         "q073": {
           "bm25": 1,
@@ -3719,31 +3719,31 @@
         },
         "q076": {
           "bm25": 1,
-          "top1:bm25": "d10-p1e10",
+          "top1:bm25": "d10-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d10-p1e10",
+          "top1:dense:nomic-embed-text": "d10-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d10-p1e10",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d10-p1e6",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d10-p1e10",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d10-p1e6",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d10-p1e10"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d10-p1e6"
         },
         "q077": {
           "bm25": 1,
-          "top1:bm25": "d10-p2e4",
+          "top1:bm25": "d10-p2e3",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d10-p2e4",
+          "top1:dense:nomic-embed-text": "d10-p2e3",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d10-p2e4",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d10-p2e3",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d10-p2e4",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d10-p2e3",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d10-p2e4"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d10-p2e3"
         },
         "q078": {
           "bm25": 2,
-          "top1:bm25": "d09-p2e7",
+          "top1:bm25": "d09-p2e5",
           "dense:nomic-embed-text": 1,
           "top1:dense:nomic-embed-text": "d10-p3e18",
           "dense:BAAI/bge-small-en-v1.5": 2,
@@ -3755,21 +3755,21 @@
         },
         "q079": {
           "bm25": 1,
-          "top1:bm25": "d10-p3e25",
+          "top1:bm25": "d10-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d10-p3e25",
+          "top1:dense:nomic-embed-text": "d10-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d10-p3e25",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d10-p3e22",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d09-p3e21",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d09-p3e20",
           "dense:BAAI/bge-base-en-v1.5": 2,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d09-p3e21"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d09-p3e20"
         },
         "q080": {
           "bm25": 1,
-          "top1:bm25": "d10-p4e19",
+          "top1:bm25": "d10-p4e13",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d10-p4e19",
+          "top1:dense:nomic-embed-text": "d10-p4e13",
           "dense:BAAI/bge-small-en-v1.5": 6,
           "top1:dense:BAAI/bge-small-en-v1.5": "d10-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 5,
@@ -3815,15 +3815,15 @@
         },
         "q084": {
           "bm25": 1,
-          "top1:bm25": "d11-p1e11",
+          "top1:bm25": "d11-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d11-p1e11",
+          "top1:dense:nomic-embed-text": "d11-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d11-p1e11",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d11-p1e6",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d12-p1e11",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d12-p1e6",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d11-p1e11"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d11-p1e6"
         },
         "q085": {
           "bm25": 1,
@@ -3851,9 +3851,9 @@
         },
         "q087": {
           "bm25": 1,
-          "top1:bm25": "d11-p3e23",
+          "top1:bm25": "d11-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d11-p3e23",
+          "top1:dense:nomic-embed-text": "d11-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 3,
           "top1:dense:BAAI/bge-small-en-v1.5": "d11-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
@@ -3863,7 +3863,7 @@
         },
         "q088": {
           "bm25": 1,
-          "top1:bm25": "d11-p4e18",
+          "top1:bm25": "d11-p4e13",
           "dense:nomic-embed-text": 2,
           "top1:dense:nomic-embed-text": "d12-p5e21",
           "dense:BAAI/bge-small-en-v1.5": 2,
@@ -3899,39 +3899,39 @@
         },
         "q091": {
           "bm25": 1,
-          "top1:bm25": "d12-p5e26",
+          "top1:bm25": "d12-p5e24",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d12-p5e26",
+          "top1:dense:nomic-embed-text": "d12-p5e24",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d12-p5e26",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d12-p5e24",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d11-p5e22",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d12-p5e26"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d12-p5e24"
         },
         "q092": {
           "bm25": 1,
-          "top1:bm25": "d12-p1e11",
+          "top1:bm25": "d12-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d12-p1e11",
+          "top1:dense:nomic-embed-text": "d12-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 5,
           "top1:dense:BAAI/bge-small-en-v1.5": "d12-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 6,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d12-p5e26",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d12-p5e24",
           "dense:BAAI/bge-base-en-v1.5": 3,
           "top1:dense:BAAI/bge-base-en-v1.5": "d12-p1e0"
         },
         "q093": {
           "bm25": 1,
-          "top1:bm25": "d12-p2e4",
+          "top1:bm25": "d12-p2e3",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d12-p2e4",
+          "top1:dense:nomic-embed-text": "d12-p2e3",
           "dense:BAAI/bge-small-en-v1.5": 2,
           "top1:dense:BAAI/bge-small-en-v1.5": "d11-p2e3",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 6,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d12-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d12-p2e4"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d12-p2e3"
         },
         "q094": {
           "bm25": 1,
@@ -3947,15 +3947,15 @@
         },
         "q095": {
           "bm25": 1,
-          "top1:bm25": "d12-p3e25",
+          "top1:bm25": "d12-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d12-p3e25",
+          "top1:dense:nomic-embed-text": "d12-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d12-p3e25",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d12-p3e22",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d12-p3e25",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d12-p3e22",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d12-p3e25"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d12-p3e22"
         },
         "q096": {
           "bm25": 1,
@@ -3967,7 +3967,7 @@
           "dense:sentence-transformers/all-MiniLM-L6-v2": 9,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d12-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 2,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d11-p4e18"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d11-p4e13"
         },
         "q097": {
           "bm25": 1,
@@ -3995,21 +3995,21 @@
         },
         "q099": {
           "bm25": 1,
-          "top1:bm25": "d13-p5e26",
+          "top1:bm25": "d13-p5e24",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d13-p5e26",
+          "top1:dense:nomic-embed-text": "d13-p5e24",
           "dense:BAAI/bge-small-en-v1.5": 2,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d14-p5e26",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d14-p5e24",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d13-p5e26",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d13-p5e24",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d13-p5e26"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d13-p5e24"
         },
         "q100": {
           "bm25": 1,
-          "top1:bm25": "d13-p1e10",
+          "top1:bm25": "d13-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d13-p1e10",
+          "top1:dense:nomic-embed-text": "d13-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 4,
           "top1:dense:BAAI/bge-small-en-v1.5": "d13-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 5,
@@ -4019,15 +4019,15 @@
         },
         "q101": {
           "bm25": 1,
-          "top1:bm25": "d13-p2e4",
+          "top1:bm25": "d13-p2e3",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d13-p2e4",
+          "top1:dense:nomic-embed-text": "d13-p2e3",
           "dense:BAAI/bge-small-en-v1.5": 3,
           "top1:dense:BAAI/bge-small-en-v1.5": "d13-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 7,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d14-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d13-p2e4"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d13-p2e3"
         },
         "q102": {
           "bm25": 1,
@@ -4043,15 +4043,15 @@
         },
         "q103": {
           "bm25": 1,
-          "top1:bm25": "d13-p3e24",
+          "top1:bm25": "d13-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d13-p3e24",
+          "top1:dense:nomic-embed-text": "d13-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d13-p3e24",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d13-p3e22",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 3,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d13-p1e1",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d13-p3e24"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d13-p3e22"
         },
         "q104": {
           "bm25": 1,
@@ -4091,21 +4091,21 @@
         },
         "q107": {
           "bm25": 1,
-          "top1:bm25": "d14-p5e26",
+          "top1:bm25": "d14-p5e24",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d14-p5e26",
+          "top1:dense:nomic-embed-text": "d14-p5e24",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d14-p5e26",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d14-p5e24",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d14-p5e26",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d14-p5e24",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d14-p5e26"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d14-p5e24"
         },
         "q108": {
           "bm25": 1,
-          "top1:bm25": "d14-p1e10",
+          "top1:bm25": "d14-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d14-p1e10",
+          "top1:dense:nomic-embed-text": "d14-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 4,
           "top1:dense:BAAI/bge-small-en-v1.5": "d14-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 10,
@@ -4115,9 +4115,9 @@
         },
         "q109": {
           "bm25": 1,
-          "top1:bm25": "d14-p2e4",
+          "top1:bm25": "d14-p2e3",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d14-p2e4",
+          "top1:dense:nomic-embed-text": "d14-p2e3",
           "dense:BAAI/bge-small-en-v1.5": 5,
           "top1:dense:BAAI/bge-small-en-v1.5": "d14-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 5,
@@ -4139,21 +4139,21 @@
         },
         "q111": {
           "bm25": 1,
-          "top1:bm25": "d14-p3e23",
+          "top1:bm25": "d14-p3e22",
           "dense:nomic-embed-text": 2,
-          "top1:dense:nomic-embed-text": "d13-p3e24",
+          "top1:dense:nomic-embed-text": "d13-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d14-p3e23",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d14-p3e22",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 3,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d13-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d14-p3e23"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d14-p3e22"
         },
         "q112": {
           "bm25": 1,
           "top1:bm25": "d14-p5e21",
           "dense:nomic-embed-text": 2,
-          "top1:dense:nomic-embed-text": "d13-p5e26",
+          "top1:dense:nomic-embed-text": "d13-p5e24",
           "dense:BAAI/bge-small-en-v1.5": 7,
           "top1:dense:BAAI/bge-small-en-v1.5": "d14-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 9,
@@ -4199,19 +4199,19 @@
         },
         "q116": {
           "bm25": 1,
-          "top1:bm25": "d15-p1e10",
+          "top1:bm25": "d15-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d15-p1e10",
+          "top1:dense:nomic-embed-text": "d15-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 3,
           "top1:dense:BAAI/bge-small-en-v1.5": "d15-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 8,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d15-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d15-p1e10"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d15-p1e6"
         },
         "q117": {
           "bm25": 2,
-          "top1:bm25": "d16-p2e4",
+          "top1:bm25": "d16-p2e3",
           "dense:nomic-embed-text": 1,
           "top1:dense:nomic-embed-text": "d15-p2e2",
           "dense:BAAI/bge-small-en-v1.5": 9,
@@ -4223,15 +4223,15 @@
         },
         "q118": {
           "bm25": 1,
-          "top1:bm25": "d15-p2e6",
+          "top1:bm25": "d15-p2e5",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d15-p2e6",
+          "top1:dense:nomic-embed-text": "d15-p2e5",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d15-p2e6",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d15-p2e5",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 3,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d15-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d15-p2e6"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d15-p2e5"
         },
         "q119": {
           "bm25": 1,
@@ -4247,15 +4247,15 @@
         },
         "q120": {
           "bm25": 1,
-          "top1:bm25": "d15-p4e37",
+          "top1:bm25": "d15-p4e32",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d15-p4e37",
+          "top1:dense:nomic-embed-text": "d15-p4e32",
           "dense:BAAI/bge-small-en-v1.5": 4,
           "top1:dense:BAAI/bge-small-en-v1.5": "d15-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 4,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d15-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d15-p4e37"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d15-p4e32"
         },
         "q121": {
           "bm25": 1,
@@ -4279,7 +4279,7 @@
           "dense:sentence-transformers/all-MiniLM-L6-v2": 3,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d16-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 4,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d16-p4e18"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d16-p4e13"
         },
         "q123": {
           "bm25": 1,
@@ -4295,19 +4295,19 @@
         },
         "q124": {
           "bm25": 1,
-          "top1:bm25": "d16-p1e9",
+          "top1:bm25": "d16-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d16-p1e9",
+          "top1:dense:nomic-embed-text": "d16-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 2,
           "top1:dense:BAAI/bge-small-en-v1.5": "d16-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 7,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d16-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d16-p1e9"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d16-p1e6"
         },
         "q125": {
           "bm25": 1,
-          "top1:bm25": "d16-p2e4",
+          "top1:bm25": "d16-p2e3",
           "dense:nomic-embed-text": 3,
           "top1:dense:nomic-embed-text": "d16-p1e1",
           "dense:BAAI/bge-small-en-v1.5": 4,
@@ -4319,21 +4319,21 @@
         },
         "q126": {
           "bm25": 2,
-          "top1:bm25": "d15-p2e6",
+          "top1:bm25": "d15-p2e5",
           "dense:nomic-embed-text": 1,
           "top1:dense:nomic-embed-text": "d16-p3e18",
           "dense:BAAI/bge-small-en-v1.5": 2,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d15-p2e6",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d15-p2e5",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d15-p2e6",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d15-p2e5",
           "dense:BAAI/bge-base-en-v1.5": 1,
           "top1:dense:BAAI/bge-base-en-v1.5": "d16-p3e18"
         },
         "q127": {
           "bm25": 1,
-          "top1:bm25": "d16-p3e24",
+          "top1:bm25": "d16-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d16-p3e24",
+          "top1:dense:nomic-embed-text": "d16-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 2,
           "top1:dense:BAAI/bge-small-en-v1.5": "d16-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 6,
@@ -4343,15 +4343,15 @@
         },
         "q128": {
           "bm25": 1,
-          "top1:bm25": "d16-p4e18",
+          "top1:bm25": "d16-p4e13",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d16-p4e18",
+          "top1:dense:nomic-embed-text": "d16-p4e13",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d16-p4e18",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d16-p4e13",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d16-p4e18",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d16-p4e13",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d16-p4e18"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d16-p4e13"
         },
         "q129": {
           "bm25": 1,
@@ -4379,27 +4379,27 @@
         },
         "q131": {
           "bm25": 1,
-          "top1:bm25": "d17-p5e26",
+          "top1:bm25": "d17-p5e24",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d17-p5e26",
+          "top1:dense:nomic-embed-text": "d17-p5e24",
           "dense:BAAI/bge-small-en-v1.5": 3,
           "top1:dense:BAAI/bge-small-en-v1.5": "d18-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d17-p5e26",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d17-p5e24",
           "dense:BAAI/bge-base-en-v1.5": 2,
           "top1:dense:BAAI/bge-base-en-v1.5": "d17-p1e0"
         },
         "q132": {
           "bm25": 1,
-          "top1:bm25": "d17-p1e10",
+          "top1:bm25": "d17-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d17-p1e10",
+          "top1:dense:nomic-embed-text": "d17-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d17-p1e10",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d17-p1e6",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d17-p1e10",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d17-p1e6",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d17-p1e10"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d17-p1e6"
         },
         "q133": {
           "bm25": 1,
@@ -4407,11 +4407,11 @@
           "dense:nomic-embed-text": 1,
           "top1:dense:nomic-embed-text": "d17-p2e3",
           "dense:BAAI/bge-small-en-v1.5": 2,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d18-p2e4",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d18-p2e3",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d18-p1e1",
           "dense:BAAI/bge-base-en-v1.5": 6,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d18-p2e4"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d18-p2e3"
         },
         "q134": {
           "bm25": 1,
@@ -4427,9 +4427,9 @@
         },
         "q135": {
           "bm25": 1,
-          "top1:bm25": "d17-p3e25",
+          "top1:bm25": "d17-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d17-p3e25",
+          "top1:dense:nomic-embed-text": "d17-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 2,
           "top1:dense:BAAI/bge-small-en-v1.5": "d17-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 4,
@@ -4439,7 +4439,7 @@
         },
         "q136": {
           "bm25": 2,
-          "top1:bm25": "d18-p4e19",
+          "top1:bm25": "d18-p4e13",
           "dense:nomic-embed-text": 0,
           "top1:dense:nomic-embed-text": "d17-p1e0",
           "dense:BAAI/bge-small-en-v1.5": 9,
@@ -4477,29 +4477,29 @@
           "bm25": 1,
           "top1:bm25": "d18-p5e22",
           "dense:nomic-embed-text": 2,
-          "top1:dense:nomic-embed-text": "d17-p5e26",
+          "top1:dense:nomic-embed-text": "d17-p5e24",
           "dense:BAAI/bge-small-en-v1.5": 1,
           "top1:dense:BAAI/bge-small-en-v1.5": "d18-p5e22",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d18-p5e22",
           "dense:BAAI/bge-base-en-v1.5": 2,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d17-p5e26"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d17-p5e24"
         },
         "q140": {
           "bm25": 1,
-          "top1:bm25": "d18-p1e10",
+          "top1:bm25": "d18-p1e6",
           "dense:nomic-embed-text": 3,
           "top1:dense:nomic-embed-text": "d18-p1e0",
           "dense:BAAI/bge-small-en-v1.5": 4,
           "top1:dense:BAAI/bge-small-en-v1.5": "d18-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 7,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d17-p5e26",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d17-p5e24",
           "dense:BAAI/bge-base-en-v1.5": 5,
           "top1:dense:BAAI/bge-base-en-v1.5": "d18-p1e0"
         },
         "q141": {
           "bm25": 1,
-          "top1:bm25": "d18-p2e4",
+          "top1:bm25": "d18-p2e3",
           "dense:nomic-embed-text": 2,
           "top1:dense:nomic-embed-text": "d17-p2e3",
           "dense:BAAI/bge-small-en-v1.5": 8,
@@ -4523,19 +4523,19 @@
         },
         "q143": {
           "bm25": 1,
-          "top1:bm25": "d18-p3e24",
+          "top1:bm25": "d18-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d18-p3e24",
+          "top1:dense:nomic-embed-text": "d18-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d18-p3e24",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d18-p3e22",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d18-p3e24",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d18-p3e22",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d18-p3e24"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d18-p3e22"
         },
         "q144": {
           "bm25": 1,
-          "top1:bm25": "d18-p4e19",
+          "top1:bm25": "d18-p4e13",
           "dense:nomic-embed-text": 2,
           "top1:dense:nomic-embed-text": "d17-p5e21",
           "dense:BAAI/bge-small-en-v1.5": 2,
@@ -4583,9 +4583,9 @@
         },
         "q148": {
           "bm25": 1,
-          "top1:bm25": "d19-p1e11",
+          "top1:bm25": "d19-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d19-p1e11",
+          "top1:dense:nomic-embed-text": "d19-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 4,
           "top1:dense:BAAI/bge-small-en-v1.5": "d19-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
@@ -4607,7 +4607,7 @@
         },
         "q150": {
           "bm25": 2,
-          "top1:bm25": "d20-p2e7",
+          "top1:bm25": "d20-p2e5",
           "dense:nomic-embed-text": 1,
           "top1:dense:nomic-embed-text": "d19-p3e18",
           "dense:BAAI/bge-small-en-v1.5": 1,
@@ -4619,9 +4619,9 @@
         },
         "q151": {
           "bm25": 1,
-          "top1:bm25": "d19-p3e24",
+          "top1:bm25": "d19-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d19-p3e24",
+          "top1:dense:nomic-embed-text": "d19-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 4,
           "top1:dense:BAAI/bge-small-en-v1.5": "d19-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 3,
@@ -4631,7 +4631,7 @@
         },
         "q152": {
           "bm25": 1,
-          "top1:bm25": "d19-p4e18",
+          "top1:bm25": "d19-p4e13",
           "dense:nomic-embed-text": 7,
           "top1:dense:nomic-embed-text": "d19-p1e1",
           "dense:BAAI/bge-small-en-v1.5": 3,
@@ -4679,39 +4679,39 @@
         },
         "q156": {
           "bm25": 1,
-          "top1:bm25": "d20-p1e9",
+          "top1:bm25": "d20-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d20-p1e9",
+          "top1:dense:nomic-embed-text": "d20-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 3,
           "top1:dense:BAAI/bge-small-en-v1.5": "d20-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 6,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d20-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d20-p1e9"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d20-p1e6"
         },
         "q157": {
           "bm25": 2,
           "top1:bm25": "d19-p2e3",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d20-p2e3",
+          "top1:dense:nomic-embed-text": "d20-p2e2",
           "dense:BAAI/bge-small-en-v1.5": 4,
           "top1:dense:BAAI/bge-small-en-v1.5": "d19-p2e3",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 6,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d20-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d20-p2e3"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d20-p2e2"
         },
         "q158": {
           "bm25": 1,
-          "top1:bm25": "d20-p2e7",
+          "top1:bm25": "d20-p2e5",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d20-p2e7",
+          "top1:dense:nomic-embed-text": "d20-p2e5",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d20-p2e7",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d20-p2e5",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d20-p2e7",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d20-p2e5",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d20-p2e7"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d20-p2e5"
         },
         "q159": {
           "bm25": 1,
@@ -4727,15 +4727,15 @@
         },
         "q160": {
           "bm25": 1,
-          "top1:bm25": "d20-p4e17",
+          "top1:bm25": "d20-p4e12",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d20-p4e17",
+          "top1:dense:nomic-embed-text": "d20-p4e12",
           "dense:BAAI/bge-small-en-v1.5": 3,
           "top1:dense:BAAI/bge-small-en-v1.5": "d20-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d20-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d20-p4e17"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d20-p4e12"
         },
         "q161": {
           "bm25": 1,
@@ -4787,15 +4787,15 @@
         },
         "q165": {
           "bm25": 1,
-          "top1:bm25": "d21-p2e4",
+          "top1:bm25": "d21-p2e3",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d21-p2e4",
+          "top1:dense:nomic-embed-text": "d21-p2e3",
           "dense:BAAI/bge-small-en-v1.5": 4,
           "top1:dense:BAAI/bge-small-en-v1.5": "d21-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 6,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d21-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d21-p2e4"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d21-p2e3"
         },
         "q166": {
           "bm25": 1,
@@ -4811,19 +4811,19 @@
         },
         "q167": {
           "bm25": 1,
-          "top1:bm25": "d21-p3e24",
+          "top1:bm25": "d21-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d21-p3e24",
+          "top1:dense:nomic-embed-text": "d21-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d21-p3e24",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d21-p3e22",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d21-p3e24",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d21-p3e22",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d21-p3e24"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d21-p3e22"
         },
         "q168": {
           "bm25": 1,
-          "top1:bm25": "d21-p4e18",
+          "top1:bm25": "d21-p4e13",
           "dense:nomic-embed-text": 4,
           "top1:dense:nomic-embed-text": "d21-p1e0",
           "dense:BAAI/bge-small-en-v1.5": 2,
@@ -4859,23 +4859,23 @@
         },
         "q171": {
           "bm25": 1,
-          "top1:bm25": "d22-p5e26",
+          "top1:bm25": "d22-p5e24",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d22-p5e26",
+          "top1:dense:nomic-embed-text": "d22-p5e24",
           "dense:BAAI/bge-small-en-v1.5": 3,
           "top1:dense:BAAI/bge-small-en-v1.5": "d22-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d22-p5e26",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d22-p5e24",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d22-p5e26"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d22-p5e24"
         },
         "q172": {
           "bm25": 1,
-          "top1:bm25": "d22-p1e10",
+          "top1:bm25": "d22-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d22-p1e10",
+          "top1:dense:nomic-embed-text": "d22-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d22-p1e10",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d22-p1e6",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 3,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d22-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 2,
@@ -4907,15 +4907,15 @@
         },
         "q175": {
           "bm25": 1,
-          "top1:bm25": "d22-p3e24",
+          "top1:bm25": "d22-p3e22",
           "dense:nomic-embed-text": 2,
-          "top1:dense:nomic-embed-text": "d21-p3e24",
+          "top1:dense:nomic-embed-text": "d21-p3e22",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d22-p3e24",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d22-p3e22",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d22-p3e24",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d22-p3e22",
           "dense:BAAI/bge-base-en-v1.5": 2,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d21-p3e24"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d21-p3e22"
         },
         "q176": {
           "bm25": 1,
@@ -4923,7 +4923,7 @@
           "dense:nomic-embed-text": 1,
           "top1:dense:nomic-embed-text": "d22-p5e21",
           "dense:BAAI/bge-small-en-v1.5": 2,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d21-p4e18",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d21-p4e13",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d22-p5e21",
           "dense:BAAI/bge-base-en-v1.5": 1,
@@ -4933,23 +4933,23 @@
           "bm25": 2,
           "top1:bm25": "d24-p1e1",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d23-p1e2",
+          "top1:dense:nomic-embed-text": "d23-p1e1",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d23-p1e2",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d23-p1e1",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d23-p1e2",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d23-p1e1",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d23-p1e2"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d23-p1e1"
         },
         "q178": {
           "bm25": 2,
-          "top1:bm25": "d23-p1e2",
+          "top1:bm25": "d23-p1e1",
           "dense:nomic-embed-text": 1,
           "top1:dense:nomic-embed-text": "d23-p4e6",
           "dense:BAAI/bge-small-en-v1.5": 10,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d23-p1e2",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d23-p1e1",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 7,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d23-p1e2",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d23-p1e1",
           "dense:BAAI/bge-base-en-v1.5": 7,
           "top1:dense:BAAI/bge-base-en-v1.5": "d23-p1e0"
         },
@@ -4969,7 +4969,7 @@
           "bm25": 2,
           "top1:bm25": "d24-p1e1",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d23-p1e11",
+          "top1:dense:nomic-embed-text": "d23-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 2,
           "top1:dense:BAAI/bge-small-en-v1.5": "d23-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 7,
@@ -4979,45 +4979,45 @@
         },
         "q181": {
           "bm25": 1,
-          "top1:bm25": "d23-p2e4",
+          "top1:bm25": "d23-p2e3",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d23-p2e4",
+          "top1:dense:nomic-embed-text": "d23-p2e3",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d23-p2e4",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d23-p2e3",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 4,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d23-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d23-p2e4"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d23-p2e3"
         },
         "q182": {
           "bm25": 2,
-          "top1:bm25": "d24-p2e6",
+          "top1:bm25": "d24-p2e5",
           "dense:nomic-embed-text": 1,
           "top1:dense:nomic-embed-text": "d23-p3e18",
           "dense:BAAI/bge-small-en-v1.5": 2,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d24-p2e6",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d24-p2e5",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d24-p2e6",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d24-p2e5",
           "dense:BAAI/bge-base-en-v1.5": 1,
           "top1:dense:BAAI/bge-base-en-v1.5": "d23-p3e18"
         },
         "q183": {
           "bm25": 1,
-          "top1:bm25": "d23-p3e24",
+          "top1:bm25": "d23-p3e22",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d23-p1e2",
+          "top1:dense:nomic-embed-text": "d23-p1e1",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d23-p1e2",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d23-p1e1",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d23-p1e2",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d23-p1e1",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d23-p1e2"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d23-p1e1"
         },
         "q184": {
           "bm25": 1,
-          "top1:bm25": "d23-p4e19",
+          "top1:bm25": "d23-p4e13",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d23-p4e19",
+          "top1:dense:nomic-embed-text": "d23-p4e13",
           "dense:BAAI/bge-small-en-v1.5": 2,
           "top1:dense:BAAI/bge-small-en-v1.5": "d23-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 7,
@@ -5029,13 +5029,13 @@
           "bm25": 1,
           "top1:bm25": "d24-p1e1",
           "dense:nomic-embed-text": 2,
-          "top1:dense:nomic-embed-text": "d23-p1e2",
+          "top1:dense:nomic-embed-text": "d23-p1e1",
           "dense:BAAI/bge-small-en-v1.5": 2,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d23-p1e2",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d23-p1e1",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 2,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d23-p1e2",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d23-p1e1",
           "dense:BAAI/bge-base-en-v1.5": 2,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d23-p1e2"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d23-p1e1"
         },
         "q186": {
           "bm25": 1,
@@ -5053,7 +5053,7 @@
           "bm25": 1,
           "top1:bm25": "d24-p5e1",
           "dense:nomic-embed-text": 2,
-          "top1:dense:nomic-embed-text": "d24-p2e6",
+          "top1:dense:nomic-embed-text": "d24-p2e5",
           "dense:BAAI/bge-small-en-v1.5": 2,
           "top1:dense:BAAI/bge-small-en-v1.5": "d24-p1e0",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
@@ -5063,11 +5063,11 @@
         },
         "q188": {
           "bm25": 1,
-          "top1:bm25": "d24-p1e10",
+          "top1:bm25": "d24-p1e6",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d24-p1e10",
+          "top1:dense:nomic-embed-text": "d24-p1e6",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d24-p1e10",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d24-p1e6",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 8,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d24-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 2,
@@ -5075,7 +5075,7 @@
         },
         "q189": {
           "bm25": 6,
-          "top1:bm25": "d23-p2e4",
+          "top1:bm25": "d23-p2e3",
           "dense:nomic-embed-text": 4,
           "top1:dense:nomic-embed-text": "d24-p5e1",
           "dense:BAAI/bge-small-en-v1.5": 0,
@@ -5087,15 +5087,15 @@
         },
         "q190": {
           "bm25": 1,
-          "top1:bm25": "d24-p2e6",
+          "top1:bm25": "d24-p2e5",
           "dense:nomic-embed-text": 1,
-          "top1:dense:nomic-embed-text": "d24-p2e6",
+          "top1:dense:nomic-embed-text": "d24-p2e5",
           "dense:BAAI/bge-small-en-v1.5": 1,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d24-p2e6",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d24-p2e5",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 1,
-          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d24-p2e6",
+          "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d24-p2e5",
           "dense:BAAI/bge-base-en-v1.5": 1,
-          "top1:dense:BAAI/bge-base-en-v1.5": "d24-p2e6"
+          "top1:dense:BAAI/bge-base-en-v1.5": "d24-p2e5"
         },
         "q191": {
           "bm25": 1,
@@ -5111,11 +5111,11 @@
         },
         "q192": {
           "bm25": 1,
-          "top1:bm25": "d24-p4e36",
+          "top1:bm25": "d24-p4e31",
           "dense:nomic-embed-text": 6,
           "top1:dense:nomic-embed-text": "d24-p1e0",
           "dense:BAAI/bge-small-en-v1.5": 4,
-          "top1:dense:BAAI/bge-small-en-v1.5": "d23-p1e2",
+          "top1:dense:BAAI/bge-small-en-v1.5": "d23-p1e1",
           "dense:sentence-transformers/all-MiniLM-L6-v2": 7,
           "top1:dense:sentence-transformers/all-MiniLM-L6-v2": "d24-p1e0",
           "dense:BAAI/bge-base-en-v1.5": 6,

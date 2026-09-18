@@ -629,7 +629,15 @@ fn draw_element(
     match tp {
         "text" => {
             // Optional background block (code snippets, callouts) behind the text.
-            let content = el.get("content").and_then(|c| c.as_str()).unwrap_or("");
+            let raw = el.get("content").and_then(|c| c.as_str()).unwrap_or("");
+            // style.textIndent (mm): first-line indent, approximated with leading spaces
+            // sized by the face's average advance — same look as the HTML renderers' text-indent.
+            let indent_mm = el.get("style").and_then(|s| s.get("textIndent")).and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+            let indented = if indent_mm > 0.0 {
+                let n = (indent_mm / (fs * PT_TO_MM * char_factor)).round().max(0.0) as usize;
+                format!("{}{}", " ".repeat(n), raw)
+            } else { raw.to_string() };
+            let content = indented.as_str();
             let wrapped = wrap_text(content, fs, width, char_factor);
             if let Some(bg) = style_ref_str(el.get("style"), document, "backgroundColor").and_then(|c| parse_color(&c)) {
                 let block_h = wrapped.len().max(1) as f32 * line_mm + 2.0;

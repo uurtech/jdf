@@ -44,6 +44,7 @@ export function styleToCss(style: Style): Record<string, string> {
     css["text-decoration"] = td;
   }
   if (style.lineHeight) css["line-height"] = String(style.lineHeight);
+  if (style.textIndent) css["text-indent"] = `${unitToPx(style.textIndent)}px`;
   if (style.letterSpacing != null) css["letter-spacing"] = typeof style.letterSpacing === "number" ? `${style.letterSpacing}px` : style.letterSpacing;
   if (style.padding != null) css["padding"] = paddingToCss(style.padding);
   if (style.margin != null) css["margin"] = paddingToCss(style.margin as any);

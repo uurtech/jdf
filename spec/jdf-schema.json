@@ -103,6 +103,7 @@
         "backgroundColor": { "type": "string" },
         "textAlign": { "type": "string", "enum": ["left","center","right","justify"] },
         "lineHeight": { "type": "number" },
+        "textIndent": { "type": "number", "description": "First-line indent in the document unit." },
         "letterSpacing": { "oneOf": [{ "type": "number" }, { "type": "string" }] },
         "padding": { "oneOf": [{ "type": "number" }, { "type": "string" }, { "$ref": "#/definitions/Margins" }] },
         "margin": { "oneOf": [{ "type": "number" }, { "type": "string" }, { "$ref": "#/definitions/Margins" }] },

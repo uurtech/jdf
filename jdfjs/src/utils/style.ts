@@ -1,3 +1,4 @@
+import { unitToPx } from "@jdf/core";
 import type { Style, StyleRef } from "@jdf/core";
 
 function paddingToCss(p: NonNullable<Style["padding"]>): string {
@@ -16,6 +17,8 @@ export function styleToCss(style: Style): Record<string, string> {
   if (style.color) css["color"] = style.color;
   if (style.backgroundColor) css["background-color"] = style.backgroundColor;
   if (style.textAlign) css["text-align"] = style.textAlign;
+  if (style.lineHeight) css["line-height"] = String(style.lineHeight); // unitless, same as the reader
+  if (style.textIndent) css["text-indent"] = `${unitToPx(style.textIndent)}px`;
   if (style.textDecoration) {
     const td = style.textDecoration === "strikethrough" ? "line-through" : style.textDecoration;
     css["text-decoration"] = td;

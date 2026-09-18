@@ -58,7 +58,7 @@ python rag_bench.py --verify             # re-run and compare with the published
           <thead><tr><th>Pipeline</th><th>Chunks</th><th>R@1k tokens</th><th>R@2k tokens</th><th>Top-1</th><th>Top-5</th><th>MRR@10</th><th>Table cells R@1k</th><th>Ctx tokens @5</th></tr></thead>
           <tbody>
             <tr class="is-jdf"><td>JDF · jdf chunk (section, 512 tok)</td><td>192</td><td class="bench-best">100.0%</td><td class="bench-best">100.0%</td><td class="bench-best">89.6%</td><td class="bench-best">100.0%</td><td class="bench-best">0.945</td><td>100.0%</td><td>798</td></tr>
-            <tr class="is-conv"><td>PDF → jdf convert → jdf chunk (section, 512 tok)</td><td>216</td><td class="bench-best">100.0%</td><td class="bench-best">100.0%</td><td>85.4%</td><td>99.5%</td><td>0.925</td><td>100.0%</td><td>848</td></tr>
+            <tr class="is-conv"><td>PDF → jdf convert → jdf chunk (section, 512 tok)</td><td>216</td><td class="bench-best">100.0%</td><td class="bench-best">100.0%</td><td>85.4%</td><td>99.5%</td><td>0.925</td><td>100.0%</td><td>845</td></tr>
             <tr><td>PDF · PyMuPDF get_text() · fixed 1000/200</td><td>153</td><td>98.4%</td><td class="bench-best">100.0%</td><td>75.0%</td><td>99.0%</td><td>0.858</td><td>100.0%</td><td>1,194</td></tr>
             <tr><td>PDF · PyMuPDF get_text() · fixed 2000/200</td><td>90</td><td>97.9%</td><td class="bench-best">100.0%</td><td>84.4%</td><td class="bench-best">100.0%</td><td>0.918</td><td>99.2%</td><td>1,759</td></tr>
             <tr><td>PDF · pdfplumber extract_text() · fixed 1000/200</td><td>150</td><td>99.5%</td><td class="bench-best">100.0%</td><td>75.5%</td><td class="bench-best">100.0%</td><td>0.865</td><td>100.0%</td><td>1,190</td></tr>
@@ -74,7 +74,7 @@ python rag_bench.py --verify             # re-run and compare with the published
           <thead><tr><th>Pipeline</th><th>Chunks</th><th>R@1k tokens</th><th>R@2k tokens</th><th>Top-1</th><th>Top-5</th><th>MRR@10</th><th>Table cells R@1k</th><th>Ctx tokens @5</th></tr></thead>
           <tbody>
             <tr class="is-jdf"><td>JDF · jdf chunk (section, 512 tok)</td><td>192</td><td class="bench-best">99.0%</td><td class="bench-best">100.0%</td><td>76.6%</td><td class="bench-best">99.0%</td><td>0.864</td><td>98.3%</td><td>753</td></tr>
-            <tr class="is-conv"><td>PDF → jdf convert → jdf chunk (section, 512 tok)</td><td>216</td><td class="bench-best">99.0%</td><td>99.5%</td><td class="bench-best">80.2%</td><td>98.4%</td><td class="bench-best">0.884</td><td>98.3%</td><td>721</td></tr>
+            <tr class="is-conv"><td>PDF → jdf convert → jdf chunk (section, 512 tok)</td><td>216</td><td class="bench-best">99.0%</td><td>99.5%</td><td class="bench-best">80.2%</td><td>98.4%</td><td class="bench-best">0.884</td><td>98.3%</td><td>718</td></tr>
             <tr><td>PDF · PyMuPDF get_text() · fixed 1000/200</td><td>153</td><td>81.8%</td><td>98.4%</td><td>41.7%</td><td>91.1%</td><td>0.606</td><td>80.0%</td><td>1,226</td></tr>
             <tr><td>PDF · PyMuPDF get_text() · fixed 2000/200</td><td>90</td><td>77.1%</td><td>99.5%</td><td>63.0%</td><td class="bench-best">99.0%</td><td>0.760</td><td>82.5%</td><td>1,781</td></tr>
             <tr><td>PDF · pdfplumber extract_text() · fixed 1000/200</td><td>150</td><td>80.7%</td><td>99.0%</td><td>42.2%</td><td>91.1%</td><td>0.608</td><td>79.2%</td><td>1,219</td></tr>
@@ -90,7 +90,7 @@ python rag_bench.py --verify             # re-run and compare with the published
           <thead><tr><th>Pipeline</th><th>Chunks</th><th>R@1k tokens</th><th>R@2k tokens</th><th>Top-1</th><th>Top-5</th><th>MRR@10</th><th>Table cells R@1k</th><th>Ctx tokens @5</th></tr></thead>
           <tbody>
             <tr class="is-jdf"><td>JDF · jdf chunk (section, 512 tok)</td><td>192</td><td class="bench-best">96.9%</td><td class="bench-best">100.0%</td><td>46.9%</td><td>91.7%</td><td>0.646</td><td>95.0%</td><td>716</td></tr>
-            <tr class="is-conv"><td>PDF → jdf convert → jdf chunk (section, 512 tok)</td><td>216</td><td>95.8%</td><td>98.4%</td><td>40.1%</td><td>91.7%</td><td>0.601</td><td>94.2%</td><td>523</td></tr>
+            <tr class="is-conv"><td>PDF → jdf convert → jdf chunk (section, 512 tok)</td><td>216</td><td>95.8%</td><td>98.4%</td><td>40.1%</td><td>91.7%</td><td>0.601</td><td>94.2%</td><td>521</td></tr>
             <tr><td>PDF · PyMuPDF get_text() · fixed 1000/200</td><td>153</td><td>74.5%</td><td>94.3%</td><td>34.4%</td><td>83.3%</td><td>0.530</td><td>71.7%</td><td>1,214</td></tr>
             <tr><td>PDF · PyMuPDF get_text() · fixed 2000/200</td><td>90</td><td>64.1%</td><td>92.2%</td><td>50.0%</td><td>90.6%</td><td>0.649</td><td>67.5%</td><td>1,783</td></tr>
             <tr><td>PDF · pdfplumber extract_text() · fixed 1000/200</td><td>150</td><td>75.0%</td><td>93.8%</td><td>34.9%</td><td>84.4%</td><td>0.534</td><td>72.5%</td><td>1,210</td></tr>
@@ -106,7 +106,7 @@ python rag_bench.py --verify             # re-run and compare with the published
           <thead><tr><th>Pipeline</th><th>Chunks</th><th>R@1k tokens</th><th>R@2k tokens</th><th>Top-1</th><th>Top-5</th><th>MRR@10</th><th>Table cells R@1k</th><th>Ctx tokens @5</th></tr></thead>
           <tbody>
             <tr class="is-jdf"><td>JDF · jdf chunk (section, 512 tok)</td><td>192</td><td class="bench-best">97.4%</td><td class="bench-best">100.0%</td><td>40.1%</td><td>91.1%</td><td>0.599</td><td>95.8%</td><td>693</td></tr>
-            <tr class="is-conv"><td>PDF → jdf convert → jdf chunk (section, 512 tok)</td><td>216</td><td>96.4%</td><td class="bench-best">100.0%</td><td>34.4%</td><td>78.1%</td><td>0.537</td><td>94.2%</td><td>529</td></tr>
+            <tr class="is-conv"><td>PDF → jdf convert → jdf chunk (section, 512 tok)</td><td>216</td><td>96.4%</td><td class="bench-best">100.0%</td><td>34.4%</td><td>78.1%</td><td>0.537</td><td>94.2%</td><td>526</td></tr>
             <tr><td>PDF · PyMuPDF get_text() · fixed 1000/200</td><td>153</td><td>70.3%</td><td>90.1%</td><td>30.2%</td><td>80.2%</td><td>0.492</td><td>63.3%</td><td>1,204</td></tr>
             <tr><td>PDF · PyMuPDF get_text() · fixed 2000/200</td><td>90</td><td>60.9%</td><td>82.8%</td><td class="bench-best">45.8%</td><td>81.8%</td><td class="bench-best">0.606</td><td>63.3%</td><td>1,695</td></tr>
             <tr><td>PDF · pdfplumber extract_text() · fixed 1000/200</td><td>150</td><td>65.6%</td><td>89.1%</td><td>28.1%</td><td>78.1%</td><td>0.474</td><td>58.3%</td><td>1,193</td></tr>
@@ -122,7 +122,7 @@ python rag_bench.py --verify             # re-run and compare with the published
           <thead><tr><th>Pipeline</th><th>Chunks</th><th>R@1k tokens</th><th>R@2k tokens</th><th>Top-1</th><th>Top-5</th><th>MRR@10</th><th>Table cells R@1k</th><th>Ctx tokens @5</th></tr></thead>
           <tbody>
             <tr class="is-jdf"><td>JDF · jdf chunk (section, 512 tok)</td><td>192</td><td>96.9%</td><td class="bench-best">100.0%</td><td class="bench-best">63.0%</td><td>94.8%</td><td class="bench-best">0.758</td><td>95.0%</td><td>728</td></tr>
-            <tr class="is-conv"><td>PDF → jdf convert → jdf chunk (section, 512 tok)</td><td>216</td><td class="bench-best">99.5%</td><td>99.5%</td><td>54.2%</td><td>94.8%</td><td>0.694</td><td>99.2%</td><td>552</td></tr>
+            <tr class="is-conv"><td>PDF → jdf convert → jdf chunk (section, 512 tok)</td><td>216</td><td class="bench-best">99.5%</td><td>99.5%</td><td>54.2%</td><td>94.8%</td><td>0.694</td><td>99.2%</td><td>550</td></tr>
             <tr><td>PDF · PyMuPDF get_text() · fixed 1000/200</td><td>153</td><td>78.6%</td><td>97.4%</td><td>31.8%</td><td>90.1%</td><td>0.528</td><td>81.7%</td><td>1,220</td></tr>
             <tr><td>PDF · PyMuPDF get_text() · fixed 2000/200</td><td>90</td><td>56.8%</td><td>94.3%</td><td>46.9%</td><td>92.7%</td><td>0.630</td><td>69.2%</td><td>1,793</td></tr>
             <tr><td>PDF · pdfplumber extract_text() · fixed 1000/200</td><td>150</td><td>80.2%</td><td>97.4%</td><td>32.3%</td><td>90.6%</td><td>0.534</td><td>83.3%</td><td>1,215</td></tr>
@@ -133,7 +133,7 @@ python rag_bench.py --verify             # re-run and compare with the published
             <tr><td>PDF · pdftotext -layout (poppler) · fixed 2000/200</td><td>96</td><td>44.8%</td><td>89.6%</td><td>34.4%</td><td class="bench-best">95.3%</td><td>0.547</td><td>48.3%</td><td>2,296</td></tr>
           </tbody>
         </table></div>
-        <p class="rag-bench-note">R@1k tokens = the answer was inside the first 1,000 tokens of retrieved context (chunk-size neutral: a 2,000-character PDF chunk “hits” more often at top-1 simply because it is a quarter of the document, and then costs 3× the tokens). Hit = right document and the chunk contains both the answer and its row/subject key. 24 documents, 120 pages, 192 questions (120 table cells, 48 prose, 24 list). Embeddings run locally (nomic-embed-text via Ollama 0.32.6; BAAI/bge-small-en-v1.5 via sentence-transformers 6.0.1; sentence-transformers/all-MiniLM-L6-v2 via sentence-transformers 6.0.1; BAAI/bge-base-en-v1.5 via sentence-transformers 6.0.1). JDF chunk hashes verified; editing one paragraph re-embeds <strong>1 of 192</strong> chunks. Apple M5, 2026-09-13.</p>
+        <p class="rag-bench-note">R@1k tokens = the answer was inside the first 1,000 tokens of retrieved context (chunk-size neutral: a 2,000-character PDF chunk “hits” more often at top-1 simply because it is a quarter of the document, and then costs 3× the tokens). Hit = right document and the chunk contains both the answer and its row/subject key. 24 documents, 120 pages, 192 questions (120 table cells, 48 prose, 24 list). Embeddings run locally (nomic-embed-text via Ollama 0.32.6; BAAI/bge-small-en-v1.5 via sentence-transformers 6.0.1; sentence-transformers/all-MiniLM-L6-v2 via sentence-transformers 6.0.1; BAAI/bge-base-en-v1.5 via sentence-transformers 6.0.1). JDF chunk hashes verified; editing one paragraph re-embeds <strong>1 of 192</strong> chunks. Apple M5, 2026-09-18.</p>
 <!-- bench:table:end -->
 
       <h2>RAG cost — 1,000 PDF files vs 1,000 JDF files</h2>
@@ -147,7 +147,7 @@ python rag_bench.py --verify             # re-run and compare with the published
             <tr><td>Chunks</td><td class="is-jdf">8,000</td><td>6,291</td></tr>
             <tr><td>Embedding tokens, initial index</td><td class="is-jdf">1,305,820</td><td>1,390,646</td></tr>
             <tr><td>Embedding cost · OpenAI text-embedding-3-small</td><td class="is-jdf">$0.0261</td><td>$0.0278</td></tr>
-            <tr><td>Local embedding time · bge-small-en-v1.5 (measured throughput)</td><td class="is-jdf">43.8 s</td><td>32.4 s</td></tr>
+            <tr><td>Local embedding time · bge-small-en-v1.5 (measured throughput)</td><td class="is-jdf">40.5 s</td><td>33.6 s</td></tr>
             <tr><td>Vector-store payload</td><td class="is-jdf">5.8 MB</td><td>5.6 MB</td></tr>
             <tr><td>Re-embed tokens when one paragraph changes in every document</td><td class="is-jdf">91,000</td><td>1,461,000</td></tr>
             <tr><td>Re-index cost · OpenAI text-embedding-3-small</td><td class="is-jdf">$0.0018</td><td>$0.0292</td></tr>
@@ -155,7 +155,7 @@ python rag_bench.py --verify             # re-run and compare with the published
             <tr><td>LLM input cost · Claude Sonnet 5 input</td><td class="is-jdf">$1,506.73</td><td>$2,447.25</td></tr>
           </tbody>
         </table></div>
-        <p class="rag-bench-note">1,000 files per format = the 24-document corpus cycled. Tokens are counted from the chunks each pipeline produces (ceil(chars/4), both sides); embedding time is measured throughput on Apple M5 (2026-09-13) applied to the totals. Prices from <code>bench/prices.json</code> (as of 2026-09-12); edit it for your provider — the benchmark never calls a paid API. The PDF column is the PDF pipeline that scored best in the accuracy run. <strong>Scaling:</strong> figures are measured at 1,000 documents and 1,000,000 queries; anything at other volumes (10,000 documents, 10M queries) is a linear estimate, not a measurement — index and re-index costs scale with documents, query cost scales with questions asked. Re-index: JDF re-embeds only chunks whose content hash changed (<code>jdf embed --incremental</code>); a PDF has no chunk identity, so an edit means re-chunking and re-embedding the whole document.</p>
+        <p class="rag-bench-note">1,000 files per format = the 24-document corpus cycled. Tokens are counted from the chunks each pipeline produces (ceil(chars/4), both sides); embedding time is measured throughput on Apple M5 (2026-09-18) applied to the totals. Prices from <code>bench/prices.json</code> (as of 2026-09-12); edit it for your provider — the benchmark never calls a paid API. The PDF column is the PDF pipeline that scored best in the accuracy run. <strong>Scaling:</strong> figures are measured at 1,000 documents and 1,000,000 queries; anything at other volumes (10,000 documents, 10M queries) is a linear estimate, not a measurement — index and re-index costs scale with documents, query cost scales with questions asked. Re-index: JDF re-embeds only chunks whose content hash changed (<code>jdf embed --incremental</code>); a PDF has no chunk identity, so an edit means re-chunking and re-embedding the whole document.</p>
 <!-- bench:cost:end -->
 
       <h2>Method</h2>

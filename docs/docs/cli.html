@@ -58,6 +58,7 @@ jdf --help</code></pre>
 - run<span class="punc">:</span> npx @uurtech/jdf-cli validate docs/whitepaper.jdf</code></pre>
 
       <h3><code>jdf convert &lt;file.pdf&gt; [-o output.{jdf,jdfx}] [--json] [--password PW] [--drop-invisible-text]</code></h3>
+      <p><strong>Reads the page the way a person does.</strong> Multi-column pages come out in reading order (column by column between full-width blocks), body lines are folded into paragraphs (the PDF's line breaks are kept, so rendering does not move — but a sentence that wraps is one sentence for <code>jdf chunk</code>, search and the LLM), tables are rebuilt from geometry, and subscripts / small caps / footnote marks stay on their line. Ground truth for both: <code>pnpm --filter @jdf/pdf-import verify:order</code> and <code>verify:tables</code>; real-document numbers in <a href="benchmark.html">the benchmark</a>.</p>
       <p>Convert a PDF to a JDF document. Same algorithm the desktop reader uses, packaged as a node CLI — both surfaces import <code>@jdf/pdf-import</code> from <code>packages/jdf-pdf-import/</code>, so output is bit-identical for the same PDF. The reader uses the browser entry point (DOM canvas, real Web Worker); the CLI uses the node entry point (<code>@napi-rs/canvas</code>, in-process).</p>
 
 <pre><code>jdf convert paper.pdf                       <span class="com"># pure-text PDF → paper.jdf</span>

@@ -103,6 +103,7 @@ function textTag(h: TextElement["heading"]): keyof HTMLElementTagNameMap {
 // ── richtext ────────────────────────────────────────────────────────────────
 function renderRichText(el: RichTextElement, ctx: RenderContext): HTMLElement {
   const p = document.createElement("p");
+  p.style.whiteSpace = "pre-wrap"; // keep "\n" line breaks (folded paragraphs) — same as the reader
   p.className = "jdfjs-richtext";
   p.style.margin = "0";
   applyStyle(p, resolveStyle(el.style, ctx.styles));

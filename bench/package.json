@@ -9,7 +9,8 @@
     "print": "node src/print-pdf.mjs",
     "export-chunks": "tsx src/export-chunks.ts",
     "render": "node src/render.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "byoc-chunks": "tsx src/byoc-chunks.ts"
   },
   "dependencies": {
     "pdfjs-dist": "^4.10.38"

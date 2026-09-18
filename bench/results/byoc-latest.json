@@ -1,0 +1,1052 @@
+{
+  "date": "2026-09-18",
+  "machine": {
+    "cpu": "Apple M5",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6"
+  },
+  "cliVersion": "0.2.2",
+  "documents": [
+    {
+      "id": "bert",
+      "title": "BERT: Pre-training of Deep Bidirectional Transformers (arXiv 1810.04805)",
+      "url": "https://arxiv.org/pdf/1810.04805",
+      "sha256": "5692a5514787a8c6727b4ff3b726a3385798bc68e12138d1d4af83947e2acf6e",
+      "layout": "two-column (ACL), 16 pages, tables",
+      "pages": 16,
+      "tables": 17,
+      "chunks": 75,
+      "convertMs": 625
+    },
+    {
+      "id": "attention",
+      "title": "Attention Is All You Need (arXiv 1706.03762)",
+      "url": "https://arxiv.org/pdf/1706.03762",
+      "sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697",
+      "layout": "single-column (NeurIPS), 15 pages, tables",
+      "pages": 15,
+      "tables": 24,
+      "chunks": 49,
+      "convertMs": 827
+    },
+    {
+      "id": "aws-overview",
+      "title": "Overview of Amazon Web Services (AWS whitepaper)",
+      "url": "https://docs.aws.amazon.com/pdfs/whitepapers/latest/aws-overview/aws-overview.pdf",
+      "sha256": "4805f3b14423574bcbc392327f8b9bc0b64c56bc88c1c4955cdc580e3aff0538",
+      "layout": "single-column, 162 pages, headings + lists",
+      "pages": 162,
+      "tables": 11,
+      "chunks": 498,
+      "convertMs": 4468
+    },
+    {
+      "id": "aws-serverless-lens",
+      "title": "Serverless Applications Lens \u2014 AWS Well-Architected Framework",
+      "url": "https://docs.aws.amazon.com/pdfs/wellarchitected/latest/serverless-applications-lens/wellarchitected-serverless-applications-lens.pdf",
+      "sha256": "ae50f18521113213400968809b9984f27a2caec0aac725563ec54e1be3e6b31e",
+      "layout": "single-column, 104 pages, headings + lists",
+      "pages": 104,
+      "tables": 6,
+      "chunks": 249,
+      "convertMs": 3580
+    }
+  ],
+  "pages": 297,
+  "questions": 128,
+  "questionsSample": [
+    {
+      "id": "bert-q001",
+      "doc": "bert",
+      "type": "prose",
+      "question": "Fill in the blank: BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding Jacob Devlin Ming-Wei Chang Kenton Lee Kristina Toutanova Google AI Language {jacobdevlin,mingweichang,kentonl,kristout}@google.com arXiv:1810.04805v2 [cs.CL] ____May 2019 Abstract We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers.",
+      "answer": "24",
+      "key": "Toutanova"
+    },
+    {
+      "id": "bert-q002",
+      "doc": "bert",
+      "type": "prose",
+      "question": "Fill in the blank: We use WordPiece embeddings (Wu et al., 2016) with a ____token vocabulary.",
+      "answer": "30,000",
+      "key": "WordPiece"
+    },
+    {
+      "id": "bert-q004",
+      "doc": "bert",
+      "type": "prose",
+      "question": "Fill in the blank: The training data generator chooses ____ of the token positions at random for prediction.",
+      "answer": "15%",
+      "key": "generator"
+    },
+    {
+      "id": "bert-q006",
+      "doc": "bert",
+      "type": "prose",
+      "question": "Fill in the blank: Specifically, when choosing the sentences A and B for each pretraining example, ____ of the time B is the actual next sentence that follows A (labeled as IsNext), and 50% of the time it is a random sentence from the corpus (labeled as NotNext).",
+      "answer": "50%",
+      "key": "sentences"
+    },
+    {
+      "id": "bert-q008",
+      "doc": "bert",
+      "type": "prose",
+      "question": "Fill in the blank: For the pre-training corpus we use the BooksCorpus (____M words) (Zhu et al., 2015) and English Wikipedia (2,500M words).",
+      "answer": "800",
+      "key": "Wikipedia"
+    }
+  ],
+  "embedders": "ollama:nomic-embed-text",
+  "pipelines": [
+    {
+      "id": "jdf-converted-512",
+      "label": "PDF \u2192 jdf convert \u2192 jdf chunk (section, 512 tok)",
+      "format": "jdf-converted",
+      "tool": "jdf convert + chunk",
+      "version": "0.2.2",
+      "chunks": 570,
+      "avgChunkTokens": 276,
+      "retrievers": {
+        "bm25": {
+          "all": {
+            "n": 128,
+            "recall1": 0.9140625,
+            "recall3": 0.96875,
+            "recall5": 0.9765625,
+            "mrr10": 0.9403645833333333,
+            "ctxTokensTop5": 2076.1640625,
+            "recallAt1000Tok": 0.9453125,
+            "recallAt2000Tok": 0.96875
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.9140625,
+            "recall3": 0.96875,
+            "recall5": 0.9765625,
+            "mrr10": 0.9403645833333333,
+            "ctxTokensTop5": 2076.1640625,
+            "recallAt1000Tok": 0.9453125,
+            "recallAt2000Tok": 0.96875
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        },
+        "dense:nomic-embed-text": {
+          "all": {
+            "n": 128,
+            "recall1": 0.546875,
+            "recall3": 0.7265625,
+            "recall5": 0.8046875,
+            "mrr10": 0.6564918154761905,
+            "ctxTokensTop5": 2047.0,
+            "recallAt1000Tok": 0.6484375,
+            "recallAt2000Tok": 0.7734375
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.546875,
+            "recall3": 0.7265625,
+            "recall5": 0.8046875,
+            "mrr10": 0.6564918154761905,
+            "ctxTokensTop5": 2047.0,
+            "recallAt1000Tok": 0.6484375,
+            "recallAt2000Tok": 0.7734375
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        }
+      }
+    },
+    {
+      "id": "jdf-converted-256",
+      "label": "PDF \u2192 jdf convert \u2192 jdf chunk (section, 256 tok)",
+      "format": "jdf-converted",
+      "tool": "jdf convert + chunk",
+      "version": "0.2.2",
+      "chunks": 871,
+      "avgChunkTokens": 181,
+      "retrievers": {
+        "bm25": {
+          "all": {
+            "n": 128,
+            "recall1": 0.9375,
+            "recall3": 0.96875,
+            "recall5": 0.96875,
+            "mrr10": 0.953125,
+            "ctxTokensTop5": 1068.78125,
+            "recallAt1000Tok": 0.96875,
+            "recallAt2000Tok": 0.96875
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.9375,
+            "recall3": 0.96875,
+            "recall5": 0.96875,
+            "mrr10": 0.953125,
+            "ctxTokensTop5": 1068.78125,
+            "recallAt1000Tok": 0.96875,
+            "recallAt2000Tok": 0.96875
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        },
+        "dense:nomic-embed-text": {
+          "all": {
+            "n": 128,
+            "recall1": 0.5703125,
+            "recall3": 0.7421875,
+            "recall5": 0.828125,
+            "mrr10": 0.678751240079365,
+            "ctxTokensTop5": 1075.1171875,
+            "recallAt1000Tok": 0.8046875,
+            "recallAt2000Tok": 0.890625
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.5703125,
+            "recall3": 0.7421875,
+            "recall5": 0.828125,
+            "mrr10": 0.678751240079365,
+            "ctxTokensTop5": 1075.1171875,
+            "recallAt1000Tok": 0.8046875,
+            "recallAt2000Tok": 0.890625
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        }
+      }
+    },
+    {
+      "id": "pdf-pymupdf-1000",
+      "label": "PDF \u00b7 PyMuPDF get_text() \u00b7 fixed 1000/200",
+      "format": "pdf",
+      "tool": "PyMuPDF get_text()",
+      "version": "1.28.2",
+      "chunks": 856,
+      "avgChunkTokens": 237,
+      "retrievers": {
+        "bm25": {
+          "all": {
+            "n": 128,
+            "recall1": 0.9375,
+            "recall3": 0.9765625,
+            "recall5": 0.9765625,
+            "mrr10": 0.9557291666666666,
+            "ctxTokensTop5": 1208.421875,
+            "recallAt1000Tok": 0.9765625,
+            "recallAt2000Tok": 0.9765625
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.9375,
+            "recall3": 0.9765625,
+            "recall5": 0.9765625,
+            "mrr10": 0.9557291666666666,
+            "ctxTokensTop5": 1208.421875,
+            "recallAt1000Tok": 0.9765625,
+            "recallAt2000Tok": 0.9765625
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        },
+        "dense:nomic-embed-text": {
+          "all": {
+            "n": 128,
+            "recall1": 0.578125,
+            "recall3": 0.765625,
+            "recall5": 0.8125,
+            "mrr10": 0.6805524553571428,
+            "ctxTokensTop5": 1209.703125,
+            "recallAt1000Tok": 0.7890625,
+            "recallAt2000Tok": 0.8828125
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.578125,
+            "recall3": 0.765625,
+            "recall5": 0.8125,
+            "mrr10": 0.6805524553571428,
+            "ctxTokensTop5": 1209.703125,
+            "recallAt1000Tok": 0.7890625,
+            "recallAt2000Tok": 0.8828125
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        }
+      }
+    },
+    {
+      "id": "pdf-pymupdf-2000",
+      "label": "PDF \u00b7 PyMuPDF get_text() \u00b7 fixed 2000/200",
+      "format": "pdf",
+      "tool": "PyMuPDF get_text()",
+      "version": "1.28.2",
+      "chunks": 393,
+      "avgChunkTokens": 456,
+      "retrievers": {
+        "bm25": {
+          "all": {
+            "n": 128,
+            "recall1": 0.9609375,
+            "recall3": 0.9765625,
+            "recall5": 0.9765625,
+            "mrr10": 0.96875,
+            "ctxTokensTop5": 2407.828125,
+            "recallAt1000Tok": 0.9765625,
+            "recallAt2000Tok": 0.9765625
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.9609375,
+            "recall3": 0.9765625,
+            "recall5": 0.9765625,
+            "mrr10": 0.96875,
+            "ctxTokensTop5": 2407.828125,
+            "recallAt1000Tok": 0.9765625,
+            "recallAt2000Tok": 0.9765625
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        },
+        "dense:nomic-embed-text": {
+          "all": {
+            "n": 128,
+            "recall1": 0.5,
+            "recall3": 0.765625,
+            "recall5": 0.8515625,
+            "mrr10": 0.642258804563492,
+            "ctxTokensTop5": 2373.03125,
+            "recallAt1000Tok": 0.640625,
+            "recallAt2000Tok": 0.8203125
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.5,
+            "recall3": 0.765625,
+            "recall5": 0.8515625,
+            "mrr10": 0.642258804563492,
+            "ctxTokensTop5": 2373.03125,
+            "recallAt1000Tok": 0.640625,
+            "recallAt2000Tok": 0.8203125
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        }
+      }
+    },
+    {
+      "id": "pdf-pdfplumber-1000",
+      "label": "PDF \u00b7 pdfplumber extract_text() \u00b7 fixed 1000/200",
+      "format": "pdf",
+      "tool": "pdfplumber extract_text()",
+      "version": "0.11.10",
+      "chunks": 843,
+      "avgChunkTokens": 237,
+      "retrievers": {
+        "bm25": {
+          "all": {
+            "n": 128,
+            "recall1": 0.7265625,
+            "recall3": 0.7890625,
+            "recall5": 0.8203125,
+            "mrr10": 0.7654606894841269,
+            "ctxTokensTop5": 1200.0390625,
+            "recallAt1000Tok": 0.8203125,
+            "recallAt2000Tok": 0.84375
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.7265625,
+            "recall3": 0.7890625,
+            "recall5": 0.8203125,
+            "mrr10": 0.7654606894841269,
+            "ctxTokensTop5": 1200.0390625,
+            "recallAt1000Tok": 0.8203125,
+            "recallAt2000Tok": 0.84375
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        },
+        "dense:nomic-embed-text": {
+          "all": {
+            "n": 128,
+            "recall1": 0.5703125,
+            "recall3": 0.7421875,
+            "recall5": 0.78125,
+            "mrr10": 0.6632688492063492,
+            "ctxTokensTop5": 1195.8671875,
+            "recallAt1000Tok": 0.7734375,
+            "recallAt2000Tok": 0.8359375
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.5703125,
+            "recall3": 0.7421875,
+            "recall5": 0.78125,
+            "mrr10": 0.6632688492063492,
+            "ctxTokensTop5": 1195.8671875,
+            "recallAt1000Tok": 0.7734375,
+            "recallAt2000Tok": 0.8359375
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        }
+      }
+    },
+    {
+      "id": "pdf-pdfplumber-2000",
+      "label": "PDF \u00b7 pdfplumber extract_text() \u00b7 fixed 2000/200",
+      "format": "pdf",
+      "tool": "pdfplumber extract_text()",
+      "version": "0.11.10",
+      "chunks": 386,
+      "avgChunkTokens": 455,
+      "retrievers": {
+        "bm25": {
+          "all": {
+            "n": 128,
+            "recall1": 0.7265625,
+            "recall3": 0.828125,
+            "recall5": 0.859375,
+            "mrr10": 0.7857638888888889,
+            "ctxTokensTop5": 2379.328125,
+            "recallAt1000Tok": 0.8046875,
+            "recallAt2000Tok": 0.8515625
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.7265625,
+            "recall3": 0.828125,
+            "recall5": 0.859375,
+            "mrr10": 0.7857638888888889,
+            "ctxTokensTop5": 2379.328125,
+            "recallAt1000Tok": 0.8046875,
+            "recallAt2000Tok": 0.8515625
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        },
+        "dense:nomic-embed-text": {
+          "all": {
+            "n": 128,
+            "recall1": 0.4296875,
+            "recall3": 0.6796875,
+            "recall5": 0.78125,
+            "mrr10": 0.5834573412698413,
+            "ctxTokensTop5": 2356.3203125,
+            "recallAt1000Tok": 0.6328125,
+            "recallAt2000Tok": 0.75
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.4296875,
+            "recall3": 0.6796875,
+            "recall5": 0.78125,
+            "mrr10": 0.5834573412698413,
+            "ctxTokensTop5": 2356.3203125,
+            "recallAt1000Tok": 0.6328125,
+            "recallAt2000Tok": 0.75
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        }
+      }
+    },
+    {
+      "id": "pdf-pypdf-1000",
+      "label": "PDF \u00b7 pypdf extract_text() \u00b7 fixed 1000/200",
+      "format": "pdf",
+      "tool": "pypdf extract_text()",
+      "version": "6.18.1",
+      "chunks": 854,
+      "avgChunkTokens": 237,
+      "retrievers": {
+        "bm25": {
+          "all": {
+            "n": 128,
+            "recall1": 0.9375,
+            "recall3": 0.9765625,
+            "recall5": 0.9765625,
+            "mrr10": 0.95703125,
+            "ctxTokensTop5": 1208.5859375,
+            "recallAt1000Tok": 0.9765625,
+            "recallAt2000Tok": 0.9765625
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.9375,
+            "recall3": 0.9765625,
+            "recall5": 0.9765625,
+            "mrr10": 0.95703125,
+            "ctxTokensTop5": 1208.5859375,
+            "recallAt1000Tok": 0.9765625,
+            "recallAt2000Tok": 0.9765625
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        },
+        "dense:nomic-embed-text": {
+          "all": {
+            "n": 128,
+            "recall1": 0.5625,
+            "recall3": 0.765625,
+            "recall5": 0.84375,
+            "mrr10": 0.6803788442460318,
+            "ctxTokensTop5": 1207.265625,
+            "recallAt1000Tok": 0.8125,
+            "recallAt2000Tok": 0.8984375
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.5625,
+            "recall3": 0.765625,
+            "recall5": 0.84375,
+            "mrr10": 0.6803788442460318,
+            "ctxTokensTop5": 1207.265625,
+            "recallAt1000Tok": 0.8125,
+            "recallAt2000Tok": 0.8984375
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        }
+      }
+    },
+    {
+      "id": "pdf-pypdf-2000",
+      "label": "PDF \u00b7 pypdf extract_text() \u00b7 fixed 2000/200",
+      "format": "pdf",
+      "tool": "pypdf extract_text()",
+      "version": "6.18.1",
+      "chunks": 391,
+      "avgChunkTokens": 457,
+      "retrievers": {
+        "bm25": {
+          "all": {
+            "n": 128,
+            "recall1": 0.953125,
+            "recall3": 0.96875,
+            "recall5": 0.9765625,
+            "mrr10": 0.962890625,
+            "ctxTokensTop5": 2419.1796875,
+            "recallAt1000Tok": 0.96875,
+            "recallAt2000Tok": 0.9765625
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.953125,
+            "recall3": 0.96875,
+            "recall5": 0.9765625,
+            "mrr10": 0.962890625,
+            "ctxTokensTop5": 2419.1796875,
+            "recallAt1000Tok": 0.96875,
+            "recallAt2000Tok": 0.9765625
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        },
+        "dense:nomic-embed-text": {
+          "all": {
+            "n": 128,
+            "recall1": 0.4453125,
+            "recall3": 0.6953125,
+            "recall5": 0.8515625,
+            "mrr10": 0.6014167906746032,
+            "ctxTokensTop5": 2389.28125,
+            "recallAt1000Tok": 0.6015625,
+            "recallAt2000Tok": 0.78125
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.4453125,
+            "recall3": 0.6953125,
+            "recall5": 0.8515625,
+            "mrr10": 0.6014167906746032,
+            "ctxTokensTop5": 2389.28125,
+            "recallAt1000Tok": 0.6015625,
+            "recallAt2000Tok": 0.78125
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        }
+      }
+    },
+    {
+      "id": "pdf-pdftotext-1000",
+      "label": "PDF \u00b7 pdftotext -layout (poppler) \u00b7 fixed 1000/200",
+      "format": "pdf",
+      "tool": "pdftotext -layout (poppler)",
+      "version": "26.06.0",
+      "chunks": 1098,
+      "avgChunkTokens": 215,
+      "retrievers": {
+        "bm25": {
+          "all": {
+            "n": 128,
+            "recall1": 0.921875,
+            "recall3": 0.9609375,
+            "recall5": 0.9609375,
+            "mrr10": 0.94140625,
+            "ctxTokensTop5": 1130.9375,
+            "recallAt1000Tok": 0.9609375,
+            "recallAt2000Tok": 0.9609375
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.921875,
+            "recall3": 0.9609375,
+            "recall5": 0.9609375,
+            "mrr10": 0.94140625,
+            "ctxTokensTop5": 1130.9375,
+            "recallAt1000Tok": 0.9609375,
+            "recallAt2000Tok": 0.9609375
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        },
+        "dense:nomic-embed-text": {
+          "all": {
+            "n": 128,
+            "recall1": 0.6171875,
+            "recall3": 0.7734375,
+            "recall5": 0.8359375,
+            "mrr10": 0.7095052083333333,
+            "ctxTokensTop5": 1119.125,
+            "recallAt1000Tok": 0.8046875,
+            "recallAt2000Tok": 0.8671875
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.6171875,
+            "recall3": 0.7734375,
+            "recall5": 0.8359375,
+            "mrr10": 0.7095052083333333,
+            "ctxTokensTop5": 1119.125,
+            "recallAt1000Tok": 0.8046875,
+            "recallAt2000Tok": 0.8671875
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        }
+      }
+    },
+    {
+      "id": "pdf-pdftotext-2000",
+      "label": "PDF \u00b7 pdftotext -layout (poppler) \u00b7 fixed 2000/200",
+      "format": "pdf",
+      "tool": "pdftotext -layout (poppler)",
+      "version": "26.06.0",
+      "chunks": 460,
+      "avgChunkTokens": 444,
+      "retrievers": {
+        "bm25": {
+          "all": {
+            "n": 128,
+            "recall1": 0.9609375,
+            "recall3": 0.984375,
+            "recall5": 0.984375,
+            "mrr10": 0.97265625,
+            "ctxTokensTop5": 2275.6015625,
+            "recallAt1000Tok": 0.984375,
+            "recallAt2000Tok": 0.984375
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.9609375,
+            "recall3": 0.984375,
+            "recall5": 0.984375,
+            "mrr10": 0.97265625,
+            "ctxTokensTop5": 2275.6015625,
+            "recallAt1000Tok": 0.984375,
+            "recallAt2000Tok": 0.984375
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        },
+        "dense:nomic-embed-text": {
+          "all": {
+            "n": 128,
+            "recall1": 0.5625,
+            "recall3": 0.734375,
+            "recall5": 0.8125,
+            "mrr10": 0.6630611359126984,
+            "ctxTokensTop5": 2267.0390625,
+            "recallAt1000Tok": 0.671875,
+            "recallAt2000Tok": 0.7734375
+          },
+          "table": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          },
+          "prose": {
+            "n": 128,
+            "recall1": 0.5625,
+            "recall3": 0.734375,
+            "recall5": 0.8125,
+            "mrr10": 0.6630611359126984,
+            "ctxTokensTop5": 2267.0390625,
+            "recallAt1000Tok": 0.671875,
+            "recallAt2000Tok": 0.7734375
+          },
+          "list": {
+            "n": 0,
+            "recall1": 0.0,
+            "recall3": 0.0,
+            "recall5": 0.0,
+            "mrr10": 0.0,
+            "ctxTokensTop5": 0.0,
+            "recallAt1000Tok": 0.0,
+            "recallAt2000Tok": 0.0
+          }
+        }
+      }
+    }
+  ]
+}

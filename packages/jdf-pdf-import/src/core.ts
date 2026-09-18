@@ -1,6 +1,8 @@
 import type { JdfDocument, Page, Element, TextElement, ImageResource, ShapeElement } from "@jdf/core";
 import type { PdfImportRuntime } from "./types";
 import { detectTables, calibrateGlyphWidth, hasStretchedSpaces, type TRun } from "./tables";
+import { detectGutters, orderByColumns } from "./columns";
+import { foldParagraphs, type LineMeta } from "./paragraphs";
 
 const PT_TO_MM = 0.352778;
 
@@ -873,6 +875,10 @@ export interface ImportPdfOptions {
   /** Rebuild tables from positioned text (+ drawn borders) into real `table`
    *  elements. Default true; set false to keep every run as loose text. */
   detectTables?: boolean;
+  /** Reorder text/tables on multi-column pages into reading order (default true). Rendering is unaffected — only element sequence. */
+  readingOrder?: boolean;
+  /** Fold consecutive body lines into paragraph elements (default true). Boxes cover the same area; text becomes whole for chunking/search. */
+  foldParagraphs?: boolean;
   /** Optional pdfjs-dist module override (already initialised). */
   pdfjs?: any;
   /** Password for encrypted PDFs (tried first). */
@@ -1221,6 +1227,8 @@ export async function importPdfToJdf(
     }
 
     const elements: Element[] = [];
+    // Facts about each emitted line the paragraph folder needs (measured width, size, face).
+    const lineMeta = new WeakMap<object, LineMeta>();
 
     // Tables: rebuild grids from line geometry (+ drawn cell borders /
     // backgrounds as hints) and emit real `table` elements. The text lines
@@ -1229,7 +1237,14 @@ export async function importPdfToJdf(
       const cls = fontMap.get(l.fontName) || classifyFont(l.fontName || "");
       return { text: l.text, x: l.x, y: l.y, width: l.width, height: l.height, fontSize: l.fontSize, fontName: l.fontName, color: l.color, bold: cls.weight === "bold" };
     });
-    const detected = options.detectTables === false ? [] : detectTables(tRuns, ops.shapes, pageW * PT_TO_MM);
+    // Body font size = the size carrying the most characters on the page.
+    const sizeChars = new Map<number, number>();
+    for (const l of lines) { const k = Math.round(l.fontSize * 2) / 2; sizeChars.set(k, (sizeChars.get(k) ?? 0) + l.text.length); }
+    const bodyFontSize = [...sizeChars.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0;
+    // Column gutters (multi-column pages). Known before table detection so two
+    // columns of justified prose are never mistaken for a two-column table.
+    const gutters = options.readingOrder === false ? [] : detectGutters(lines.map((l) => ({ text: l.text, x: l.x, y: l.y, width: l.width, fontSize: l.fontSize })), bodyFontSize, pageW * PT_TO_MM);
+    const detected = options.detectTables === false ? [] : detectTables(tRuns, ops.shapes, pageW * PT_TO_MM, gutters);
     const consumedLines = new Set<number>();
     const consumedShapes = new Set<number>();
     const tableAtLine = new Map<number, Element>();
@@ -1292,11 +1307,6 @@ export async function importPdfToJdf(
       });
     }
 
-    // Body font size = the size carrying the most characters on the page.
-    const sizeChars = new Map<number, number>();
-    for (const l of lines) { const k = Math.round(l.fontSize * 2) / 2; sizeChars.set(k, (sizeChars.get(k) ?? 0) + l.text.length); }
-    const bodyFontSize = [...sizeChars.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0;
-
     // Visual rows: runs on one baseline that sit right next to each other but
     // differ in style ("Full Stack Developer," bold + " Decktopus AI" regular).
     // As separate absolutely-positioned boxes they overlap whenever the
@@ -1310,10 +1320,14 @@ export async function importPdfToJdf(
       const order = lines.map((_, i) => i).filter((i) => !consumedLines.has(i));
       for (let a = 0; a < order.length; a++) {
         const i = order[a], li = lines[i];
-        const tolY = Math.max(0.6, li.fontSize * PT_TO_MM * 0.35);
         let bestNext = -1, bestX = Infinity;
         for (let b = 0; b < order.length; b++) {
           const j = order[b], lj = lines[j];
+          // Half the larger font size: a subscript/small-caps run ("BERT" + "LARGE"),
+          // a superscript footnote mark or an inline formula sits on a shifted
+          // baseline but belongs to the same visual row. Line pitch is ≥ 1 em, so
+          // the next line stays out.
+          const tolY = Math.max(0.6, Math.max(li.fontSize, lj.fontSize) * PT_TO_MM * 0.5);
           if (j === i || Math.abs(lj.y - li.y) > tolY || lj.x <= li.x) continue;
           if (lj.x < bestX) { bestX = lj.x; bestNext = j; }
         }
@@ -1375,13 +1389,17 @@ export async function importPdfToJdf(
         });
         const style: any = { fontSize: Math.round(first.fontSize * 10) / 10, fontFamily: base.cls.family };
         if (first.opacity < 0.999) style.opacity = Math.round(first.opacity * 100) / 100;
-        elements.push({
+        const rt: any = {
           type: "richtext",
           runs,
           position: { x: Math.max(0, Math.round(first.x * 100) / 100), y: Math.max(0, Math.round(Math.min(...row.map((i) => lines[i].y)) * 100) / 100) },
           width: Math.max(2, Math.round(Math.max(first.fontSize * PT_TO_MM, Math.min(measuredW, cap)) * 100) / 100),
           style,
-        } as any);
+        };
+        // Size/face of the row = the run carrying most characters ("BERT" + small-caps "LARGE" + body text → body).
+        const dominant = row.map((i) => lines[i]).sort((a, b) => b.text.trim().length - a.text.trim().length)[0];
+        lineMeta.set(rt, { w: Math.max(first.fontSize * PT_TO_MM, rowEnd - first.x), size: dominant.fontSize, face: fontKey(dominant.fontName) });
+        elements.push(rt);
         return;
       }
       const cls = fontMap.get(l.fontName) || classifyFont(l.fontName || "");
@@ -1447,8 +1465,26 @@ export async function importPdfToJdf(
         prev.width = Math.max(prev.width ?? 0, text.width ?? 0);
         return;
       }
+      lineMeta.set(text, { w: Math.max(l.fontSize * PT_TO_MM, l.width), size: l.fontSize, face: fontKey(l.fontName) });
       elements.push(text);
     });
+
+    // Multi-column pages: put the flow elements (text, richtext, table) into
+    // reading order — column by column between full-width blocks — so
+    // `jdf chunk`, search and the TOC see the page the way a reader does.
+    // Shapes/images keep their place in front so paint order is unchanged.
+    if (options.readingOrder !== false) {
+      if (gutters.length) {
+        const isFlow = (e: Element) => e.type === "text" || e.type === "richtext" || e.type === "table";
+        const flow = elements.filter(isFlow), rest = elements.filter((e) => !isFlow(e));
+        elements.splice(0, elements.length, ...rest, ...orderByColumns(flow as any[], gutters, pageWmm));
+      }
+    }
+    // Lines → paragraphs (same boxes, whole sentences) for chunking, search and LLMs.
+    if (options.foldParagraphs !== false) {
+      const folded = foldParagraphs(elements as any[], lineMeta, pageWmm);
+      elements.splice(0, elements.length, ...(folded as Element[]));
+    }
 
     // Form widgets — emit on top of text/shape so the user can interact
     // with them in jdf.js / the reader. Skip pushbuttons (no form value

@@ -53,3 +53,6 @@ sow/
 bench/.venv/
 __pycache__/
 demos/*/out/
+
+# Real-corpus benchmark downloads (bench/byoc.py)
+bench/byoc/cache/

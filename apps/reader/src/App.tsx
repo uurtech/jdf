@@ -152,6 +152,88 @@ export default function App() {
   function appendToPage(pageIndex: number, element: Element) {
     const d = doc(); if (!d) return; commit(appendElementToPage(d, pageIndex, element));
   }
+
+  // ── Media insert: real files, not empty placeholders ─────────────────────
+  // Insert bar "Image"/"Video" opens a file picker; dropping an image/video
+  // onto an open document inserts it. Bytes go into resources.images/videos as
+  // base64 (same shape the PDF importer and the .jdfx unpacker produce), so
+  // autosave/packJdfx carry the asset and jdf.js renders the same document.
+  const MEDIA_MIME: Record<string, string> = {
+    png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", svg: "image/svg+xml", bmp: "image/bmp",
+    mp4: "video/mp4", m4v: "video/mp4", webm: "video/webm", mov: "video/quicktime", ogv: "video/ogg",
+  };
+  function mediaMime(filePath: string): string | undefined {
+    return MEDIA_MIME[(filePath.split(".").pop() || "").toLowerCase()];
+  }
+  function bytesToBase64(bytes: Uint8Array): string {
+    let s = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 0x8000)));
+    return btoa(s);
+  }
+  function imageDims(src: string): Promise<{ w: number; h: number }> {
+    return new Promise((resolve, reject) => {
+      const im = new Image();
+      im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
+      im.onerror = () => reject(new Error("image decode failed"));
+      im.src = src;
+    });
+  }
+  /** Next free y on a page (mm): below the lowest element, so an insert never lands on top of existing content. */
+  function nextFreeY(d: JdfDocument, pageIndex: number): number {
+    const els = (d.pages?.[pageIndex]?.elements ?? []) as any[];
+    let bottom = 0;
+    for (const e of els) if (e?.position) bottom = Math.max(bottom, (e.position.y ?? 0) + (e.height ?? 8));
+    return bottom > 0 ? Math.round((bottom + 4) * 10) / 10 : 5;
+  }
+  async function insertMediaFile(filePath: string): Promise<boolean> {
+    const d = doc(); if (!d) return false;
+    const mime = mediaMime(filePath); if (!mime) return false;
+    try {
+      const bytes = await readBinaryFile(filePath);
+      const base64 = bytesToBase64(bytes);
+      const isVideo = mime.startsWith("video/");
+      const name = filePath.split(/[\\/]/).pop() || (isVideo ? "video" : "image");
+      const id = `${isVideo ? "vid" : "img"}-${Date.now().toString(36)}`;
+      const pageIndex = currentPage();
+      const pageW = (typeof d.meta?.pageSize === "object" && d.meta.pageSize && "width" in d.meta.pageSize ? (d.meta.pageSize as any).width : 210) - 32;
+      let width = isVideo ? Math.min(160, pageW) : Math.min(120, pageW), height = isVideo ? width * 9 / 16 : width * 0.75;
+      if (!isVideo) {
+        try { const dims = await imageDims(`data:${mime};base64,${base64}`); width = Math.min(Math.min(120, pageW), dims.w * 0.2646); height = width * dims.h / dims.w; } catch { /* keep default box */ }
+      }
+      const next: JdfDocument = JSON.parse(JSON.stringify(d));
+      next.resources = next.resources ?? {};
+      const bucket = isVideo ? "videos" : "images";
+      (next.resources as any)[bucket] = { ...((next.resources as any)[bucket] ?? {}), [id]: { src: "embedded", mimeType: mime, data: base64 } };
+      const y = nextFreeY(next, pageIndex);
+      const element: Element = isVideo
+        ? ({ type: "video", id, resource: id, title: name.replace(/\.[^.]+$/, ""), controls: true, fit: "contain", position: { x: 0, y }, width: Math.round(width * 10) / 10, height: Math.round(height * 10) / 10 } as Element)
+        : ({ type: "image", id, resource: id, alt: name.replace(/\.[^.]+$/, ""), fit: "contain", position: { x: 0, y }, width: Math.round(width * 10) / 10, height: Math.round(height * 10) / 10 } as Element);
+      commit(appendElementToPage(next, pageIndex, element));
+      return true;
+    } catch (e: any) {
+      setError5s(`Insert failed: ${e?.message || e}`);
+      return true;
+    }
+  }
+  async function pickAndInsertMedia(kind: "image" | "video") {
+    try {
+      const { open } = await import("@tauri-apps/plugin-dialog");
+      const result = await open({
+        multiple: false,
+        filters: [kind === "image"
+          ? { name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp"] }
+          : { name: "Videos", extensions: ["mp4", "m4v", "webm", "mov", "ogv"] }],
+      });
+      if (!result) return;
+      const filePath = typeof result === "string" ? result : (result as any).path || String(result);
+      await insertMediaFile(filePath);
+    } catch (e) { console.error(e); }
+  }
+  function onInsertElement(el: Element) {
+    // Image/Video from the Insert bar → pick a real file instead of an empty box.
+    if ((el.type === "image" || el.type === "video") && !(el as any).src && !(el as any).resource) { void pickAndInsertMedia(el.type); return; }
+    appendToPage(currentPage(), el);
+  }
   function addPageAfter(pageIndex: number) {
     const d = doc(); if (!d) return; commit(insertPageAfterMutation(d, pageIndex));
   }
@@ -331,9 +413,13 @@ export default function App() {
     try {
       const { listen } = await import("@tauri-apps/api/event");
       const off1 = await listen<string>("open-file", (event) => openByExtension(event.payload));
-      const off2 = await listen<any>("tauri://drag-drop", (event) => {
+      const off2 = await listen<any>("tauri://drag-drop", async (event) => {
         const paths: string[] = event.payload?.paths ?? [];
-        if (paths[0]) openByExtension(paths[0]);
+        if (!paths[0]) return;
+        // An image/video dropped onto an open document is an insert, not an open.
+        const p = normaliseDroppedPath(paths[0]);
+        if (doc() && mediaMime(p) && (await insertMediaFile(p))) return;
+        openByExtension(paths[0]);
       });
       onCleanup(() => { off1(); off2(); });
     } catch {}
@@ -587,7 +673,7 @@ export default function App() {
 
         <Show when={loaded() && doc() && (viewMode() === "jdf")}>
           <div class="flex justify-center py-2 border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/60">
-            <InsertBar onInsert={(el) => appendToPage(currentPage(), el)} />
+            <InsertBar onInsert={onInsertElement} />
           </div>
         </Show>
 

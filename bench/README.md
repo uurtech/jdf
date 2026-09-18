@@ -54,6 +54,27 @@ Nothing from the corpus leaves the machine. The cost benchmark never calls a pai
 
 **RAG cost** (`cost_bench.py`). The corpus is cycled to N files per format (default 1,000). Both sides run the same pipeline — chunks → embeddings → vector store → top-5 context → LLM — and only the input format differs; the PDF column is the PDF pipeline that scored best in the accuracy run. Counted: chunks and embedding tokens for the initial index (ceil(chars/4), both sides), vector-store payload, re-index tokens when one paragraph changes in every document (JDF: only hash-changed chunks; PDF: the whole document), LLM input tokens for 1M queries with top-5 context. Measured: local embedding throughput on a real sample of each pipeline's chunks. Dollar rows use `prices.json`. Accuracy from the same run is repeated in the table so cost and quality sit side by side.
 
+## Real documents — bring your own corpus (`byoc.py`)
+
+The generated corpus gives exact ground truth; `byoc.py` answers "and on real PDFs?" with the same pipelines, retrievers and hit rule on public documents ([`byoc/corpus.json`](byoc/corpus.json): arXiv papers including a two-column one, two AWS whitepapers — downloaded at run time, never committed) or on any folder you pass with `--pdf`. Questions are derived from the documents deterministically: a sentence that states a number is turned into a fill-in-the-blank, and a hit must contain the number and the sentence's key word in the right document. The JDF side is `jdf convert` + `jdf chunk` run on the PDF ([`src/byoc-chunks.ts`](src/byoc-chunks.ts)). Unsupervised questions are noisier than labelled ones, so absolute numbers are lower and both sides share that noise.
+
+<!-- bench:byoc:start -->
+| Pipeline | Chunks | BM25 R@1k tok | nomic-embed-text R@1k tok | nomic-embed-text top-1 | Ctx tokens @5 |
+|---|---:|---:|---:|---:|---:|
+| **PDF → jdf convert → jdf chunk (section, 512 tok)** | 570 | **94.5%** | **64.8%** | **54.7%** | 2047 |
+| **PDF → jdf convert → jdf chunk (section, 256 tok)** | 871 | **96.9%** | **80.5%** | **57.0%** | 1075 |
+| PDF · PyMuPDF get_text() · fixed 1000/200 | 856 | 97.7% | 78.9% | 57.8% | 1210 |
+| PDF · PyMuPDF get_text() · fixed 2000/200 | 393 | 97.7% | 64.1% | 50.0% | 2373 |
+| PDF · pdfplumber extract_text() · fixed 1000/200 | 843 | 82.0% | 77.3% | 57.0% | 1196 |
+| PDF · pdfplumber extract_text() · fixed 2000/200 | 386 | 80.5% | 63.3% | 43.0% | 2356 |
+| PDF · pypdf extract_text() · fixed 1000/200 | 854 | 97.7% | 81.2% | 56.2% | 1207 |
+| PDF · pypdf extract_text() · fixed 2000/200 | 391 | 96.9% | 60.2% | 44.5% | 2389 |
+| PDF · pdftotext -layout (poppler) · fixed 1000/200 | 1098 | 96.1% | 80.5% | 61.7% | 1119 |
+| PDF · pdftotext -layout (poppler) · fixed 2000/200 | 460 | 98.4% | 67.2% | 56.2% | 2267 |
+
+Real public PDFs — [BERT: Pre-training of Deep Bidirectional Transformers](https://arxiv.org/pdf/1810.04805), [Attention Is All You Need](https://arxiv.org/pdf/1706.03762), [Overview of Amazon Web Services](https://docs.aws.amazon.com/pdfs/whitepapers/latest/aws-overview/aws-overview.pdf), [Serverless Applications Lens](https://docs.aws.amazon.com/pdfs/wellarchitected/latest/serverless-applications-lens/wellarchitected-serverless-applications-lens.pdf) (297 pages) — with 128 numeric-fact questions derived from the documents themselves (see `bench/byoc.py`; unsupervised, so absolute numbers are lower than the labelled benchmark and both sides share the noise). JDF side = `jdf convert` + `jdf chunk` 0.2.2, the same code the CLI and reader ship. Apple M5, 2026-09-18. Re-run: `python bench/byoc.py --embedder ollama:nomic-embed-text`; your own folder: `--pdf DIR`.
+<!-- bench:byoc:end -->
+
 ## Reading the accuracy numbers honestly
 
 Results depend on the embedding model. With `nomic-embed-text`, `bge-base` and BM25, JDF leads on every metric. With the two smallest models (`bge-small`, `all-MiniLM-L6-v2`) the PDF 2,000-character configuration edges out JDF at top-1 — because each of its chunks is a quarter of the document — while JDF still leads on R@1k tokens with every retriever and hands the LLM roughly a third of the tokens. Both views are in `results/report.md`; the landing page defaults to the chunk-size-neutral metric and lets you switch.
@@ -80,7 +101,9 @@ bench/
   results/latest.json             accuracy results incl. per-question ranks
   results/cost-latest.json        cost results
   results/report.md               human-readable tables
-  src/                            maintainer tooling (Node): gen-corpus.ts, print-pdf.mjs, export-chunks.ts, render.mjs
+  byoc.py, byoc/corpus.json       real-corpus benchmark (public PDFs downloaded to byoc/cache/, gitignored)
+  results/byoc-latest.json        real-corpus results
+  src/                            maintainer tooling (Node): gen-corpus.ts, print-pdf.mjs, export-chunks.ts, byoc-chunks.ts, render.mjs
 ```
 
 Maintainers: after changing the generator or the CLI chunker — `pnpm --filter @jdf/bench corpus && pnpm --filter @jdf/bench print && pnpm --filter @jdf/bench export-chunks`, then re-run both Python benchmarks and `pnpm --filter @jdf/bench render` to publish the numbers to README, landing page and docs.
