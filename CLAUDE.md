@@ -200,6 +200,27 @@ The JDF-vs-PDF RAG benchmark is **Python** (`bench/rag_bench.py` accuracy, `benc
 
 User talks Turkish. Replies in Turkish. Code comments, file paths, commit messages, technical terms remain in English.
 
+## ⚠️ THE NO-REGRESSION RULE — a PDF that converted well must keep converting well
+
+The user drops real PDFs into `ref_docs/` (gitignored, third-party — never commit them) and expects every one of them to keep converting exactly as well after every importer change. "It got better on my new PDF" is worthless if an older PDF got worse. This is enforced by a gate, not by memory:
+
+```bash
+pnpm --filter @jdf/pdf-import verify:regress            # compare against regress/baseline.json — must be green
+pnpm --filter @jdf/pdf-import verify:regress --update   # accept an intended change (only after the checks below)
+pnpm --filter @jdf/pdf-import verify:regress --only FAB # one document while iterating
+```
+
+`packages/jdf-pdf-import/scripts/verify-regress.ts` converts `spec/examples/sample.pdf`, `bench/corpus/docs/*.pdf` and every `ref_docs/*.pdf` present, fingerprints each page (element mix, every table as rows×cols, styled cells, word multiset hash, fonts, form-field count) and diffs it against the committed `packages/jdf-pdf-import/regress/baseline.json`. The fingerprints are committed even for gitignored PDFs, so the baseline travels with the repo while the PDFs never do. `release.sh` Step 0 runs it together with `verify:tables` and `verify:order`; red = no release.
+
+Non-negotiable, for any change to `packages/jdf-pdf-import/src/**` (core.ts, tables.ts, columns.ts, paragraphs.ts) or to the renderers' handling of imported output:
+
+1. **Before touching code, run `verify:regress` and make sure it is green.** If it is red already, that is the first bug to fix.
+2. **After the change, run all three: `verify:tables` (120/120, 100% cells, 0 FP), `verify:order` (100%), `verify:regress` (0 changed).** A feature is not done while any of them is red.
+3. **Every document the gate reports as "changed" is a regression until proven otherwise.** Prove it with a side-by-side render (`/tmp/jdfref/shots.mjs <name> <pdf> <pages>`: pdftoppm on the left, jdf.js on the right) of the pages that changed, for *every* changed document — not just the one you were working on. Fewer tables is fine when the text is now faithful; lost words, lost bold/colour, wrapped table-of-contents lines, a chart or a form grid turned into a table, or a paragraph split into words are not.
+4. **Only then `--update`, and say in the commit message which documents changed and why.** Never update the baseline to make the gate green.
+5. **A new PDF the user reports as broken goes into `ref_docs/` (and its fingerprint into the baseline) in the same change that fixes it**, so it can never silently break again. Put a same-shaped fixture into `spec/examples/` or `bench/corpus/` when the PDF cannot be shared.
+6. **Do not "fix" one document by loosening a rule that other documents rely on.** The gap rules in core.ts, the acceptance rules in tables.ts and the merged-cell / rowspan / sparse-block rejections exist because a specific PDF broke without them; the gate is what tells you which.
+
 ## Memory of past mistakes
 
 - **Table styling is data, not renderer constants.** jdf.js `renderTable`, the reader's `TableElement` and Rust `draw_table`/`measure_element` read `style.fontSize`/`lineHeight` for the cells and `style.padding` (CSS string / px number) as the *cell* padding; `rowStyle` paints every body row, `alternateRowStyle`/`alternatingRowColor` the odd ones; the default `#f8fafc` header band only when no `headerStyle` is given; an all-empty row is a one-line spacer. All three must stay identical — hard-coding 14px/8px again makes imported statements 3× taller than the PDF and they cover the text below.
@@ -220,4 +241,9 @@ User talks Turkish. Replies in Turkish. Code comments, file paths, commit messag
 - **Media coverage is a first-class check.** `mediaCoverage()` in `chunk.ts` defines "has text": image = caption or OCR (alt alone doesn't count), video = transcript. `jdf chunk` warns, `jdf rag` reports/fills/`--strict`-fails. Any new media element type must be added there or it becomes a silent RAG blind spot.
 - **Video transcripts are text, not assets.** `video.transcript` lives in document.json; `shouldUseJdfx` must keep ignoring it. `jdf chunk` emits transcript windows via `transcriptChunks()` with `media`; jdf.js and the reader render the same WebVTT track from it; Rust `extract_text` indexes it. `jdf rag` config is `jdf.rag.json` (JSON, not YAML — no new parser dep).
 - **Binary assets bind by MIME.** `.jdfx` unpackers (reader `jdfx.ts` + `App.tsx`, jdf.js `jdfx.ts`) put `video/*` assets into `resources.videos` and everything else into `resources.images`; packers (reader + CLI `jdfx.ts`) drain both buckets and both `image`/`video` elements with `data:` src. Renderers look `resource` ids up in both buckets. Add a new media type the same way — don't invent a third store.
+- **Font classification: trust the embedded program, not the descriptor flag.** `probeFontProgram()` in core.ts reads the TrueType `name` + OS/2 PANOSE tables from `font.data`; Chrome/Quartz write anonymous `CIDFont+F1` fonts with the Serif flag set on *every* font, and trusting it turned a whole sans document into Tinos. `font.bold`/`font.italic` are never set by pdf.js — weight/slant come from PANOSE, the subfamily name, a skewed text matrix (`italic`) or fake-bold double drawing.
+- **Table cells are `{content, style}` when they differ from the table.** tables.ts derives the table's dominant `fontFamily`/`color` and gives cells that differ their own style; the Rust `draw_table` reads per-cell `fontWeight`/`color`. Going back to plain strings loses every bold total and coloured figure — that was the "gotume benziyor" of 2026-09-27.
+- **Forms are not tables.** A page with ≥ 5 AcroForm widgets skips table detection; a ruled block is rejected when its rules do not partition the text bands (merged cells / per-row layouts), when horizontal rules stop short of the band edges while vertical borders exist (rowspan), when it is a sparse wide grid, or when a ruled cell holds two text bands. Loosening any of these brings the HCFA-1500 / Word claim-form mangling back. Imported widgets shorter than 9 mm render compact (`compactField` in jdf.js, `compact()` in the reader's FormElement, font-from-height in Rust) — three surfaces, keep identical.
+- **Single-line text carries `lineHeight: 1` and box top = baseline − 0.846 em.** paragraphs.ts shifts folded paragraphs up by the half-leading. The renderers' container line-height (1.5) otherwise pushes glyphs ~0.3 em below the PDF baseline, so underlines drawn as shapes cross the text.
+- **`bandsFor` conflict fallback must re-assign the other anchor rows.** Leaving them in `anchorRows` skipped their cells in the placement loop and silently dropped their text from the table (Word checklist rows 6.a–9 vanished). Any cell without a band is lost text — never let that path exist.
 - **Table/cell rendering must tolerate malformed shapes.** jdf.js `renderTable` and the reader's `TableElement` both defend against non-array `rows`, non-array rows, and null/non-object cells (`cellText`/`cellAttrs`/`cellAlign`/`cellCss` all null-guard). The web embed used to throw on `null.content` and abort the whole page render while the reader's `<For>` tolerated it — a silent one-surface divergence. Keep both lenient and identical.

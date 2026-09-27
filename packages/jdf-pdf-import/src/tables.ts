@@ -27,7 +27,7 @@
  * wrap onto a continuation line (single cell, not in the first column) are
  * folded back into the previous row.
  */
-import type { TableElement, TableColumn, TextAlign } from "@jdf/core";
+import type { TableElement, TableColumn, TableCellValue, TextAlign } from "@jdf/core";
 
 export interface TRun {
   text: string;
@@ -39,6 +39,9 @@ export interface TRun {
   fontName: string;
   color: string;
   bold?: boolean;
+  italic?: boolean;
+  /** CSS family stack the importer chose for this run's font. */
+  family?: string;
 }
 
 export interface TShape {
@@ -239,14 +242,18 @@ function columnBands(rows: Row[]): BandResult | null {
   const countOf = new Map<Row, number>();
   for (const m of body) countOf.set(m.r, (countOf.get(m.r) ?? 0) + 1);
   const maxCount = Math.max(...countOf.values());
-  const anchorRows = new Set(rows.filter((r) => countOf.get(r) === maxCount));
+  let anchorRows = new Set(rows.filter((r) => countOf.get(r) === maxCount));
   let bands = clusterCells(body.filter((m) => anchorRows.has(m.r)));
   if (hasConflict(bands)) {
     // Even the finest rows disagree (one of them carries a spanning cell):
-    // let the first of them alone define the grid.
+    // let the first of them alone define the grid. The other anchor rows
+    // then go through the placement loop below like every other row — left
+    // in `anchorRows` their cells were never assigned and their text was
+    // silently dropped from the table.
     const first = rows.find((r) => anchorRows.has(r))!;
     bands = clusterCells(body.filter((m) => m.r === first));
     if (hasConflict(bands)) return null;
+    anchorRows = new Set([first]);
   }
   for (const m of body) {
     if (anchorRows.has(m.r)) continue;
@@ -367,9 +374,15 @@ export function detectTables(runs: TRun[], shapes: TShape[], pageWidthMm: number
       // Cell padding puts backgrounds/borders well above the first baseline and below the last.
       y0: blockRows[0].y - blockRows[0].h * 2.5, y1: blockRows[blockRows.length - 1].y + blockRows[blockRows.length - 1].h * 3,
     } : null;
+    // Fills must sit inside the block; a horizontal rule may run past the
+    // text (an empty last column still has its borders drawn) as long as
+    // most of it overlaps the block.
+    const thinH = (s: TShape) => (s.kind === "line" || s.kind === "rect") && s.height < 0.6 && s.width >= s.height && !!(s.fill || s.stroke);
     const gridShapes = bbox ? shapes.map((s, k) => ({ s, k })).filter(({ s }) =>
-      s.x >= bbox.x0 - 1 && s.x + s.width <= bbox.x1 + 1 && s.y >= bbox.y0 - 1 && s.y + s.height <= bbox.y1 + 1 &&
-      (s.kind === "line" || s.kind === "rect")) : [];
+      s.y >= bbox.y0 - 1 && s.y + s.height <= bbox.y1 + 1 && (s.kind === "line" || s.kind === "rect") &&
+      (thinH(s)
+        ? Math.min(s.x + s.width, bbox.x1) - Math.max(s.x, bbox.x0) >= s.width * 0.5
+        : s.x >= bbox.x0 - 1 && s.x + s.width <= bbox.x1 + 1)) : [];
     const tableW = bbox ? bbox.x1 - bbox.x0 : 0;
     const isRule = (s: TShape) => s.kind === "line" || (s.kind === "rect" && (s.height < 0.6 || s.width < 0.6) && !!(s.fill || s.stroke));
     // Horizontal rules spanning the block (cell borders) tell wrapped rows apart
@@ -468,9 +481,22 @@ export function detectTables(runs: TRun[], shapes: TShape[], pageWidthMm: number
     for (let r = 1; r < blockRows.length; r++) pitches.push(blockRows[r].y - blockRows[r - 1].y);
     const medPitch = pitches.length ? pitches.slice().sort((a, b) => a - b)[Math.floor(pitches.length / 2)] : blockRows[0].h * 1.3;
     let pendingLabel: { text: string; idx: number[]; row: Row } | null = null;
+    // First line(s) of a wrapped cell in column b > 0 whose row label sits on
+    // a later baseline ("6" centred beside two description lines): held until
+    // the row with the label arrives.
+    const pendingCells = new Map<number, { text: string; idx: number[]; row: Row }>();
+    const flushPendingCells = () => {
+      if (!pendingCells.size) return;
+      const cells = bands.map(() => "");
+      let row: Row | null = null;
+      for (const [b, pc] of pendingCells) { cells[b] = pc.text; lineIdx.push(...pc.idx); row = row ?? pc.row; }
+      grid.push(cells); gridRows.push(row!); pendingCells.clear();
+    };
     const flushPending = () => {
       if (!pendingLabel) return;
       const cells = bands.map(() => ""); cells[0] = pendingLabel.text;
+      for (const [b, pc] of pendingCells) { cells[b] = pc.text; lineIdx.push(...pc.idx); }
+      pendingCells.clear();
       grid.push(cells); gridRows.push(pendingLabel.row); lineIdx.push(...pendingLabel.idx); pendingLabel = null;
     };
     for (let r = 0; r < blockRows.length; r++) {
@@ -479,6 +505,15 @@ export function detectTables(runs: TRun[], shapes: TShape[], pageWidthMm: number
         const c = row.cells[0];
         const b = assign.get(c) ?? bands.findIndex((bb) => overlaps(c, bb));
         if (b > 0) {
+          const prevRow = gridRows[gridRows.length - 1];
+          if (denseRules && prevRow && ruleBetween(prevRow, row) && !pendingLabel) {
+            // A rule separates it from the previous row: it is the head of the
+            // next row's cell, not a continuation.
+            const pc = pendingCells.get(b);
+            if (pc) { pc.text = `${pc.text} ${c.run.text.trim()}`.trim(); pc.idx.push(...cellIdx(c)); }
+            else pendingCells.set(b, { text: c.run.text.trim(), idx: cellIdx(c), row });
+            continue;
+          }
           // Continuation of a wrapped cell → append to the same column of the previous row.
           flushPending();
           grid[grid.length - 1][b] = (grid[grid.length - 1][b] + " " + c.run.text.trim()).trim();
@@ -504,13 +539,25 @@ export function detectTables(runs: TRun[], shapes: TShape[], pageWidthMm: number
       // Blank separator line between groups → an empty spacer row keeps the
       // vertical rhythm of the statement when rendered.
       const prevRow = gridRows[gridRows.length - 1];
-      if (prevRow && !pendingLabel && row.y - prevRow.y > medPitch * 1.7 && grid.length) { grid.push(bands.map(() => "")); gridRows.push(row); }
+      // A gap after a row that wrapped onto several lines is that row's own
+      // height, not a blank separator: measure the gap from its last line.
+      const prevLastY = (() => { let y = prevRow?.y ?? row.y; for (let q = r - 1; q >= 0 && blockRows[q] !== prevRow; q--) { if (blockRows[q].cells.length === 1) { y = Math.max(y, blockRows[q].y); } else break; } return y; })();
+      if (prevRow && !pendingLabel && !pendingCells.size && row.y - prevLastY > medPitch * 1.7 && grid.length) { grid.push(bands.map(() => "")); gridRows.push(row); }
       const cells = bands.map((_, b) => cellText(row, b));
       if (pendingLabel) { cells[0] = `${pendingLabel.text} ${cells[0]}`.trim(); lineIdx.push(...pendingLabel.idx); pendingLabel = null; }
+      if (pendingCells.size) {
+        const prevRow = gridRows[gridRows.length - 1];
+        // The held lines belong to this row unless a rule separates them from it.
+        const pcRow = [...pendingCells.values()][0].row;
+        if (denseRules && ruleBetween(pcRow, row)) flushPendingCells();
+        else { for (const [b, pc] of pendingCells) { cells[b] = `${pc.text} ${cells[b]}`.trim(); lineIdx.push(...pc.idx); } pendingCells.clear(); }
+        void prevRow;
+      }
       grid.push(cells); gridRows.push(row);
       for (const c of row.cells) lineIdx.push(...cellIdx(c));
     }
     flushPending();
+    flushPendingCells();
     // A row with no label whose predecessor has no values is the wrapped
     // second line of that predecessor ("Item 5. Market For … Equity" /
     // "Securities 33").
@@ -546,6 +593,12 @@ export function detectTables(runs: TRun[], shapes: TShape[], pageWidthMm: number
     // align do not, a real text table does.
     const counts = new Set(blockRows.filter((r) => r.cells.length >= 2).map((r) => r.cells.length));
     if (!structural && numCols === 0 && (multiRows < 4 || hasLoneLabel || counts.size > 1 || bands.length === 2 && grid.length <= 3)) { dbg("reject text block", grid[0]); i++; continue; }
+    // A chart's axis labels and legend sit between plenty of rules but fill
+    // only a corner of their grid; a real table of three rows is mostly full.
+    const fillRatio = grid.flat().filter(Boolean).length / Math.max(1, grid.length * bands.length);
+    const multiFilled = grid.filter((r) => r.filter(Boolean).length >= 2).length;
+    // …and a wide block that is mostly empty cells is a form grid, not a table.
+    if ((grid.length <= 3 && fillRatio < 0.6) || (fillRatio < 0.5 && multiFilled <= 2) || (bands.length >= 6 && fillRatio < 0.3)) { dbg("reject sparse block", grid[0]); i++; continue; }
 
     // Header: first row is a header when its runs are bold, or when a filled band covers exactly that row.
     const first = blockRows[0];
@@ -568,7 +621,10 @@ export function detectTables(runs: TRun[], shapes: TShape[], pageWidthMm: number
       const firstRule = ruleYs.find((y) => y > gridRows[0].y + gridRows[0].h * 0.5);
       if (firstRule != null) {
         const above = gridRows.filter((r) => r.y + r.h * 0.5 < firstRule).length;
-        if (above >= 1 && above <= 5 && gridRows.length - above >= 2) headerRows = Math.max(headerRows, above);
+        // …unless those lines already carry figures in the numeric columns: a
+        // table of contents ruled under every entry has no header row.
+        const figuresAbove = grid.slice(0, above).some((row) => row.some((v, k) => isNumCol[k] && v && numeric(v)));
+        if (above >= 1 && above <= 5 && gridRows.length - above >= 2 && !figuresAbove) headerRows = Math.max(headerRows, above);
       }
     }
     // Multi-line column headers ("31 Mar 2026" / "AED million", "Additional" /
@@ -590,21 +646,91 @@ export function detectTables(runs: TRun[], shapes: TShape[], pageWidthMm: number
     }
     if (headerRows > 0 && grid.length - headerRows < 1) headerRows = 0;
 
+    // A grid needs vertical rules; horizontal underlines alone (statement
+    // totals, header rules) do not make a bordered table.
+    // …or a Word grid: one short vertical segment per cell plus a rule under
+    // every row. The table then draws its own borders at its own row
+    // positions and consumes the drawn ones, so they cannot clash.
+    const shortVerticals = gridShapes.filter(({ s }) => isRule(s) && s.height > s.width).length;
+    const hasGrid = verticalRules >= 2 || (shortVerticals >= 2 && denseRules && ruleYs.length >= 2);
+    // Drawn vertical rules are the column edges: when every text band falls
+    // into its own rule interval, the table gets exactly the drawn columns —
+    // including empty ones — instead of bands split at text midpoints, so the
+    // rendered borders sit where the PDF drew them.
+    // Horizontal rules that stop short of the table width are cell borders of
+    // rows that share a taller neighbour (rowspan: "1" beside three
+    // description lines). The grid has no rowspan; text and rules stay put.
+    // Any drawn vertical border counts here (Word draws one short segment per
+    // cell, below the `hasGrid` length threshold); a statement's underlines
+    // have no vertical rules at all and are unaffected.
+    const anyVertical = shortVerticals >= 2;
+    if (hasGrid || anyVertical) {
+      const bx0 = Math.min(...bands.map((b) => b.x0)), bx1 = Math.max(...bands.map((b) => b.x1));
+      const partial = gridShapes.filter(({ s }) => isRule(s) && s.width >= s.height && s.width >= tableW * 0.3 && (s.x > bx0 + 3 || s.x + s.width < bx1 - 3)).length;
+      if (partial >= 2) { dbg("reject rowspan grid", grid[0]); i++; continue; }
+    }
+    let colBands: { x0: number; x1: number }[] = bands;
+    let colGrid: string[][] = grid;
+    let colNum: boolean[] = isNumCol;
+    let edges: number[] | null = null;
+    if (hasGrid) {
+      // Vertical rule positions, each weighted by the rule length stacked on
+      // it (Word/browsers draw one short segment per cell): a column edge is
+      // an x where the segments add up to at least half the block height.
+      const acc = new Map<number, number>();
+      const blockH = blockRows[blockRows.length - 1].y + blockRows[blockRows.length - 1].h - blockRows[0].y;
+      for (const { s } of gridShapes) {
+        if (!(isRule(s) && s.height > s.width)) continue;
+        const cx = s.x + s.width / 2;
+        const key = [...acc.keys()].find((x) => Math.abs(x - cx) < 1) ?? cx;
+        acc.set(key, (acc.get(key) ?? 0) + s.height);
+      }
+      const xs = [...acc.entries()].filter(([, h]) => h >= blockH * 0.5).map(([x]) => x).sort((a, b) => a - b);
+      dbg(`grid rules x=${xs.map((x) => x.toFixed(1)).join(",")} bands=${bands.length}`);
+      if (xs.length >= 3) {
+        const bandCol = bands.map((b) => { const c = (b.x0 + b.x1) / 2; return xs.findIndex((x, k) => k < xs.length - 1 && c > x && c < xs[k + 1]); });
+        // Every cell must stay inside its rule interval: text running across
+        // a drawn rule is a merged cell (colspan), which the grid cannot hold.
+        // A cell straddling a rule (text on both sides of a drawn vertical
+        // line) is the merged-cell signal; cells outside the ruled range
+        // (a column whose border did not survive) are fine.
+        const straddles = (c: Cell) => xs.some((x) => c.x0 < x - 1.5 && c.x1 > x + 1.5);
+        // …and so is one ruled cell holding two text bands (a form's
+        // "label: value" pairs boxed together): no single column layout fits.
+        const crowded = bandCol.some((c, k) => c >= 0 && bandCol.indexOf(c) !== k);
+        const inside = !crowded && !blockRows.some((row) => row.cells.some(straddles));
+        if (!inside) {
+          // Text running across a drawn rule = merged cells (colspan), or a
+          // per-row column layout (a Word form): a rows×columns table cannot
+          // express it; text and rules stay where the PDF put them.
+          dbg("reject merged-cell grid", grid[0]); i++; continue;
+        }
+        if (xs.length - 1 >= bands.length && bandCol.every((c) => c >= 0) && new Set(bandCol).size === bandCol.length) {
+          edges = xs;
+          colBands = xs.slice(0, -1).map((x, k) => ({ x0: x, x1: xs[k + 1] }));
+          colGrid = grid.map((row) => { const out = colBands.map(() => ""); row.forEach((v, k) => { out[bandCol[k]] = v; }); return out; });
+          colNum = colBands.map((_, k) => { const b = bandCol.indexOf(k); return b >= 0 && isNumCol[b]; });
+        }
+      }
+    }
     // Column alignment: numeric columns → right.
-    const columns: TableColumn[] = bands.map((b, k) => {
+    const columns: TableColumn[] = colBands.map((b, k) => {
       const col: TableColumn = { width: Math.round((b.x1 - b.x0) * 10) / 10 };
-      if (isNumCol[k]) col.align = "right" as TextAlign;
+      if (colNum[k]) col.align = "right" as TextAlign;
       return col;
     });
     // Widen bands to fill the gaps between them (cells have padding).
-    const x0 = Math.max(0, bands[0].x0 - 2.5);
-    const x1 = Math.min(pageW, bands[bands.length - 1].x1 + 2.5);
-    // Column edges = midpoints between neighbouring bands, forced to increase
-    // so an overlapping pair can never produce a negative width.
-    const edges: number[] = [x0];
-    for (let k = 1; k < bands.length; k++) edges.push(Math.max(edges[k - 1] + 2, Math.min((bands[k - 1].x1 + bands[k].x0) / 2, x1 - 2 * (bands.length - k))));
-    edges.push(Math.max(edges[edges.length - 1] + 2, x1));
-    for (let k = 0; k < bands.length; k++) columns[k].width = Math.round((edges[k + 1] - edges[k]) * 10) / 10;
+    const x0 = edges ? edges[0] : Math.max(0, bands[0].x0 - 2.5);
+    const x1 = edges ? edges[edges.length - 1] : Math.min(pageW, bands[bands.length - 1].x1 + 2.5);
+    if (!edges) {
+      // Column edges = midpoints between neighbouring bands, forced to increase
+      // so an overlapping pair can never produce a negative width.
+      edges = [x0];
+      for (let k = 1; k < bands.length; k++) edges.push(Math.max(edges[k - 1] + 2, Math.min((bands[k - 1].x1 + bands[k].x0) / 2, x1 - 2 * (bands.length - k))));
+      edges.push(Math.max(edges[edges.length - 1] + 2, x1));
+    }
+    for (let k = 0; k < colBands.length; k++) columns[k].width = Math.round((edges[k + 1] - edges[k]) * 10) / 10;
+    const colOfBand = colBands === bands ? bands.map((_, k) => k) : bands.map((b) => colBands.findIndex((cb) => (b.x0 + b.x1) / 2 > cb.x0 && (b.x0 + b.x1) / 2 < cb.x1));
 
     // Alternating row background: every other body row shares one fill, the
     // others have none. Body rows are the source rows that became grid rows
@@ -617,9 +743,6 @@ export function detectTables(runs: TRun[], shapes: TShape[], pageWidthMm: number
     const altColor = oddAlt || evenAlt;
     const borderShape = gridShapes.find(({ s }) => isRule(s));
     const borderColor = borderShape ? (borderShape.s.stroke || borderShape.s.fill) : undefined;
-    // A grid needs vertical rules; horizontal underlines alone (statement
-    // totals, header rules) do not make a bordered table.
-    const hasGrid = verticalRules >= 2;
 
     // Cell font = the size carrying most characters in the block; compact cell
     // padding derived from the source row pitch so the rendered table occupies
@@ -632,16 +755,63 @@ export function detectTables(runs: TRun[], shapes: TShape[], pageWidthMm: number
     const padV = Math.max(0.2, Math.min(2.5, (medPitch - lineMm) / 2));
     const padH = Math.max(0.5, Math.min(3, fontSize * PT_TO_MM * 0.35));
     const y0 = headerBg ? Math.min(...headerBg.rects.map(({ s }) => s.y)) : first.y - padV;
+    // Table face/colour = the family and colour carrying most characters;
+    // cells that differ (a bold total row, an italic note, a red figure, a
+    // serif label) carry their own style so nothing the PDF set is lost.
+    const tally = (pick: (c: Cell) => string | undefined) => {
+      const m = new Map<string, number>();
+      for (const row of blockRows) for (const c of row.cells) { const k = pick(c); if (k) m.set(k, (m.get(k) ?? 0) + c.run.text.trim().length); }
+      return [...m.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    };
+    const tableFamily = tally((c) => c.run.family);
+    const tableColor = tally((c) => c.run.color) ?? "#000000";
+    // Runs behind each grid cell: the source row's cells in that band, plus the
+    // lone label lines folded into column 0 of a row without its own label.
+    const runsAt = (r: number, b: number): TRun[] => {
+      const src = gridRows[r];
+      if (!src) return [];
+      const own = src.cells.filter((c) => assign.get(c) === b).map((c) => c.run);
+      if (own.length || b !== 0) return own;
+      const at = blockRows.indexOf(src);
+      for (let q = at - 1; q >= Math.max(0, at - 3); q--) {
+        const row = blockRows[q];
+        if (row.cells.length !== 1) break;
+        if ((assign.get(row.cells[0]) ?? 0) === 0) return [row.cells[0].run];
+      }
+      return [];
+    };
+    const styledCell = (text: string, runs: TRun[]): TableCellValue => {
+      if (!text || !runs.length) return text;
+      const st: Record<string, unknown> = {};
+      const chars = (f: (r: TRun) => boolean) => runs.filter(f).reduce((a, r) => a + r.text.trim().length, 0) / Math.max(1, runs.reduce((a, r) => a + r.text.trim().length, 0));
+      if (chars((r) => !!r.bold) >= 0.5) st.fontWeight = "bold";
+      if (chars((r) => !!r.italic) >= 0.5) st.fontStyle = "italic";
+      const color = runs.slice().sort((a, b) => b.text.trim().length - a.text.trim().length)[0].color;
+      if (color && color !== tableColor) st.color = color;
+      const fam = runs.slice().sort((a, b) => b.text.trim().length - a.text.trim().length)[0].family;
+      if (fam && tableFamily && fam !== tableFamily) st.fontFamily = fam;
+      const size = Math.round(runs[0].fontSize * 2) / 2;
+      if (Math.abs(size - fontSize) >= 1) st.fontSize = size;
+      return Object.keys(st).length ? { content: text, style: st as any } : text;
+    };
+    const bodyStart = (() => { let k = headerRows; while (k < colGrid.length - 1 && colGrid[k].every((c) => !c)) k++; return k; })();
+    const styledRows: TableCellValue[][] = colGrid.slice(bodyStart).map((row, ri) => {
+      const r = bodyStart + ri;
+      return row.map((text, col) => { const b = colOfBand.indexOf(col); return styledCell(text, b >= 0 ? runsAt(r, b) : []); });
+    });
+    const tableStyle: Record<string, unknown> = { fontSize, lineHeight: 1.2, padding: `${Math.round(padV * 100) / 100}mm ${Math.round(padH * 100) / 100}mm` };
+    if (tableFamily) tableStyle.fontFamily = tableFamily;
+    if (tableColor !== "#000000") tableStyle.color = tableColor;
     const element: TableElement = {
       type: "table",
       position: { x: Math.round(x0 * 100) / 100, y: Math.round(Math.max(0, y0) * 100) / 100 },
       width: Math.round((x1 - x0) * 100) / 100,
       columns,
-      rows: (() => { const body = grid.slice(headerRows); while (body.length > 1 && body[0].every((c) => !c)) body.shift(); return body; })(),
-      style: { fontSize, lineHeight: 1.2, padding: `${Math.round(padV * 100) / 100}mm ${Math.round(padH * 100) / 100}mm` },
+      rows: styledRows,
+      style: tableStyle as any,
     };
     if (headerRows > 0) {
-      element.headers = bands.map((_, k) => grid.slice(0, headerRows).map((r) => r[k]).filter(Boolean).join(" ").trim());
+      element.headers = colBands.map((_, k) => colGrid.slice(0, headerRows).map((r) => r[k]).filter(Boolean).join(" ").trim());
       const hs: Record<string, unknown> = { fontWeight: "bold" };
       if (headerBg) hs.backgroundColor = headerBg.fill;
       // One text colour for the header row: the colour carrying most header
@@ -669,10 +839,16 @@ export function detectTables(runs: TRun[], shapes: TShape[], pageWidthMm: number
     // consumed too: left behind they would sit under black header text.
     if (headerRows > 0) {
       const hy0 = gridRows[0].y - gridRows[0].h * 0.5, hy1 = gridRows[headerRows - 1].y + gridRows[headerRows - 1].h * 1.2;
-      for (const { s, k } of gridShapes) if (s.kind === "rect" && s.fill && s.fill.toLowerCase() !== "#ffffff" && !isRule(s) && s.y < hy1 && s.y + s.height > hy0 && s.y >= hy0 - gridRows[0].h) fillRects.add(k);
+      // Only a band spanning most of the table is a header background the
+      // `headerStyle` can express; a box behind one column's header (FAB's
+      // dark-blue "31 Mar 2026") stays as a shape so the box is not lost.
+      for (const { s, k } of gridShapes) if (s.kind === "rect" && s.fill && s.fill.toLowerCase() !== "#ffffff" && !isRule(s) && s.width >= tableW * 0.5 && s.y < hy1 && s.y + s.height > hy0 && s.y >= hy0 - gridRows[0].h) fillRects.add(k);
     }
     if (altColor) for (const row of blockRows) { const f = rowFill(row); if (f) for (const { k } of f.rects) fillRects.add(k); }
-    const consumedShapes = gridShapes.filter(({ s, k }) => isRule(s) || fillRects.has(k)).map(({ k }) => k);
+    // Rules are consumed only when the table draws them itself (a bordered
+    // grid). Underlines under totals and header rules of an unruled statement
+    // stay as shapes at their PDF position — dropping them lost every line.
+    const consumedShapes = gridShapes.filter(({ s, k }) => (hasGrid && isRule(s)) || fillRects.has(k)).map(({ k }) => k);
     dbg(`table ${grid.length} rows × ${bands.length} cols at y=${element.position!.y}`, element.headers ?? grid[0]);
 
     for (const k of lineIdx) used.add(k);

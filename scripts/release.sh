@@ -49,6 +49,11 @@ pnpm typecheck
 pnpm --filter @uurtech/jdf build
 pnpm --filter @jdf/reader build
 node scripts/parity-check.mjs
+# PDF importer regression gate: every corpus PDF must convert exactly as the
+# committed baseline says (pages, element mix, tables, words, fonts, fields).
+pnpm --filter @jdf/pdf-import verify:tables
+pnpm --filter @jdf/pdf-import verify:order
+pnpm --filter @jdf/pdf-import verify:regress
 
 echo ""
 echo "═══════════════════════════════════════════════════════════"

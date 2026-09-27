@@ -222,6 +222,7 @@ export class JDFViewer {
   }
 
   private mount() {
+    ensureMetricFonts(this.doc);
     this.container.innerHTML = "";
     this.container.classList.add("jdfjs");
     this.applyDarkMode();
@@ -755,4 +756,25 @@ function resolveContainer(c: HTMLElement | string): HTMLElement {
 
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]!));
+}
+
+/**
+ * The PDF importer maps fonts to metric-compatible open families (Carlito =
+ * Calibri, Arimo = Arial, Tinos = Times New Roman, Cousine = Courier New,
+ * Gelasio = Georgia, Caladea = Cambria) so converted lines keep their width.
+ * Load them from Google Fonts once, only when a document uses them; offline
+ * embeds fall through to the stack's next family.
+ */
+const METRIC_FAMILIES = ["Carlito", "Arimo", "Tinos", "Cousine", "Gelasio", "Caladea", "IBM Plex Sans", "IBM Plex Serif"];
+function ensureMetricFonts(doc: JdfDocument) {
+  if (typeof document === "undefined" || document.getElementById("jdfjs-metric-fonts")) return;
+  let json: string;
+  try { json = JSON.stringify(doc.styles ?? {}) + JSON.stringify(doc.pages ?? []); } catch { return; }
+  const used = METRIC_FAMILIES.filter((f) => json.includes(f));
+  if (!used.length) return;
+  const link = document.createElement("link");
+  link.id = "jdfjs-metric-fonts";
+  link.rel = "stylesheet";
+  link.href = "https://fonts.googleapis.com/css2?" + used.map((f) => `family=${encodeURIComponent(f).replace(/%20/g, "+")}:ital,wght@0,400;0,700;1,400;1,700`).join("&") + "&display=swap";
+  document.head.appendChild(link);
 }

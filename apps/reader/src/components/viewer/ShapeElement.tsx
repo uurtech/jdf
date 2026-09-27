@@ -1,4 +1,4 @@
-import { Switch, Match } from "solid-js";
+import { Switch, Match, Show, For, createUniqueId } from "solid-js";
 import type { ShapeElement, Style } from "@jdf/core";
 import { resolveStyle } from "./PageRenderer";
 
@@ -10,7 +10,11 @@ interface ShapeElementViewProps {
 export function ShapeElementView(props: ShapeElementViewProps) {
   const css = () => resolveStyle(props.element.style, props.styles);
   const shape = () => props.element.shape;
-  const fill = () => props.element.fill ?? "none";
+  // Gradient fill via SVG defs — same geometry as jdf.js renderShape.
+  const gradId = `jdf-grad-${createUniqueId()}`;
+  const grad = () => { const g = props.element.gradient; return g && Array.isArray(g.stops) && g.stops.length >= 2 ? g : undefined; };
+  const gradVec = () => { const a = ((grad()?.angle ?? 180) * Math.PI) / 180; return { dx: Math.sin(a) / 2, dy: -Math.cos(a) / 2 }; };
+  const fill = () => (grad() ? `url(#${gradId})` : props.element.fill ?? "none");
   const strokeColor = () => {
     const s = props.element.stroke;
     if (typeof s === "string") return s;
@@ -39,6 +43,19 @@ export function ShapeElementView(props: ShapeElementViewProps) {
         xmlns="http://www.w3.org/2000/svg"
         style={{ display: "block", overflow: "visible" }}
       >
+        <Show when={grad()}>
+          <defs>
+            <Show when={grad()!.type === "radial"} fallback={
+              <linearGradient id={gradId} x1={0.5 - gradVec().dx} y1={0.5 - gradVec().dy} x2={0.5 + gradVec().dx} y2={0.5 + gradVec().dy}>
+                <For each={grad()!.stops}>{(st) => <stop offset={`${Math.max(0, Math.min(1, st.offset)) * 100}%`} stop-color={st.color} />}</For>
+              </linearGradient>
+            }>
+              <radialGradient id={gradId} cx="50%" cy="50%" r="50%">
+                <For each={grad()!.stops}>{(st) => <stop offset={`${Math.max(0, Math.min(1, st.offset)) * 100}%`} stop-color={st.color} />}</For>
+              </radialGradient>
+            </Show>
+          </defs>
+        </Show>
         <Switch>
           <Match when={shape() === "rect"}>
             <rect

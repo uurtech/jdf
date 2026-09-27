@@ -97,9 +97,14 @@ function merge<T extends Placed>(para: T[], meta: WeakMap<object, LineMeta>, pag
   const width = Math.min(pageWmm - x, (right - x) * 1.2 + lineH * 0.4);
   // Line breaks stay where the PDF had them: "\n" between lines (pre-wrap in both renderers).
   const joiner = () => "\n";
-  const style = { ...(first.style ?? {}), lineHeight: Math.round((pitch / lineH) * 100) / 100, ...(indent > 0.5 ? { textIndent: Math.round(indent * 100) / 100 } : {}) };
+  const lineHeight = Math.round((pitch / lineH) * 100) / 100;
+  const style = { ...(first.style ?? {}), lineHeight, ...(indent > 0.5 ? { textIndent: Math.round(indent * 100) / 100 } : {}) };
   const allText = para.every((e) => e.type === "text" && !e.link);
-  const base: any = { position: { x, y: first.position!.y }, width: Math.round(width * 100) / 100, style };
+  // Single lines are emitted with lineHeight 1 (box top = baseline − 0.846 em).
+  // With line-height L the browser adds (L − 1)/2 em of half-leading above the
+  // first line, so the box moves up by that much to keep the baselines put.
+  const y = Math.max(0, first.position!.y - ((lineHeight - 1) / 2) * lineH);
+  const base: any = { position: { x, y: Math.round(y * 100) / 100 }, width: Math.round(width * 100) / 100, style };
   if (allText) {
     const content = para.map((e) => String(e.content ?? "").trim().replace(/[ \t]+/g, " ")).join(joiner());
     const { height: _hh, ...firstRest } = first as any;

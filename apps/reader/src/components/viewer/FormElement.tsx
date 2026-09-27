@@ -29,11 +29,18 @@ interface FormProps<T> {
  *    in jdfjs (and vice-versa).
  */
 
+/** Same rule as jdf.js `compactField`: a box shorter than 9 mm (an imported
+ *  PDF-form widget) drops label/padding and sizes its font to the box. */
+function compact(el: { height?: number }): { cls: string; css: Record<string, string> } {
+  if (el.height == null || el.height >= 9) return { cls: "", css: {} };
+  return { cls: " jdfjs-form-compact", css: { "font-size": `${Math.max(7, Math.min(12, Math.round(el.height * 3.7795 * 0.62)))}px` } };
+}
+
 export function FormInputElementView(props: FormProps<FormInputElement>) {
   const edit = useEdit();
-  const css = () => resolveStyle(props.element.style, props.styles);
+  const css = () => ({ ...resolveStyle(props.element.style, props.styles), ...compact(props.element).css });
   return (
-    <div class="jdfjs-form-field" style={css()}>
+    <div class={"jdfjs-form-field" + compact(props.element).cls} style={css()}>
       {props.element.label && <label class="jdfjs-form-label">{props.element.label}</label>}
       <input
         class="jdfjs-form-control"
@@ -52,9 +59,9 @@ export function FormInputElementView(props: FormProps<FormInputElement>) {
 
 export function FormTextareaElementView(props: FormProps<FormTextareaElement>) {
   const edit = useEdit();
-  const css = () => resolveStyle(props.element.style, props.styles);
+  const css = () => ({ ...resolveStyle(props.element.style, props.styles), ...compact(props.element).css });
   return (
-    <div class="jdfjs-form-field" style={css()}>
+    <div class={"jdfjs-form-field" + compact(props.element).cls} style={css()}>
       {props.element.label && <label class="jdfjs-form-label">{props.element.label}</label>}
       <textarea
         class="jdfjs-form-control"
@@ -72,9 +79,9 @@ export function FormTextareaElementView(props: FormProps<FormTextareaElement>) {
 
 export function FormCheckboxElementView(props: FormProps<FormCheckboxElement>) {
   const edit = useEdit();
-  const css = () => resolveStyle(props.element.style, props.styles);
+  const css = () => ({ ...resolveStyle(props.element.style, props.styles), ...compact(props.element).css });
   return (
-    <label class="jdfjs-form-field jdfjs-form-checkbox" style={css()}>
+    <label class={"jdfjs-form-field jdfjs-form-checkbox" + compact(props.element).cls} style={css()}>
       <input
         type="checkbox"
         name={props.element.name}
@@ -90,13 +97,13 @@ export function FormCheckboxElementView(props: FormProps<FormCheckboxElement>) {
 
 export function FormSelectElementView(props: FormProps<FormSelectElement>) {
   const edit = useEdit();
-  const css = () => resolveStyle(props.element.style, props.styles);
+  const css = () => ({ ...resolveStyle(props.element.style, props.styles), ...compact(props.element).css });
   const isSelected = (v: string) => {
     if (props.element.multiple) return (props.element.values || []).includes(v);
     return props.element.value === v;
   };
   return (
-    <div class="jdfjs-form-field" style={css()}>
+    <div class={"jdfjs-form-field" + compact(props.element).cls} style={css()}>
       {props.element.label && <label class="jdfjs-form-label">{props.element.label}</label>}
       <select
         class="jdfjs-form-control"

@@ -6,18 +6,124 @@ import { foldParagraphs, type LineMeta } from "./paragraphs";
 
 const PT_TO_MM = 0.352778;
 
-function classifyFont(name: string): { family: string; weight?: "normal" | "bold"; style?: "normal" | "italic" } {
-  const n = (name || "").toLowerCase();
-  const bold = /bold|black|heavy|semibold|demibold|extrabold/.test(n);
-  const italic = /italic|oblique/.test(n);
-  let family = "Inter, Helvetica, Arial, sans-serif";
-  if (n.includes("times") || n.includes("serif") || n.includes("roman") || n.includes("georgia") || n.includes("garamond") || n.includes("baskerville")) {
-    family = "Times New Roman, serif";
-  } else if (n.includes("courier") || n.includes("mono") || n.includes("consolas") || n.includes("menlo") || n.includes("source code") || n.includes("fira code")) {
-    family = "JetBrains Mono, ui-monospace, monospace";
-  } else if (n.includes("helvetica") || n.includes("arial") || n.includes("sans") || n.includes("roboto") || n.includes("inter") || n.includes("noto")) {
-    family = "Inter, Helvetica, Arial, sans-serif";
+/**
+ * Symbol / Wingdings bullets arrive as Private Use Area code points (Word's
+ * "•" is U+F0B7). Map the common ones to real characters so the bullet
+ * renders in any font instead of as a tofu box.
+ */
+const SYMBOL_PUA: Record<number, string> = {
+  0xf0b7: "•", 0xf0a7: "▪", 0xf0a8: "◻", 0xf0b2: "■", 0xf0a0: "◦", 0xf0b0: "◦", 0xf076: "❖", 0xf0d8: "➢",
+  0xf0fc: "✓", 0xf0fe: "☑", 0xf0a3: "☐", 0xf0f0: "⇨", 0xf0e0: "→", 0xf0ae: "→", 0xf0ad: "←", 0xf0b6: "¶", 0xf02d: "−", 0xf0be: "―",
+  0xf0d7: "•", 0xf0a4: "◆", 0xf0f6: "✖", 0xf0fb: "✗", 0xf0e8: "⇒", 0xf0d0: "—",
+};
+function mapSymbolGlyphs(str: string): string {
+  let out = "";
+  for (const ch of str) {
+    const c = ch.codePointAt(0)!;
+    if (c >= 0xe000 && c <= 0xf8ff) { const m = SYMBOL_PUA[c]; out += m ?? "•"; }
+    else out += ch;
   }
+  return out;
+}
+
+/** Font flags PDF.js exports on the font object (`fontExtraProperties: true`). */
+interface FontFlags { serif?: boolean; monospace?: boolean; bold?: boolean; italic?: boolean }
+
+/**
+ * Read the family name, subfamily and PANOSE classification from an embedded
+ * TrueType/OpenType program (the `font.data` PDF.js keeps with
+ * `fontExtraProperties`). Chrome/Skia and Quartz write anonymous fonts
+ * (`CIDFont+F1`) whose descriptor flags say "serif" for everything, while the
+ * embedded program still carries "Georgia" / "Arial" and a PANOSE record.
+ * Returns null when there is no usable name table.
+ */
+function probeFontProgram(data: unknown): { family?: string; subfamily?: string; flags: FontFlags } | null {
+  if (!(data instanceof Uint8Array) || data.length < 12) return null;
+  try {
+    const dv = new DataView(data.buffer, data.byteOffset, data.byteLength);
+    let off = 0;
+    if (dv.getUint32(0) === 0x74746366) off = dv.getUint32(12); // 'ttcf' → first font
+    const numTables = dv.getUint16(off + 4);
+    if (numTables > 64) return null;
+    const out: { family?: string; subfamily?: string; flags: FontFlags } = { flags: {} };
+    let found = false;
+    for (let i = 0; i < numTables; i++) {
+      const rec = off + 12 + i * 16;
+      if (rec + 16 > data.length) break;
+      const tag = String.fromCharCode(dv.getUint8(rec), dv.getUint8(rec + 1), dv.getUint8(rec + 2), dv.getUint8(rec + 3));
+      const toff = dv.getUint32(rec + 8), tlen = dv.getUint32(rec + 12);
+      if (toff + tlen > data.length) continue;
+      if (tag === "name") {
+        const count = dv.getUint16(toff + 2), strOff = dv.getUint16(toff + 4);
+        for (let k = 0; k < count; k++) {
+          const r = toff + 6 + k * 12;
+          if (r + 12 > data.length) break;
+          const pid = dv.getUint16(r), nid = dv.getUint16(r + 6), len = dv.getUint16(r + 8), so = dv.getUint16(r + 10);
+          if (nid !== 1 && nid !== 2) continue;
+          const start = toff + strOff + so;
+          if (start + len > data.length) continue;
+          let str = "";
+          if (pid === 3 || pid === 0) { for (let j = 0; j + 1 < len; j += 2) str += String.fromCharCode(dv.getUint16(start + j)); }
+          else { for (let j = 0; j < len; j++) str += String.fromCharCode(dv.getUint8(start + j)); }
+          str = str.replace(/\0/g, "").trim();
+          if (!str) continue;
+          if (nid === 1 && !out.family) out.family = str;
+          if (nid === 2 && !out.subfamily) out.subfamily = str;
+          found = true;
+        }
+      } else if (tag === "OS/2" && tlen >= 42) {
+        // PANOSE: [0] family kind (2 = Latin text), [1] serif style (11–15 = sans,
+        // 2–10 = serif), [2] weight (≥ 7 = bold), [3] proportion (9 = monospaced),
+        // [7] letterform (9–15 = oblique). sFamilyClass high byte 8 = sans, 1–7 = serif.
+        const p = Array.from(data.subarray(toff + 32, toff + 42));
+        const familyClass = dv.getUint8(toff + 30);
+        if (p[0] === 2) {
+          if (p[1] >= 11 && p[1] <= 15) out.flags.serif = false;
+          else if (p[1] >= 2 && p[1] <= 10) out.flags.serif = true;
+          if (p[2] >= 7) out.flags.bold = true;
+          if (p[3] === 9) out.flags.monospace = true;
+          if (p[7] >= 9 && p[7] <= 15) out.flags.italic = true;
+          found = true;
+        } else if (familyClass >= 1 && familyClass <= 7) { out.flags.serif = true; found = true; }
+        else if (familyClass === 8) { out.flags.serif = false; found = true; }
+      }
+    }
+    // A subset prefix ("ABCDEF+Arial") or a bare index ("1") is not a family name.
+    if (out.family && (/^[A-Z]{6}\+/.test(out.family) || /^\d+$/.test(out.family))) out.family = undefined;
+    return found ? out : null;
+  } catch { return null; }
+}
+
+/**
+ * Map a PDF font to a CSS family stack whose FIRST entry is metric-compatible
+ * with the original, so a line set in Calibri in the PDF has the same width
+ * when the browser draws it: Carlito = Calibri, Caladea = Cambria, Arimo =
+ * Arial/Helvetica, Tinos = Times New Roman, Cousine = Courier New, Gelasio =
+ * Georgia (all SIL OFL; jdf.js loads them from Google Fonts, the reader
+ * bundles them). Without this every converted statement wrapped and grew:
+ * Inter is ~8% wider than Calibri. Unknown faces fall back by the PDF's own
+ * serif / monospace flags, not just by name.
+ */
+function classifyFont(name: string, flags: FontFlags = {}): { family: string; weight?: "normal" | "bold"; style?: "normal" | "italic" } {
+  // Compare without spaces/hyphens: "IBMPlexSans", "IBM Plex Sans" and
+  // "IBM-Plex-Sans" are one face.
+  const n = (name || "").toLowerCase().replace(/[\s_-]+/g, "");
+  const bold = flags.bold || /bold|black|heavy|semibold|demibold|extrabold/.test(n);
+  const italic = flags.italic || /italic|oblique/.test(n);
+  let family: string;
+  if (n.includes("calibri") || n.includes("carlito")) family = "Carlito, Calibri, sans-serif";
+  else if (n.includes("cambria")) family = "Caladea, Cambria, serif";
+  else if (n.includes("georgia")) family = "Gelasio, Georgia, serif";
+  else if (n.includes("courier") || n.includes("mono") || n.includes("consolas") || n.includes("menlo") || n.includes("sourcecode") || n.includes("firacode")) family = "Cousine, 'Courier New', JetBrains Mono, monospace";
+  else if (n.includes("times") || n.includes("roman") || n.includes("garamond") || n.includes("baskerville") || n.includes("bookantiqua") || n.includes("palatino") || n.includes("minion")) family = "Tinos, 'Times New Roman', serif";
+  else if (n.includes("plexsans")) family = "'IBM Plex Sans', Arimo, sans-serif";
+  else if (n.includes("plexserif")) family = "'IBM Plex Serif', Tinos, serif";
+  else if (n.includes("arial") || n.includes("helvetica") || n.includes("liberationsans") || n.includes("arimo")) family = "Arimo, Arial, Helvetica, sans-serif";
+  else if (n.includes("segoe") || n.includes("verdana") || n.includes("tahoma") || n.includes("roboto") || n.includes("inter") || n.includes("noto") || n.includes("opensans") || n.includes("lato") || n.includes("aptos") || n.includes("sans")) family = "Arimo, Arial, Helvetica, sans-serif";
+  else if (n.includes("serif")) family = "Tinos, 'Times New Roman', serif";
+  else if (flags.monospace) family = "Cousine, 'Courier New', monospace";
+  else if (flags.serif === true) family = "Tinos, 'Times New Roman', serif";
+  else family = "Arimo, Arial, Helvetica, sans-serif";
   return {
     family,
     weight: bold ? "bold" : undefined,
@@ -43,6 +149,7 @@ interface ImagePos {
   x: number; y: number; w: number; h: number;
   inline?: any;
   maskFill?: string;
+  seq?: number;
 }
 
 /**
@@ -54,6 +161,9 @@ interface ImagePos {
  */
 interface TextOp { x: number; y: number; fontSize: number; fill: string; alpha: number; mode: number }
 
+/** Gradient as emitted into `shape.gradient` (angle: CSS convention, 0 = up, 90 = right). */
+interface GradientOp { type: "linear" | "radial"; angle?: number; stops: { offset: number; color: string }[] }
+
 interface ShapeOp {
   kind: "rect" | "line" | "path";
   x: number; y: number; width: number; height: number;
@@ -62,6 +172,10 @@ interface ShapeOp {
   strokeWidth?: number;
   opacity?: number;
   path?: string;
+  gradient?: GradientOp;
+  /** Operator index — paint order. Shapes and images are emitted in this
+   *  order so a banner drawn over a photo stays over it. */
+  seq?: number;
 }
 
 /**
@@ -136,8 +250,35 @@ function averageStops(stops: any): string | null {
   return n ? rgbToHex(r / n, g / n, b / n) : null;
 }
 
+/** `["RadialAxial", type, colorStops, p0, p1, r0, r1]` → gradient with the axis
+ *  direction in viewport space (PDF y is up, CSS angle 0 = up, 90 = right). */
+function irToGradient(ir: any, toVp: (x: number, y: number) => { x: number; y: number }, m?: number[]): GradientOp | null {
+  if (!Array.isArray(ir) || ir[0] !== "RadialAxial" || !Array.isArray(ir[3])) return null;
+  const stops = ir[3].filter((st: any) => Array.isArray(st) && typeof st[1] === "string").map((st: any) => ({ offset: Math.round(st[0] * 1000) / 1000, color: st[1] }));
+  if (stops.length < 2) return null;
+  const type: "linear" | "radial" = ir[2] === 3 ? "radial" : "linear";
+  const g: GradientOp = { type, stops };
+  if (type === "linear" && Array.isArray(ir[4]) && Array.isArray(ir[5])) {
+    const p = (pt: number[]) => { const q = m ? tx(m, pt[0], pt[1]) : { x: pt[0], y: pt[1] }; return toVp(q.x, q.y); };
+    const a = p(ir[4]), b = p(ir[5]);
+    // viewport y grows downward; CSS 0deg points up, angles increase clockwise
+    g.angle = Math.round(((Math.atan2(b.x - a.x, -(b.y - a.y)) * 180) / Math.PI + 360) % 360);
+  }
+  return g;
+}
+
 /** Resolve a pattern operand (`["Shading", objId, matrix]` / `["TilingPattern", color, …]`)
  *  to a representative solid colour, or null when nothing sensible exists. */
+function patternIR(page: any, arg: any): any {
+  if (!Array.isArray(arg) || arg[0] !== "Shading") return null;
+  const id = arg[1];
+  try {
+    const store = typeof id === "string" && id.startsWith("g_") ? page.commonObjs : page.objs;
+    if (typeof store?.has === "function" && !store.has(id)) return null;
+    return store.get(id);
+  } catch { return null; }
+}
+
 function patternToColor(page: any, arg: any): string | null {
   if (!Array.isArray(arg)) return null;
   if (arg[0] === "TilingPattern") {
@@ -183,8 +324,15 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
   const fnArr: number[] = opList.fnArray;
   const argsArr: any[][] = opList.argsArray;
 
+  // Current operator index; every shape/image records it as `seq` (paint order).
+  let opIndex = 0;
   const gs = {
     ctm: [1, 0, 0, 1, 0, 0] as number[],
+    // Gradient behind the current fill colour (a shading pattern set with scn);
+    // `fill` keeps the average colour so exporters without gradients still paint.
+    fillGradient: undefined as GradientOp | undefined,
+    // Clip path in viewport space (set by W / W*); `sh` paints exactly this area.
+    clip: undefined as { d: string; x: number; y: number; w: number; h: number } | undefined,
     fill: "#000000",
     stroke: "#000000",
     lineWidth: 1,
@@ -217,6 +365,7 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
     const minX = Math.min(...xs), maxX = Math.max(...xs);
     const minY = Math.min(...ys), maxY = Math.max(...ys);
     imagePositions.push({
+      seq: opIndex,
       name,
       x: minX * PT_TO_MM,
       y: minY * PT_TO_MM,
@@ -234,17 +383,44 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
   let pathStart: { x: number; y: number } | null = null;
   let pathLast: { x: number; y: number } | null = null;
 
+  /** Current path as a clip area in viewport pt: bbox + SVG path (mm, bbox-relative). */
+  function clipFromPath(): { d: string; x: number; y: number; w: number; h: number } | undefined {
+    const rects = [...pathRects, ...(pathRect ? [pathRect] : [])];
+    const pts: number[][] = [];
+    let d = "";
+    if (pathSegments.length) {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      const vp = pathSegments.map((seg) => {
+        if (seg.type === "Z") return seg;
+        const out: number[] = [];
+        for (let k = 0; k < seg.pts.length; k += 2) { const v = toViewport(seg.pts[k], seg.pts[k + 1]); out.push(v.x, v.y); if (v.x < minX) minX = v.x; if (v.x > maxX) maxX = v.x; if (v.y < minY) minY = v.y; if (v.y > maxY) maxY = v.y; }
+        return { type: seg.type, pts: out };
+      });
+      if (!isFinite(minX)) return undefined;
+      d = vp.map((seg) => seg.type === "Z" ? "Z" : `${seg.type} ${Array.from({ length: seg.pts.length / 2 }, (_, k) => `${((seg.pts[2 * k] - minX) * PT_TO_MM).toFixed(2)} ${((seg.pts[2 * k + 1] - minY) * PT_TO_MM).toFixed(2)}`).join(" ")}`).join(" ");
+      return { d, x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+    }
+    if (rects.length) {
+      for (const r of rects) { const a = toViewport(r.x, r.y), b = toViewport(r.x + r.w, r.y + r.h); pts.push([Math.min(a.x, b.x), Math.min(a.y, b.y), Math.max(a.x, b.x), Math.max(a.y, b.y)]); }
+      const x0 = Math.min(...pts.map((p) => p[0])), y0 = Math.min(...pts.map((p) => p[1])), x1 = Math.max(...pts.map((p) => p[2])), y1 = Math.max(...pts.map((p) => p[3]));
+      return { d: "", x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    }
+    return undefined;
+  }
+
   function flushPath(isFill: boolean, isStroke: boolean) {
     for (const r of pathRects) {
       const tl = toViewport(r.x, r.y + r.h);
       const br = toViewport(r.x + r.w, r.y);
       shapes.push({
+        seq: opIndex,
         kind: "rect",
         x: Math.min(tl.x, br.x) * PT_TO_MM,
         y: Math.min(tl.y, br.y) * PT_TO_MM,
         width: Math.abs(br.x - tl.x) * PT_TO_MM,
         height: Math.abs(br.y - tl.y) * PT_TO_MM,
         fill: isFill ? gs.fill : undefined,
+        gradient: isFill ? gs.fillGradient : undefined,
         stroke: isStroke ? gs.stroke : undefined,
         strokeWidth: isStroke ? gs.lineWidth * PT_TO_MM : undefined,
         opacity: isFill ? gs.fillAlpha : gs.strokeAlpha,
@@ -259,12 +435,14 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
       const w = Math.abs(br.x - tl.x);
       const h = Math.abs(br.y - tl.y);
       shapes.push({
+        seq: opIndex,
         kind: "rect",
         x: x * PT_TO_MM,
         y: y * PT_TO_MM,
         width: w * PT_TO_MM,
         height: h * PT_TO_MM,
         fill: isFill ? gs.fill : undefined,
+        gradient: isFill ? gs.fillGradient : undefined,
         stroke: isStroke ? gs.stroke : undefined,
         strokeWidth: isStroke ? gs.lineWidth * PT_TO_MM : undefined,
         opacity: isFill ? gs.fillAlpha : gs.strokeAlpha,
@@ -294,6 +472,7 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
       const axisAligned = dx < 0.5 || dy < 0.5;
       if (axisAligned) {
         shapes.push({
+          seq: opIndex,
           kind: "line",
           x: minX * PT_TO_MM,
           y: minY * PT_TO_MM,
@@ -305,6 +484,7 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
         });
       } else {
         shapes.push({
+          seq: opIndex,
           kind: "path",
           x: minX * PT_TO_MM,
           y: minY * PT_TO_MM,
@@ -349,17 +529,25 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
           }
           return `${seg.type} ${p.join(" ")}`;
         }).join(" ");
+        // A filled polygon of straight segments whose box is thinner than
+        // 0.6 mm is a rule drawn as a path (LibreOffice/Word table borders).
+        // Emit it as a rect so collinear merging and the table detector see
+        // a border, not an opaque "path" they must leave alone.
+        const straight = vpSegments.every((seg) => seg.type === "M" || seg.type === "L" || seg.type === "Z");
+        const thin = isFill && straight && Math.min(bw, bh) * PT_TO_MM < 0.6 && Math.max(bw, bh) * PT_TO_MM >= 1;
         shapes.push({
-          kind: "path",
+          seq: opIndex,
+          kind: thin ? "rect" : "path",
           x: minX * PT_TO_MM,
           y: minY * PT_TO_MM,
           width: bw * PT_TO_MM,
           height: bh * PT_TO_MM,
           fill: isFill ? gs.fill : undefined,
+          gradient: isFill ? gs.fillGradient : undefined,
           stroke: isStroke ? gs.stroke : undefined,
           strokeWidth: isStroke ? gs.lineWidth * PT_TO_MM : undefined,
           opacity: isFill ? gs.fillAlpha : gs.strokeAlpha,
-          path: d,
+          path: thin ? undefined : d,
         });
       }
     }
@@ -370,6 +558,7 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
   }
 
   for (let i = 0; i < fnArr.length; i++) {
+    opIndex = i;
     const fn = fnArr[i];
     const args = argsArr[i] || [];
 
@@ -420,6 +609,11 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
     } else if (fn === OPS.setFillColorN) {
       const c = patternToColor(page, args[0]);
       if (c) gs.fill = c;
+      // Shading pattern: keep the gradient itself (banners, cover art), the
+      // pattern matrix maps pattern space to the default page space.
+      const ir = patternIR(page, args[0]);
+      const pm = Array.isArray(args[0]) && Array.isArray(args[0][2]) ? args[0][2] : undefined;
+      gs.fillGradient = ir ? irToGradient(ir, toViewport, pm) ?? undefined : undefined;
     } else if (fn === OPS.setStrokeColorN) {
       const c = patternToColor(page, args[0]);
       if (c) gs.stroke = c;
@@ -433,10 +627,12 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
       gs.ctm = multiplyCtm(args as number[], gs.ctm);
     } else if (fn === OPS.setFillRGBColor) {
       gs.fill = rgbToHex(args[0], args[1], args[2]);
+      gs.fillGradient = undefined;
     } else if (fn === OPS.setStrokeRGBColor) {
       gs.stroke = rgbToHex(args[0], args[1], args[2]);
     } else if (fn === OPS.setFillGray) {
       gs.fill = rgbToHex(args[0], args[0], args[0]);
+      gs.fillGradient = undefined;
     } else if (fn === OPS.setStrokeGray) {
       gs.stroke = rgbToHex(args[0], args[0], args[0]);
     } else if (fn === OPS.setFillCMYKColor || fn === OPS.setStrokeCMYKColor) {
@@ -448,7 +644,7 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
       const g = (1 - m) * (1 - k) * 255;
       const b = (1 - y) * (1 - k) * 255;
       const hex = rgbToHex(r, g, b);
-      if (fn === OPS.setFillCMYKColor) gs.fill = hex; else gs.stroke = hex;
+      if (fn === OPS.setFillCMYKColor) { gs.fill = hex; gs.fillGradient = undefined; } else gs.stroke = hex;
     } else if (fn === OPS.setLineWidth) {
       gs.lineWidth = args[0];
     } else if (fn === OPS.setTextRenderingMode) {
@@ -549,11 +745,32 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
       const isStroke = fn === OPS.stroke || fn === OPS.fillStroke || fn === OPS.eoFillStroke || fn === OPS.closeFillStroke || fn === OPS.closeStroke || fn === OPS.closeEOFillStroke;
       flushPath(isFill, isStroke);
     } else if (fn === OPS.endPath || fn === OPS.clip || fn === OPS.eoClip) {
+      if (fn !== OPS.endPath) gs.clip = clipFromPath();
       pathSegments = [];
       pathRects = [];
       pathRect = null;
       pathStart = null;
       pathLast = null;
+    } else if (fn === OPS.shadingFill) {
+      // `sh`: paint the current clip (or the whole page) with a shading. Gradient
+      // banners and cover art arrive this way; they used to be dropped, leaving
+      // white titles on a white page.
+      const ir = args[0];
+      const g = irToGradient(ir, (x, y) => toViewport(...(Object.values(tx(gs.ctm, x, y)) as [number, number])));
+      const avg = Array.isArray(ir) && ir[0] === "RadialAxial" ? averageStops(ir[3]) : null;
+      if (g || avg) {
+        const area = gs.clip ?? { d: "", x: 0, y: 0, w: viewport.width, h: viewport.height };
+        shapes.push({
+          seq: opIndex,
+          kind: area.d ? "path" : "rect",
+          x: area.x * PT_TO_MM, y: area.y * PT_TO_MM,
+          width: Math.max(0.1, area.w * PT_TO_MM), height: Math.max(0.1, area.h * PT_TO_MM),
+          fill: avg ?? (g ? g.stops[0].color : undefined),
+          gradient: g ?? undefined,
+          opacity: gs.fillAlpha,
+          path: area.d || undefined,
+        });
+      }
     } else if (fn === OPS.paintImageXObject) {
       pushImage(String(args[0]), gs.ctm);
     } else if (fn === OPS.paintImageXObjectRepeat) {
@@ -715,6 +932,10 @@ interface TextRun {
   opacity: number;
   /** Set when the same line was drawn twice at a sub-point offset (fake bold). */
   bold?: boolean;
+  /** Set when the text matrix is skewed (synthetic italic: no italic face embedded). */
+  italic?: boolean;
+  /** Set when the text matrix rotates the run (a diagonal "SAMPLE" watermark, a vertical margin label). */
+  rotated?: boolean;
 }
 
 interface LinkAnnot {
@@ -998,6 +1219,9 @@ export async function importPdfToJdf(
     // newer Node. Browser entry leaves this unset (= false = real worker
     // via GlobalWorkerOptions.workerSrc); node entry sets `true`.
     disableWorker: runtime.disableWorker === true,
+    // Keep font flags (serif / monospace / bold / italic) on the font objects
+    // so classifyFont can pick a metric-compatible family for unknown names.
+    fontExtraProperties: true,
     isEvalSupported: false,
     // Keep going past malformed content streams instead of failing the page.
     stopAtErrors: false,
@@ -1079,6 +1303,7 @@ export async function importPdfToJdf(
     for (const k of Object.keys(textContent.styles || {})) {
       const s = (textContent.styles as any)[k];
       let realName: string = s.fontFamily || k;
+      const flags: FontFlags = {};
       // commonObjs.get(name, callback) can hang forever on node when the
       // font hasn't been requested through page.render() (the callback only
       // fires once the resource is materialised). Skip the lookup if the
@@ -1094,6 +1319,19 @@ export async function importPdfToJdf(
               page.commonObjs.get(k, (font: any) => {
                 if (font?.name) realName = font.name;
                 else if (font?.loadedName) realName = font.loadedName;
+                if (font) {
+                  // The embedded program knows better than the PDF's descriptor:
+                  // Chrome/Quartz write "CIDFont+F1" with the Serif flag set on
+                  // every font, while the TrueType name table still says Arial.
+                  const probe = probeFontProgram(font.data);
+                  const anonymous = /^(?:[A-Z]{6}\+)?(?:CIDFont\+)?F\d+$/i.test(String(font.name || "")) || !/[a-z]{3}/i.test(String(font.name || "").replace(/^[A-Z]{6}\+/, ""));
+                  if (probe?.family && anonymous) realName = probe.family + (probe.subfamily ? " " + probe.subfamily : "");
+                  else if (probe?.subfamily && /bold|italic|oblique/i.test(probe.subfamily) && !/bold|italic|oblique/i.test(realName)) realName += " " + probe.subfamily;
+                  if (probe) Object.assign(flags, probe.flags);
+                  if (flags.monospace == null && font.isMonospace) flags.monospace = true;
+                  // Descriptor Serif flag: trusted only for non-symbolic fonts with no PANOSE.
+                  if (flags.serif == null && !font.isSymbolicFont && font.isSerifFont) flags.serif = true;
+                }
                 done();
               });
             } catch { done(); }
@@ -1102,7 +1340,7 @@ export async function importPdfToJdf(
           });
         }
       } catch { /* ignore */ }
-      const cls = classifyFont(realName);
+      const cls = classifyFont(realName, flags);
       if (!cls.weight && /bold/i.test(s.fontFamily || "")) cls.weight = "bold";
       if (!cls.style && /italic|oblique/i.test(s.fontFamily || "")) cls.style = "italic";
       fontMap.set(k, cls);
@@ -1194,11 +1432,22 @@ export async function importPdfToJdf(
       if (mode === 7) return;
       const invisible = mode === 3;
       if (invisible && !keepInvisible) return;
-      const ascent = it.height ? safeNum(it.height, fontSize) * 0.78 : fontSize * 0.78;
+      // Box top = baseline − 0.846 em: where a browser puts the baseline of a
+      // line-height 1 box for Arimo/Carlito/Tinos (ascent 0.90, descent 0.21).
+      // Every emitted text element carries lineHeight 1 (paragraphs adjust),
+      // so an underline drawn at the PDF baseline lands under the glyphs, not
+      // through them.
+      const ascent = fontSize * 0.846;
       const yTop = vy - ascent;
       const w = safeNum(it.width, 0);
+      // Skewed text matrix (c ≠ 0) = synthetic italic: LibreOffice/Word slant
+      // the regular face when no italic face is embedded.
+      const skew = fontSize > 0 && Math.abs(safeNum(tr?.[2], 0)) / fontSize > 0.1 && Math.abs(safeNum(tr?.[1], 0)) / fontSize < 0.1;
+      const rotated = fontSize > 0 && Math.abs(safeNum(tr?.[1], 0)) / fontSize > 0.1;
       runs.push({
-        text: it.str,
+        text: mapSymbolGlyphs(it.str),
+        ...(skew ? { italic: true } : {}),
+        ...(rotated ? { rotated: true } : {}),
         x: safeNum(vx * PT_TO_MM, 0),
         y: safeNum(yTop * PT_TO_MM, 0),
         fontSize: safeNum(fontSize, 10),
@@ -1262,6 +1511,8 @@ export async function importPdfToJdf(
         Math.abs(last.fontSize - r.fontSize) < 0.4 &&
         (last.fontName === r.fontName || fontKey(last.fontName) === fontKey(r.fontName)) &&
         last.color === r.color &&
+        !!last.italic === !!r.italic &&
+        !!last.rotated === !!r.rotated &&
         Math.abs(last.opacity - r.opacity) < 0.05;
       const emMm = r.fontSize * PT_TO_MM;
       const gapMm = r.x - (last.x + extent(last));
@@ -1295,7 +1546,7 @@ export async function importPdfToJdf(
       for (const l of lines) {
         const t = l.text.trim();
         const recent = keep.slice(-40);
-        const dup = t.length ? recent.find((k) => Math.abs(k.y - l.y) <= 0.6 && Math.abs(k.x - l.x) <= 0.8 && Math.abs(k.fontSize - l.fontSize) < 0.6 && k.text.trim() === t) : undefined;
+        const dup = t.length ? recent.find((k) => Math.abs(k.y - l.y) <= 0.9 && Math.abs(k.x - l.x) <= 1.3 && Math.abs(k.fontSize - l.fontSize) < 0.6 && k.text.trim() === t) : undefined;
         if (dup) { dup.bold = true; continue; }
         keep.push(l);
       }
@@ -1323,7 +1574,7 @@ export async function importPdfToJdf(
     // and shapes they consume are skipped below so nothing is drawn twice.
     const tRuns: TRun[] = lines.map((l) => {
       const cls = fontMap.get(l.fontName) || classifyFont(l.fontName || "");
-      return { text: l.text, x: l.x, y: l.y, width: extent(l), height: l.height, fontSize: l.fontSize, fontName: l.fontName, color: l.color, bold: cls.weight === "bold" || !!l.bold };
+      return { text: l.text, x: l.x, y: l.y, width: extent(l), height: l.height, fontSize: l.fontSize, fontName: l.fontName, color: l.color, bold: cls.weight === "bold" || !!l.bold, italic: cls.style === "italic" || !!l.italic, family: cls.family };
     });
     // Body font size = the size carrying the most characters on the page.
     const sizeChars = new Map<number, number>();
@@ -1333,7 +1584,11 @@ export async function importPdfToJdf(
     // columns of justified prose are never mistaken for a two-column table.
     const gutters = options.readingOrder === false ? [] : detectGutters(lines.map((l) => ({ text: l.text, x: l.x, y: l.y, width: l.width, fontSize: l.fontSize })), bodyFontSize, pageW * PT_TO_MM);
     const pageShapes = mergeCollinearShapes(ops.shapes);
-    const detected = options.detectTables === false ? [] : detectTables(tRuns, pageShapes, pageW * PT_TO_MM, gutters);
+    // A page carrying several form widgets is a form: its ruled cells hold
+    // labels and fields, not rows and columns — table detection would fold
+    // the labels into wrapped cells and push everything below off the page.
+    const isFormPage = formWidgets.length >= 5;
+    const detected = options.detectTables === false || isFormPage ? [] : detectTables(tRuns, pageShapes, pageW * PT_TO_MM, gutters);
     const consumedLines = new Set<number>();
     const consumedShapes = new Set<number>();
     const tableAtLine = new Map<number, Element>();
@@ -1344,6 +1599,9 @@ export async function importPdfToJdf(
     }
 
     const pageWmm = pageW * PT_TO_MM, pageHmm = pageH * PT_TO_MM;
+    // Paint order of shapes and images = PDF operator order (a photo, then the
+    // banner over it, then the logo). Text stays on top and in reading order.
+    const paintSeq = new WeakMap<object, number>();
     pageShapes.forEach((sh, shapeIdx) => {
       if (consumedShapes.has(shapeIdx)) return;
       if (sh.width < 0.3 && sh.height < 0.3) return;
@@ -1361,6 +1619,8 @@ export async function importPdfToJdf(
         height: Math.max(0.1, Math.round(sh.height * 100) / 100),
       };
       if (sh.fill) shape.fill = sh.fill;
+      if (sh.gradient) (shape as any).gradient = sh.gradient;
+      paintSeq.set(shape, sh.seq ?? 0);
       if (sh.stroke) shape.stroke = { color: sh.stroke, width: sh.strokeWidth || 0.3 };
       if (shapeType === "path" && sh.path) shape.path = sh.path;
       if (sh.opacity != null && sh.opacity < 0.999) {
@@ -1386,15 +1646,18 @@ export async function importPdfToJdf(
           data: base64,
         };
       }
-      elements.push({
+      const imgEl: Element = {
         type: "image",
         resource: resourceKey,
         position: { x: Math.round(pos.x * 100) / 100, y: Math.round(pos.y * 100) / 100 },
         width: Math.max(1, Math.round(pos.w * 100) / 100),
         height: Math.max(1, Math.round(pos.h * 100) / 100),
         fit: "fill",
-      });
+      };
+      paintSeq.set(imgEl, pos.seq ?? 0);
+      elements.push(imgEl);
     }
+    elements.sort((a, b) => (paintSeq.get(a) ?? 0) - (paintSeq.get(b) ?? 0));
 
     // Visual rows: runs on one baseline that sit right next to each other but
     // differ in style ("Full Stack Developer," bold + " Decktopus AI" regular).
@@ -1417,22 +1680,39 @@ export async function importPdfToJdf(
           // baseline but belongs to the same visual row. Line pitch is ≥ 1 em, so
           // the next line stays out.
           const tolY = Math.max(0.6, Math.max(li.fontSize, lj.fontSize) * PT_TO_MM * 0.5);
-          if (j === i || Math.abs(lj.y - li.y) > tolY || lj.x <= li.x) continue;
+          // A rotated run (watermark letters strewn across the page) is nobody's
+          // right-hand neighbour: capping a paragraph at it wraps it into words.
+          if (j === i || lj.rotated || li.rotated || Math.abs(lj.y - li.y) > tolY || lj.x <= li.x) continue;
           if (lj.x < bestX) { bestX = lj.x; bestNext = j; }
         }
         if (bestNext >= 0) nextOnRow.set(i, bestNext);
       }
-      const seen = new Set<number>();
-      for (const i of order) {
-        if (seen.has(i)) continue;
-        const row = [i]; seen.add(i);
-        let cur = i;
-        while (nextOnRow.has(cur)) {
-          const j = nextOnRow.get(cur)!, lc = lines[cur], lj = lines[j];
+      // Which runs join their left neighbour (gap small enough). A joined run
+      // never starts a row of its own — a skewed (italic) run whose box top
+      // sorts before its neighbour's used to be emitted twice: once as its
+      // own element and once inside the neighbour's richtext.
+      const joinsLeft = (cur: number, j: number) => {
+          const lc = lines[cur], lj = lines[j];
           const em = Math.min(lc.fontSize, lj.fontSize) * PT_TO_MM;
           const gap = lj.x - (lc.x + extent(lc));
-          if (gap < -em * 0.3 || gap > em * 0.6) break; // a real gap → separate column / element
-          row.push(j); seen.add(j); cur = j;
+          // A justified line stretches its word spaces: two runs of running
+          // prose on one baseline ("Vivamus " bold + "dapibus sodales …")
+          // may sit up to ~2 em apart. Numbers/short tokens (table cells that
+          // escaped detection) keep the tight limit.
+          const prose = (a: TextRun, b: TextRun) => /\s$/.test(a.text) && /^[a-zà-ÿ]/.test(b.text.trim()) && a.text.trim().length >= 3 && b.text.trim().length >= 12 && !/\d[\d,.]*$/.test(a.text.trim());
+          const maxGap = prose(lc, lj) ? em * 2.0 : em * 0.6;
+          return !(gap < -em * 0.3 || gap > maxGap); // a real gap → separate column / element
+      };
+      const joined = new Set<number>();
+      for (const i of order) { const j = nextOnRow.get(i); if (j != null && joinsLeft(i, j)) joined.add(j); }
+      for (const i of order) {
+        if (joined.has(i)) continue;
+        const row = [i];
+        let cur = i;
+        while (nextOnRow.has(cur)) {
+          const j = nextOnRow.get(cur)!;
+          if (!joinsLeft(cur, j)) break;
+          row.push(j); cur = j;
         }
         rowOf.set(i, row);
         for (const j of row) rowStartOf.set(j, i);
@@ -1440,13 +1720,24 @@ export async function importPdfToJdf(
     }
     const runStyle = (l: TextRun) => {
       const cls = fontMap.get(l.fontName) || classifyFont(l.fontName || "");
-      return { cls, bold: cls.weight === "bold" || !!l.bold, italic: cls.style === "italic" };
+      return { cls, bold: cls.weight === "bold" || !!l.bold, italic: cls.style === "italic" || !!l.italic };
     };
 
+    // A printed value sitting inside a form field that already carries the
+    // same value (a filled form exported with both the appearance text and
+    // the widget) would render twice — once as text, once in the input.
+    const underWidgetValue = (l: TextRun) => {
+      const t = l.text.trim();
+      if (!t) return false;
+      const cx = l.x + extent(l) / 2, cy = l.y + l.height / 2;
+      return formWidgets.some((w) => !w.pushButton && typeof w.fieldValue === "string" && w.fieldValue.trim() === t &&
+        cx >= w.rectMm.x && cx <= w.rectMm.x + w.rectMm.w && cy >= w.rectMm.y - 1 && cy <= w.rectMm.y + w.rectMm.h + 1);
+    };
     lines.forEach((l, lineIdx) => {
       const tableEl = tableAtLine.get(lineIdx);
       if (tableEl) elements.push(tableEl);
       if (consumedLines.has(lineIdx)) return;
+      if (underWidgetValue(l)) return;
       const row = rowOf.get(lineIdx);
       if (!row) return; // continuation of a richtext row already emitted
       if (row.length > 1) {
@@ -1476,7 +1767,7 @@ export async function importPdfToJdf(
           if (lk) run.link = lk.url ? lk.url : lk.destPage != null ? { type: "internal", target: `#page-${lk.destPage + 1}` } : undefined;
           runs.push(run);
         });
-        const style: any = { fontSize: Math.round(first.fontSize * 10) / 10, fontFamily: base.cls.family };
+        const style: any = { fontSize: Math.round(first.fontSize * 10) / 10, fontFamily: base.cls.family, lineHeight: 1 };
         if (first.opacity < 0.999) style.opacity = Math.round(first.opacity * 100) / 100;
         const rt: any = {
           type: "richtext",
@@ -1495,9 +1786,10 @@ export async function importPdfToJdf(
       const style: any = {
         fontSize: Math.round(l.fontSize * 10) / 10,
         fontFamily: cls.family,
+        lineHeight: 1,
       };
       if (cls.weight === "bold" || l.bold) style.fontWeight = "bold";
-      if (cls.style === "italic") style.fontStyle = "italic";
+      if (cls.style === "italic" || l.italic) style.fontStyle = "italic";
       if (l.color !== "#000000") style.color = l.color;
       if (l.opacity < 0.999) style.opacity = Math.round(l.opacity * 100) / 100;
 

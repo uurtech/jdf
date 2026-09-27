@@ -168,6 +168,7 @@
         <tbody>
           <tr><td><code>type</code></td><td><code>"shape"</code></td></tr>
           <tr><td><code>shape</code></td><td><code>"rect"</code> · <code>"circle"</code> · <code>"ellipse"</code> · <code>"line"</code> · <code>"path"</code></td></tr>
+          <tr><td><code>gradient</code></td><td><code>{type: "linear" | "radial", angle, stops: [{offset, color}]}</code> — gradient fill; <code>angle</code> follows CSS (0 = up, 90 = right). Keep a representative <code>fill</code> too: PDF export paints the average of the stops. The PDF importer writes this for shading banners and cover art.</td></tr>
           <tr><td><code>fill</code></td><td>color string</td></tr>
           <tr><td><code>stroke</code></td><td>color string or <code>{color, width}</code></td></tr>
           <tr><td><code>strokeWidth</code></td><td>number</td></tr>

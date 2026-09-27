@@ -217,6 +217,9 @@ export interface ShapeElement {
   borderRadius?: number;
   path?: string;
   points?: Position[];
+  /** Gradient fill. `angle` follows CSS (0 = up, 90 = right); `fill` should
+   *  still carry a representative colour for renderers without gradients (PDF export). */
+  gradient?: { type: "linear" | "radial"; angle?: number; stops: { offset: number; color: string }[] };
   style?: StyleRef;
 }
 

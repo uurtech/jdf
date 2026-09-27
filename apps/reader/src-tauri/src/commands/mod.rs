@@ -750,7 +750,14 @@ fn draw_element(
         "shape" => {
             let shape = el.get("shape").and_then(|s| s.as_str()).unwrap_or("rect");
             let h = el.get("height").and_then(|v| v.as_f64()).unwrap_or(1.0) as f32;
-            let fill = el.get("fill").and_then(|f| f.as_str()).and_then(parse_color);
+            // No gradients in printpdf: a `gradient` without `fill` paints the average of its stops.
+            let fill = el.get("fill").and_then(|f| f.as_str()).and_then(parse_color).or_else(|| {
+                let stops = el.get("gradient")?.get("stops")?.as_array()?;
+                let cols: Vec<Rgb> = stops.iter().filter_map(|s| s.get("color")?.as_str().and_then(parse_color)).collect();
+                if cols.is_empty() { return None; }
+                let n = cols.len() as f32;
+                Some(Rgb::new(cols.iter().map(|c| c.r).sum::<f32>() / n, cols.iter().map(|c| c.g).sum::<f32>() / n, cols.iter().map(|c| c.b).sum::<f32>() / n, None))
+            });
             let stroke_obj = el.get("stroke");
             let stroke_color = stroke_obj
                 .and_then(|s| s.get("color").and_then(|c| c.as_str()))
@@ -976,6 +983,9 @@ fn draw_element(
         "input" | "textarea" => {
             let label = el.get("label").and_then(|s| s.as_str()).unwrap_or("");
             let value = el.get("value").and_then(|s| s.as_str()).unwrap_or("");
+            // Compact widgets (imported PDF forms, box < 9 mm): font sized to the box.
+            let fs = el.get("height").and_then(|h| h.as_f64()).map(|h| h as f32)
+                .filter(|h| *h < 9.0).map(|h| (h / PT_TO_MM * 0.62).min(fs).max(5.0)).unwrap_or(fs);
             let mut row = 0.0f32;
             if !label.is_empty() {
                 layer.use_text(label.to_string(), fs, Mm(margin_left + px), to_pdf_y(py, row), font_bold);
@@ -1142,14 +1152,18 @@ fn draw_table(
     };
 
     // Draw one row of cells at the given top-y (mm from bottom). Returns row height.
+    // Table-level text colour (`style.color`), black by default.
+    let table_color = el.get("style").and_then(|s| s.get("color")).and_then(|c| c.as_str()).and_then(parse_color)
+        .unwrap_or_else(|| Rgb::new(0.0, 0.0, 0.0, None));
+    // Per-cell style: `{content, style:{fontWeight, color}}` cells written by the
+    // PDF importer (bold totals, coloured figures). Italic has no face here.
     let draw_row = |cell_text: &dyn Fn(usize) -> String,
                         cell_align: &dyn Fn(usize) -> Option<String>,
+                        cell_style: &dyn Fn(usize) -> (bool, Option<Rgb>),
                         row_top: f32, face: &printpdf::IndirectFontRef, bg: Option<Rgb>| -> f32 {
         let h = row_height(cell_text);
         let row_bottom = row_top - h;
         if let Some(color) = bg { fill_rect(layer, x, row_bottom, width, h, color); }
-        // Reset text colour to black after any fill_rect changed fill colour.
-        layer.set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None)));
         for ci in 0..col_count {
             let cx = col_x(ci);
             if border_inner {
@@ -1159,6 +1173,10 @@ fn draw_table(
             let inner_w = (col_w[ci] - 2.0 * pad_h).max(1.0);
             let wrapped = wrap_text(&text, fs, inner_w, char_factor);
             let align = cell_align(ci).or_else(|| col_align(ci));
+            let (bold, color) = cell_style(ci);
+            let cell_face = if bold { font_bold } else { face };
+            // Reset text colour after fill_rect/stroke_rect changed the fill colour.
+            layer.set_fill_color(Color::Rgb(color.unwrap_or_else(|| table_color.clone())));
             for (li, line) in wrapped.iter().enumerate() {
                 if line.is_empty() { continue; }
                 let tw = text_width_mm(line, fs, char_factor);
@@ -1168,9 +1186,10 @@ fn draw_table(
                     _ => cx + pad_h,
                 };
                 let ty = row_top - pad_v - (li as f32 + 1.0) * line_mm + line_mm * 0.25;
-                layer.use_text(line.to_string(), fs, Mm(tx.max(cx + pad_h)), Mm(ty), face);
+                layer.use_text(line.to_string(), fs, Mm(tx.max(cx + pad_h)), Mm(ty), cell_face);
             }
         }
+        layer.set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None)));
         h
     };
 
@@ -1180,7 +1199,9 @@ fn draw_table(
         let hs = headers.clone();
         let get = move |ci: usize| hs.get(ci).cloned().unwrap_or_default();
         let noalign = |_ci: usize| None;
-        let h = draw_row(&get, &noalign, cursor, font_bold, header_bg);
+        let header_color = el.get("headerStyle").and_then(|s| s.get("color")).and_then(|c| c.as_str()).and_then(parse_color);
+        let hstyle = move |_ci: usize| (false, header_color.clone());
+        let h = draw_row(&get, &noalign, &hstyle, cursor, font_bold, header_bg);
         cursor -= h;
     }
     for (ri, row) in rows.iter().enumerate() {
@@ -1196,8 +1217,15 @@ fn draw_table(
         let getalign = move |ci: usize| -> Option<String> {
             row2.get(ci).and_then(|v| v.get("align")).and_then(|a| a.as_str()).map(String::from)
         };
+        let row3 = rows[ri].clone();
+        let getstyle = move |ci: usize| -> (bool, Option<Rgb>) {
+            let st = row3.get(ci).and_then(|v| v.get("style"));
+            let bold = st.and_then(|s| s.get("fontWeight")).and_then(|w| w.as_str()).map(|w| w == "bold" || w == "700").unwrap_or(false);
+            let color = st.and_then(|s| s.get("color")).and_then(|c| c.as_str()).and_then(parse_color);
+            (bold, color)
+        };
         let bg = if ri % 2 == 1 { alt_bg.clone().or_else(|| row_bg.clone()) } else { row_bg.clone() };
-        let h = draw_row(&get, &getalign, cursor, font, bg);
+        let h = draw_row(&get, &getalign, &getstyle, cursor, font, bg);
         cursor -= h;
     }
     // Outer border around the whole table.

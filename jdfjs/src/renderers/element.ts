@@ -455,6 +455,7 @@ function buildItems(parent: HTMLElement, items: ListItem[], def: "ordered" | "un
 }
 
 // ── shape ───────────────────────────────────────────────────────────────────
+let gradientSeq = 0;
 function renderShape(el: ShapeElement): HTMLElement {
   const wrap = document.createElement("div");
   wrap.className = "jdfjs-shape";
@@ -534,7 +535,35 @@ function renderShape(el: ShapeElement): HTMLElement {
     }
   }
   if (shapeNode) {
-    shapeNode.setAttribute("fill", fill);
+    // Gradient fill via SVG defs (same geometry the reader uses).
+    let paint = fill;
+    const g = el.gradient;
+    if (g && Array.isArray(g.stops) && g.stops.length >= 2) {
+      const id = `jdfjs-grad-${++gradientSeq}`;
+      const defs = document.createElementNS(NS_SVG, "defs");
+      let gradNode: SVGElement;
+      if (g.type === "radial") {
+        gradNode = document.createElementNS(NS_SVG, "radialGradient");
+        gradNode.setAttribute("cx", "50%"); gradNode.setAttribute("cy", "50%"); gradNode.setAttribute("r", "50%");
+      } else {
+        gradNode = document.createElementNS(NS_SVG, "linearGradient");
+        const a = ((g.angle ?? 180) * Math.PI) / 180;
+        const dx = Math.sin(a) / 2, dy = -Math.cos(a) / 2;
+        gradNode.setAttribute("x1", String(0.5 - dx)); gradNode.setAttribute("y1", String(0.5 - dy));
+        gradNode.setAttribute("x2", String(0.5 + dx)); gradNode.setAttribute("y2", String(0.5 + dy));
+      }
+      gradNode.setAttribute("id", id);
+      for (const st of g.stops) {
+        const stop = document.createElementNS(NS_SVG, "stop");
+        stop.setAttribute("offset", `${Math.max(0, Math.min(1, st.offset)) * 100}%`);
+        stop.setAttribute("stop-color", st.color);
+        gradNode.appendChild(stop);
+      }
+      defs.appendChild(gradNode);
+      svg.appendChild(defs);
+      paint = `url(#${id})`;
+    }
+    shapeNode.setAttribute("fill", paint);
     shapeNode.setAttribute("stroke", strokeColor);
     if (strokeWidth) shapeNode.setAttribute("stroke-width", String(strokeWidth));
     svg.appendChild(shapeNode);
@@ -681,10 +710,23 @@ function commitFormChange(ctx: RenderContext, field: string, value: unknown) {
   ctx.onFormChange(ctx.path, field, value);
 }
 
+/**
+ * A field whose box is shorter than 9 mm (an AcroForm widget imported from a
+ * PDF form) renders compact: no label, no padding, font sized to the box, so
+ * the control sits inside the form's printed cell instead of covering the
+ * labels around it. Same rule in the reader's FormElement.
+ */
+function compactField(wrap: HTMLElement, el: { height?: number }) {
+  if (el.height == null || el.height >= 9) return;
+  wrap.classList.add("jdfjs-form-compact");
+  wrap.style.fontSize = `${Math.max(7, Math.min(12, Math.round(el.height * 3.7795 * 0.62)))}px`;
+}
+
 function renderFormInput(el: FormInputElement, ctx: RenderContext): HTMLElement {
   const wrap = document.createElement("div");
   wrap.className = "jdfjs-form-field jdfjs-form-input";
   applyStyle(wrap, resolveStyle(el.style, ctx.styles));
+  compactField(wrap, el);
   const lab = makeLabel(el.label);
   if (lab) wrap.appendChild(lab);
   const input = document.createElement("input");
@@ -706,6 +748,7 @@ function renderFormTextarea(el: FormTextareaElement, ctx: RenderContext): HTMLEl
   const wrap = document.createElement("div");
   wrap.className = "jdfjs-form-field jdfjs-form-textarea";
   applyStyle(wrap, resolveStyle(el.style, ctx.styles));
+  compactField(wrap, el);
   const lab = makeLabel(el.label);
   if (lab) wrap.appendChild(lab);
   const ta = document.createElement("textarea");
@@ -726,6 +769,7 @@ function renderFormCheckbox(el: FormCheckboxElement, ctx: RenderContext): HTMLEl
   const wrap = document.createElement("label");
   wrap.className = "jdfjs-form-field jdfjs-form-checkbox";
   applyStyle(wrap, resolveStyle(el.style, ctx.styles));
+  compactField(wrap, el);
   const cb = document.createElement("input");
   cb.type = "checkbox";
   cb.name = el.name;
@@ -747,6 +791,7 @@ function renderFormSelect(el: FormSelectElement, ctx: RenderContext): HTMLElemen
   const wrap = document.createElement("div");
   wrap.className = "jdfjs-form-field jdfjs-form-select";
   applyStyle(wrap, resolveStyle(el.style, ctx.styles));
+  compactField(wrap, el);
   const lab = makeLabel(el.label);
   if (lab) wrap.appendChild(lab);
   const sel = document.createElement("select");

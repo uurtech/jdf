@@ -440,6 +440,18 @@
         "stroke": { "oneOf": [{ "type": "string" }, { "type": "object", "properties": { "color": { "type": "string" }, "width": { "type": "number" } } }] },
         "strokeWidth": { "type": "number" }, "borderRadius": { "type": "number" }, "path": { "type": "string" },
         "points": { "type": "array", "items": { "$ref": "#/definitions/Position" } },
+        "gradient": {
+          "type": "object",
+          "required": ["type", "stops"],
+          "properties": {
+            "type": { "type": "string", "enum": ["linear", "radial"] },
+            "angle": { "type": "number" },
+            "stops": {
+              "type": "array", "minItems": 2,
+              "items": { "type": "object", "required": ["offset", "color"], "properties": { "offset": { "type": "number" }, "color": { "type": "string" } } }
+            }
+          }
+        },
         "style": { "$ref": "#/definitions/StyleRef" }
       }
     },

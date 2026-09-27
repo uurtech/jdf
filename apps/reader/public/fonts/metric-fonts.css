@@ -1,0 +1,25 @@
+/* Metric-compatible open fonts (SIL OFL 1.1, see OFL.txt): Carlito=Calibri, Caladea=Cambria, Arimo=Arial/Helvetica, Tinos=Times New Roman, Cousine=Courier New, Gelasio=Georgia. Bundled so converted PDFs keep their line widths offline. */
+@font-face { font-family: "Arimo"; font-style: italic; font-weight: 400; font-display: swap; src: local("Arimo"), url("/fonts/Arimo-400i.woff2") format("woff2"); }
+@font-face { font-family: "Arimo"; font-style: italic; font-weight: 700; font-display: swap; src: local("Arimo"), url("/fonts/Arimo-700i.woff2") format("woff2"); }
+@font-face { font-family: "Arimo"; font-style: normal; font-weight: 400; font-display: swap; src: local("Arimo"), url("/fonts/Arimo-400.woff2") format("woff2"); }
+@font-face { font-family: "Arimo"; font-style: normal; font-weight: 700; font-display: swap; src: local("Arimo"), url("/fonts/Arimo-700.woff2") format("woff2"); }
+@font-face { font-family: "Caladea"; font-style: italic; font-weight: 400; font-display: swap; src: local("Caladea"), url("/fonts/Caladea-400i.woff2") format("woff2"); }
+@font-face { font-family: "Caladea"; font-style: italic; font-weight: 700; font-display: swap; src: local("Caladea"), url("/fonts/Caladea-700i.woff2") format("woff2"); }
+@font-face { font-family: "Caladea"; font-style: normal; font-weight: 400; font-display: swap; src: local("Caladea"), url("/fonts/Caladea-400.woff2") format("woff2"); }
+@font-face { font-family: "Caladea"; font-style: normal; font-weight: 700; font-display: swap; src: local("Caladea"), url("/fonts/Caladea-700.woff2") format("woff2"); }
+@font-face { font-family: "Carlito"; font-style: italic; font-weight: 400; font-display: swap; src: local("Carlito"), url("/fonts/Carlito-400i.woff2") format("woff2"); }
+@font-face { font-family: "Carlito"; font-style: italic; font-weight: 700; font-display: swap; src: local("Carlito"), url("/fonts/Carlito-700i.woff2") format("woff2"); }
+@font-face { font-family: "Carlito"; font-style: normal; font-weight: 400; font-display: swap; src: local("Carlito"), url("/fonts/Carlito-400.woff2") format("woff2"); }
+@font-face { font-family: "Carlito"; font-style: normal; font-weight: 700; font-display: swap; src: local("Carlito"), url("/fonts/Carlito-700.woff2") format("woff2"); }
+@font-face { font-family: "Cousine"; font-style: italic; font-weight: 400; font-display: swap; src: local("Cousine"), url("/fonts/Cousine-400i.woff2") format("woff2"); }
+@font-face { font-family: "Cousine"; font-style: italic; font-weight: 700; font-display: swap; src: local("Cousine"), url("/fonts/Cousine-700i.woff2") format("woff2"); }
+@font-face { font-family: "Cousine"; font-style: normal; font-weight: 400; font-display: swap; src: local("Cousine"), url("/fonts/Cousine-400.woff2") format("woff2"); }
+@font-face { font-family: "Cousine"; font-style: normal; font-weight: 700; font-display: swap; src: local("Cousine"), url("/fonts/Cousine-700.woff2") format("woff2"); }
+@font-face { font-family: "Gelasio"; font-style: italic; font-weight: 400; font-display: swap; src: local("Gelasio"), url("/fonts/Gelasio-400i.woff2") format("woff2"); }
+@font-face { font-family: "Gelasio"; font-style: italic; font-weight: 700; font-display: swap; src: local("Gelasio"), url("/fonts/Gelasio-700i.woff2") format("woff2"); }
+@font-face { font-family: "Gelasio"; font-style: normal; font-weight: 400; font-display: swap; src: local("Gelasio"), url("/fonts/Gelasio-400.woff2") format("woff2"); }
+@font-face { font-family: "Gelasio"; font-style: normal; font-weight: 700; font-display: swap; src: local("Gelasio"), url("/fonts/Gelasio-700.woff2") format("woff2"); }
+@font-face { font-family: "Tinos"; font-style: italic; font-weight: 400; font-display: swap; src: local("Tinos"), url("/fonts/Tinos-400i.woff2") format("woff2"); }
+@font-face { font-family: "Tinos"; font-style: italic; font-weight: 700; font-display: swap; src: local("Tinos"), url("/fonts/Tinos-700i.woff2") format("woff2"); }
+@font-face { font-family: "Tinos"; font-style: normal; font-weight: 400; font-display: swap; src: local("Tinos"), url("/fonts/Tinos-400.woff2") format("woff2"); }
+@font-face { font-family: "Tinos"; font-style: normal; font-weight: 700; font-display: swap; src: local("Tinos"), url("/fonts/Tinos-700.woff2") format("woff2"); }
