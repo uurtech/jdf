@@ -60,3 +60,6 @@ bench/byoc/cache/
 # Third-party reference PDFs used for importer QA — never tracked
 ref_docs/
 .win-smoke.png
+
+# release.sh ↔ publish-dmg.sh handoff (draft release id)
+.release-id

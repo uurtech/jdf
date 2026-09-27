@@ -15,6 +15,11 @@ on:
 permissions:
   contents: write
 
+# The macOS dmg is NOT built here: scripts/publish-dmg.sh builds, signs,
+# notarizes and staples it locally and uploads it to the release; a CI-built,
+# unsigned dmg attached under the same name would overwrite it (it did once:
+# v0.2.4 shipped for 20 minutes with a dmg whose sha256 did not match the cask).
+# Linux and Windows bundles are community-maintained and built here.
 jobs:
   build:
     name: Build (${{ matrix.platform }})
@@ -22,12 +27,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest
-            target: aarch64-apple-darwin
-            artifact: "*.dmg"
-          - platform: macos-13
-            target: x86_64-apple-darwin
-            artifact: "*.dmg"
           - platform: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             artifact: "*.deb,*.AppImage,*.rpm"
@@ -81,7 +80,6 @@ jobs:
         with:
           name: jdf-reader-${{ matrix.target }}
           path: |
-            apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
             apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
             apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
             apps/reader/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm

@@ -209,12 +209,14 @@ GH_API="https://api.github.com/repos/$GH_OWNER/$GH_REPO"
 GH_UPLOADS="https://uploads.github.com/repos/$GH_OWNER/$GH_REPO"
 
 # Delete existing release for this tag if present (for re-runs)
+# Drafts are not reachable via /releases/tags/:tag, so list and match by tag_name.
 EXISTING_JSON=$(curl -sL -H "Authorization: Bearer $GITHUB_TOKEN" \
   -H "Accept: application/vnd.github+json" \
-  "$GH_API/releases/tags/$TAG")
-EXISTING=$(echo "$EXISTING_JSON" | node -e "
-  let j; try { j = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); } catch { j = {}; }
-  process.stdout.write(j && typeof j.id === 'number' ? String(j.id) : '');
+  "$GH_API/releases?per_page=50")
+EXISTING=$(echo "$EXISTING_JSON" | TAG="$TAG" node -e "
+  let j; try { j = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); } catch { j = []; }
+  const r = Array.isArray(j) ? j.find((x) => x.tag_name === process.env.TAG) : null;
+  process.stdout.write(r && typeof r.id === 'number' ? String(r.id) : '');
 ")
 
 if [[ -n "$EXISTING" ]]; then
@@ -237,10 +239,12 @@ RELEASE_JSON=$(curl -sL -X POST -H "Authorization: Bearer $GITHUB_TOKEN" \
     \"tag_name\": \"$TAG\",
     \"name\": \"JDF Reader $NEW_VER\",
     \"body\": \"Automated release.\\n\\nDMG sha256: \`$SHA256\`\",
-    \"draft\": false,
-    \"prerelease\": false,
-    \"target_commitish\": \"master\"
+    \"draft\": true,
+    \"prerelease\": false
   }")
+# Draft on purpose: a draft has no tag, so the Release workflow (Linux/Windows
+# bundles) does not fire on the pre-bump commit. release.sh commits the version
+# bump, pushes the tag and then publishes this draft (see .release-id).
 
 RELEASE_ID=$(echo "$RELEASE_JSON" | node -e "
   let j; try { j = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); } catch { process.exit(1); }
@@ -263,6 +267,7 @@ curl -sL -X POST \
   --data-binary "@$DMG" \
   "$GH_UPLOADS/releases/$RELEASE_ID/assets?name=$DMG_URL_NAME" >/dev/null
 
+echo "$RELEASE_ID" > .release-id
 DMG_DOWNLOAD_URL="https://github.com/$GH_OWNER/$GH_REPO/releases/download/$TAG/$DMG_URL_NAME"
 echo "→ Asset URL: $DMG_DOWNLOAD_URL"
 

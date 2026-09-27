@@ -183,6 +183,19 @@ git push origin "$CURRENT_BRANCH"
 git push origin "$TAG" --force
 echo "  ✓ Branch + tag $TAG pushed"
 
+# Publish the draft release created by publish-dmg.sh now that the tag points
+# at the version-bump commit (GitHub attaches the release to the pushed tag).
+if [[ -f .release-id ]]; then
+  RELEASE_ID=$(cat .release-id)
+  set -a; source .env; set +a
+  curl -sL -X PATCH -H "Authorization: Bearer $GITHUB_TOKEN" \
+    -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/uurtech/jdf/releases/$RELEASE_ID" \
+    -d "{\"draft\": false, \"tag_name\": \"$TAG\", \"target_commitish\": \"$(git rev-parse HEAD)\"}" >/dev/null \
+    && echo "  ✓ Release $TAG published" || echo "  ✗ could not publish draft release $RELEASE_ID — publish it in the GitHub UI"
+  rm -f .release-id
+fi
+
 echo ""
 echo "✓ Release complete."
 echo "  Desktop: $TAG  https://github.com/uurtech/jdf/releases/tag/$TAG"

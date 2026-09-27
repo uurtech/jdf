@@ -184,6 +184,8 @@ The last two steps prove the PDF ingestion path is alive — sample.pdf must pro
 
 All scripts read tokens from `/.env` (root) — `NPM_TOKEN` and `GITHUB_TOKEN` are required. See `/.env.example`.
 
+**Release ordering is load-bearing (2026-09-27 incident).** `publish-dmg.sh` creates the GitHub release as a *draft* and writes its id to `.release-id`; `release.sh` commits the version bump, pushes the tag, then publishes the draft. A non-draft release creates the tag on the *pre-bump* commit, which fires `.github/workflows/release.yml` twice, and its CI-built unsigned dmg overwrites the notarized one under the same asset name (v0.2.4 shipped for 20 minutes with a dmg whose sha256 did not match the cask). The workflow therefore builds Linux/Windows only — never add a macOS/dmg job back. `macos-13` runners no longer exist on GitHub (jobs queue forever).
+
 ## Benchmark (`bench/`)
 
 The JDF-vs-PDF RAG benchmark is **Python** (`bench/rag_bench.py` accuracy, `bench/cost_bench.py` RAG cost at 1,000 files — chunks/tokens/$/re-index/query, NO parser timing: the user rejected parser benchmarks) so AI/RAG people can run it without the Node toolchain. Node is maintainer tooling only (`bench/src/`: seeded corpus generator, JDF→PDF printing via jdf.js in Chrome, `jdf chunk` export, publishing results to the site). Rules:
