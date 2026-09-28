@@ -1,13 +1,13 @@
 {
-  "date": "2026-09-18",
+  "date": "2026-09-28",
   "machine": {
-    "cpu": "Apple M5",
-    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
-    "python": "3.14.6"
+    "cpu": "x86_64",
+    "platform": "Linux-7.0.0-1013-aws-x86_64-with-glibc2.43",
+    "python": "3.14.4"
   },
   "files": 1000,
   "corpusDocuments": 24,
-  "pdfPipeline": "pdf-pypdf-1000",
+  "pdfPipeline": "pdf-pdfplumber-1000",
   "pdfChunking": {
     "chars": 1000,
     "overlap": 200
@@ -16,11 +16,11 @@
   "embedding": {
     "provider": "st",
     "model": "BAAI/bge-small-en-v1.5",
-    "version": "sentence-transformers 6.0.1",
+    "version": "sentence-transformers 5.7.0 \u00b7 torch 2.14.0+cu130 \u00b7 cuda:0 (NVIDIA L40S)",
     "measuredOn": "first 2000 unique chunks per pipeline",
     "tokensPerSecond": {
-      "jdf": 32222.466201683284,
-      "pypdf": 41423.207023653864
+      "jdf": 74737.4806939267,
+      "pdfplumber": 217005.35584377687
     }
   },
   "prices": {
@@ -201,11 +201,11 @@
         }
       },
       "accuracy": {
-        "recallAt1000Tok": 0.9895833333333334,
-        "recall1": 0.765625,
-        "recall5": 0.9895833333333334,
-        "mrr10": 0.8643229166666666,
-        "retriever": "dense:nomic-embed-text"
+        "recallAt1000Tok": 0.96875,
+        "recall1": 0.46875,
+        "recall5": 0.9166666666666666,
+        "mrr10": 0.6455915178571429,
+        "retriever": "dense:BAAI/bge-small-en-v1.5"
       },
       "chunks": 8000,
       "embedTokens": 1305820,
@@ -215,7 +215,7 @@
         "openai-text-embedding-3-large": 0.1697566,
         "cohere-embed-v4": 0.1566984
       },
-      "localEmbedSeconds": 40.525141428553496,
+      "localEmbedSeconds": 17.472090146411816,
       "reindex": {
         "chunksPerEditedDoc": 1,
         "tokensPerEditedDoc": 91,
@@ -227,179 +227,179 @@
         }
       },
       "query": {
-        "ctxTokensPerQuery": 753.3645833333334,
+        "ctxTokensPerQuery": 716.3177083333334,
         "queries": 1000000,
-        "inputTokens": 753364583.3333334,
+        "inputTokens": 716317708.3333334,
         "usd": {
-          "claude-sonnet-5": 1506.7291666666667,
-          "claude-haiku-4-5": 753.3645833333334,
-          "claude-opus-5": 3766.822916666667,
-          "openai-gpt-4o-mini": 113.0046875
+          "claude-sonnet-5": 1432.6354166666667,
+          "claude-haiku-4-5": 716.3177083333334,
+          "claude-opus-5": 3581.588541666667,
+          "openai-gpt-4o-mini": 107.44765625000001
         }
       }
     },
     {
-      "id": "pypdf",
-      "label": "PDF \u00b7 pypdf extract_text() \u00b7 fixed 1000/200",
-      "version": "6.18.1",
+      "id": "pdfplumber",
+      "label": "PDF \u00b7 pdfplumber extract_text() \u00b7 fixed 1000/200",
+      "version": "0.11.10",
       "files": 1000,
       "perDoc": {
         "d01": {
-          "chunks": 7,
-          "tokens": 1461,
-          "bytes": 5925
+          "chunks": 6,
+          "tokens": 1402,
+          "bytes": 5659
         },
         "d02": {
           "chunks": 5,
-          "tokens": 1325,
-          "bytes": 5365
+          "tokens": 1322,
+          "bytes": 5336
         },
         "d03": {
           "chunks": 6,
-          "tokens": 1359,
-          "bytes": 5498
+          "tokens": 1356,
+          "bytes": 5472
         },
         "d04": {
           "chunks": 7,
-          "tokens": 1438,
-          "bytes": 5820
+          "tokens": 1439,
+          "bytes": 5793
         },
         "d05": {
           "chunks": 6,
-          "tokens": 1414,
-          "bytes": 5715
+          "tokens": 1411,
+          "bytes": 5687
         },
         "d06": {
           "chunks": 6,
-          "tokens": 1336,
-          "bytes": 5418
+          "tokens": 1337,
+          "bytes": 5388
         },
         "d07": {
           "chunks": 7,
-          "tokens": 1438,
-          "bytes": 5813
+          "tokens": 1435,
+          "bytes": 5783
         },
         "d08": {
           "chunks": 6,
-          "tokens": 1340,
-          "bytes": 5425
+          "tokens": 1336,
+          "bytes": 5398
         },
         "d09": {
           "chunks": 7,
-          "tokens": 1431,
-          "bytes": 5780
+          "tokens": 1428,
+          "bytes": 5756
         },
         "d10": {
           "chunks": 6,
-          "tokens": 1408,
-          "bytes": 5691
+          "tokens": 1405,
+          "bytes": 5668
         },
         "d11": {
           "chunks": 7,
-          "tokens": 1427,
-          "bytes": 5757
+          "tokens": 1423,
+          "bytes": 5736
         },
         "d12": {
           "chunks": 6,
-          "tokens": 1427,
-          "bytes": 5763
+          "tokens": 1423,
+          "bytes": 5730
         },
         "d13": {
           "chunks": 6,
-          "tokens": 1385,
-          "bytes": 5592
+          "tokens": 1382,
+          "bytes": 5568
         },
         "d14": {
           "chunks": 5,
-          "tokens": 1312,
-          "bytes": 5312
+          "tokens": 1311,
+          "bytes": 5284
         },
         "d15": {
           "chunks": 7,
-          "tokens": 1384,
-          "bytes": 5607
+          "tokens": 1382,
+          "bytes": 5583
         },
         "d16": {
           "chunks": 6,
-          "tokens": 1345,
-          "bytes": 5448
+          "tokens": 1344,
+          "bytes": 5427
         },
         "d17": {
           "chunks": 6,
-          "tokens": 1400,
-          "bytes": 5659
+          "tokens": 1397,
+          "bytes": 5634
         },
         "d18": {
           "chunks": 6,
-          "tokens": 1377,
-          "bytes": 5565
+          "tokens": 1373,
+          "bytes": 5537
         },
         "d19": {
           "chunks": 6,
-          "tokens": 1373,
-          "bytes": 5545
+          "tokens": 1368,
+          "bytes": 5516
         },
         "d20": {
           "chunks": 7,
-          "tokens": 1406,
-          "bytes": 5691
+          "tokens": 1405,
+          "bytes": 5666
         },
         "d21": {
           "chunks": 7,
-          "tokens": 1450,
-          "bytes": 5859
+          "tokens": 1447,
+          "bytes": 5829
         },
         "d22": {
           "chunks": 6,
-          "tokens": 1352,
-          "bytes": 5477
+          "tokens": 1349,
+          "bytes": 5447
         },
         "d23": {
           "chunks": 6,
-          "tokens": 1395,
-          "bytes": 5645
+          "tokens": 1392,
+          "bytes": 5613
         },
         "d24": {
           "chunks": 7,
-          "tokens": 1393,
-          "bytes": 5632
+          "tokens": 1390,
+          "bytes": 5613
         }
       },
       "accuracy": {
-        "recallAt1000Tok": 0.8333333333333334,
-        "recall1": 0.4114583333333333,
-        "recall5": 0.921875,
-        "mrr10": 0.6049520502645502,
-        "retriever": "dense:nomic-embed-text"
+        "recallAt1000Tok": 0.75,
+        "recall1": 0.3489583333333333,
+        "recall5": 0.84375,
+        "mrr10": 0.5338748346560847,
+        "retriever": "dense:BAAI/bge-small-en-v1.5"
       },
-      "chunks": 6291,
-      "embedTokens": 1390646,
-      "chunkStoreBytes": 5625011,
+      "chunks": 6249,
+      "embedTokens": 1385673,
+      "chunkStoreBytes": 5588311,
       "embedUsd": {
-        "openai-text-embedding-3-small": 0.02781292,
-        "openai-text-embedding-3-large": 0.18078398,
-        "cohere-embed-v4": 0.16687752
+        "openai-text-embedding-3-small": 0.02771346,
+        "openai-text-embedding-3-large": 0.18013749,
+        "cohere-embed-v4": 0.16628075999999997
       },
-      "localEmbedSeconds": 33.57166428967946,
+      "localEmbedSeconds": 6.385432260932547,
       "reindex": {
-        "chunksPerEditedDoc": 7,
-        "tokensPerEditedDoc": 1461,
-        "tokensAllDocsEdited": 1461000,
+        "chunksPerEditedDoc": 6,
+        "tokensPerEditedDoc": 1402,
+        "tokensAllDocsEdited": 1402000,
         "usd": {
-          "openai-text-embedding-3-small": 0.029220000000000003,
-          "openai-text-embedding-3-large": 0.18993000000000002,
-          "cohere-embed-v4": 0.17532
+          "openai-text-embedding-3-small": 0.02804,
+          "openai-text-embedding-3-large": 0.18226,
+          "cohere-embed-v4": 0.16823999999999997
         }
       },
       "query": {
-        "ctxTokensPerQuery": 1223.625,
+        "ctxTokensPerQuery": 1210.21875,
         "queries": 1000000,
-        "inputTokens": 1223625000.0,
+        "inputTokens": 1210218750.0,
         "usd": {
-          "claude-sonnet-5": 2447.25,
-          "claude-haiku-4-5": 1223.625,
-          "claude-opus-5": 6118.125,
-          "openai-gpt-4o-mini": 183.54375
+          "claude-sonnet-5": 2420.4375,
+          "claude-haiku-4-5": 1210.21875,
+          "claude-opus-5": 6051.09375,
+          "openai-gpt-4o-mini": 181.5328125
         }
       }
     }

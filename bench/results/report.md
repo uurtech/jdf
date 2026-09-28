@@ -1,23 +1,8 @@
 # JDF vs PDF — RAG retrieval benchmark
 
-Generated 2026-09-18 on Apple M5 (macOS-26.6.2-arm64-arm-64bit-Mach-O, Python 3.14.6). Corpus: 24 documents / 120 pages / 192 questions (120 table-cell, 48 prose, 24 list). Reproduce: `pip install -r requirements.txt && python rag_bench.py` — see bench/README.md.
+Generated 2026-09-28 on x86_64 (Linux-7.0.0-1013-aws-x86_64-with-glibc2.43, Python 3.14.4). Corpus: 24 documents / 120 pages / 192 questions (120 table-cell, 48 prose, 24 list). Reproduce: `pip install -r requirements.txt && python rag_bench.py` — see bench/README.md.
 
 Hit rule: same document AND chunk contains answer string AND row/subject key (whitespace-insensitive). R@1k tokens = answer found within the first 1,000 tokens of retrieved context (chunk-size neutral). PDF chunking: RecursiveCharacterTextSplitter semantics at 1000/200 and 2000/200 chars. JDF: `jdf chunk --strategy section --max-tokens 512` (committed output, jdf-cli 0.2.2).
-
-## Dense retrieval — nomic-embed-text
-
-| Pipeline | Chunks | Avg tokens/chunk | R@1 | R@5 | MRR@10 | R@1k tokens | R@2k tokens | Table R@1k | Prose R@1k | List R@1k | Ctx tokens @5 |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| JDF · jdf chunk (section, 512 tok) | 192 | 163 | 76.6% | 99.0% | 0.864 | 99.0% | 100.0% | 98.3% | 100.0% | 100.0% | 753 |
-| PDF → jdf convert → jdf chunk (section, 512 tok) | 216 | 158 | 80.2% | 98.4% | 0.884 | 99.0% | 99.5% | 98.3% | 100.0% | 100.0% | 718 |
-| PDF · PyMuPDF get_text() · fixed 1000/200 | 153 | 221 | 41.7% | 91.1% | 0.606 | 81.8% | 98.4% | 80.0% | 85.4% | 83.3% | 1226 |
-| PDF · PyMuPDF get_text() · fixed 2000/200 | 90 | 334 | 63.0% | 99.0% | 0.760 | 77.1% | 99.5% | 82.5% | 77.1% | 50.0% | 1781 |
-| PDF · pdfplumber extract_text() · fixed 1000/200 | 150 | 222 | 42.2% | 91.1% | 0.608 | 80.7% | 99.0% | 79.2% | 85.4% | 79.2% | 1219 |
-| PDF · pdfplumber extract_text() · fixed 2000/200 | 90 | 333 | 63.5% | 97.9% | 0.763 | 77.1% | 99.0% | 82.5% | 77.1% | 50.0% | 1773 |
-| PDF · pypdf extract_text() · fixed 1000/200 | 151 | 221 | 41.1% | 92.2% | 0.605 | 83.3% | 97.9% | 81.7% | 87.5% | 83.3% | 1224 |
-| PDF · pypdf extract_text() · fixed 2000/200 | 90 | 333 | 63.0% | 97.4% | 0.759 | 77.1% | 99.0% | 82.5% | 77.1% | 50.0% | 1774 |
-| PDF · pdftotext -layout (poppler) · fixed 1000/200 | 268 | 191 | 35.9% | 73.4% | 0.508 | 71.9% | 86.5% | 70.8% | 83.3% | 54.2% | 1040 |
-| PDF · pdftotext -layout (poppler) · fixed 2000/200 | 96 | 448 | 46.4% | 93.8% | 0.642 | 62.0% | 89.1% | 60.0% | 70.8% | 54.2% | 2269 |
 
 ## Dense retrieval — BAAI/bge-small-en-v1.5
 
@@ -31,8 +16,6 @@ Hit rule: same document AND chunk contains answer string AND row/subject key (wh
 | PDF · pdfplumber extract_text() · fixed 2000/200 | 90 | 333 | 50.5% | 91.7% | 0.659 | 66.1% | 92.2% | 69.2% | 75.0% | 33.3% | 1771 |
 | PDF · pypdf extract_text() · fixed 1000/200 | 151 | 221 | 31.8% | 84.4% | 0.515 | 75.0% | 94.8% | 72.5% | 93.8% | 50.0% | 1210 |
 | PDF · pypdf extract_text() · fixed 2000/200 | 90 | 333 | 52.1% | 88.5% | 0.665 | 66.1% | 90.1% | 69.2% | 77.1% | 29.2% | 1777 |
-| PDF · pdftotext -layout (poppler) · fixed 1000/200 | 268 | 191 | 34.9% | 71.4% | 0.487 | 66.7% | 82.8% | 61.7% | 93.8% | 37.5% | 1044 |
-| PDF · pdftotext -layout (poppler) · fixed 2000/200 | 96 | 448 | 38.0% | 95.3% | 0.572 | 48.4% | 87.0% | 49.2% | 68.8% | 4.2% | 2211 |
 
 ## Dense retrieval — sentence-transformers/all-MiniLM-L6-v2
 
@@ -46,8 +29,6 @@ Hit rule: same document AND chunk contains answer string AND row/subject key (wh
 | PDF · pdfplumber extract_text() · fixed 2000/200 | 90 | 333 | 45.8% | 82.8% | 0.605 | 61.5% | 83.9% | 62.5% | 81.2% | 16.7% | 1684 |
 | PDF · pypdf extract_text() · fixed 1000/200 | 151 | 221 | 28.1% | 78.6% | 0.477 | 66.7% | 88.0% | 59.2% | 95.8% | 45.8% | 1197 |
 | PDF · pypdf extract_text() · fixed 2000/200 | 90 | 333 | 42.7% | 81.8% | 0.590 | 62.5% | 84.9% | 63.3% | 79.2% | 25.0% | 1693 |
-| PDF · pdftotext -layout (poppler) · fixed 1000/200 | 268 | 191 | 29.2% | 68.8% | 0.441 | 66.1% | 82.8% | 60.8% | 87.5% | 50.0% | 1021 |
-| PDF · pdftotext -layout (poppler) · fixed 2000/200 | 96 | 448 | 37.0% | 91.7% | 0.571 | 54.2% | 83.9% | 50.8% | 72.9% | 33.3% | 2214 |
 
 ## Dense retrieval — BAAI/bge-base-en-v1.5
 
@@ -61,8 +42,19 @@ Hit rule: same document AND chunk contains answer string AND row/subject key (wh
 | PDF · pdfplumber extract_text() · fixed 2000/200 | 90 | 333 | 47.4% | 93.2% | 0.634 | 57.8% | 95.3% | 70.0% | 54.2% | 4.2% | 1778 |
 | PDF · pypdf extract_text() · fixed 1000/200 | 151 | 221 | 30.2% | 91.7% | 0.519 | 77.6% | 98.4% | 78.3% | 81.2% | 66.7% | 1215 |
 | PDF · pypdf extract_text() · fixed 2000/200 | 90 | 333 | 46.9% | 91.1% | 0.631 | 57.3% | 94.8% | 69.2% | 54.2% | 4.2% | 1790 |
-| PDF · pdftotext -layout (poppler) · fixed 1000/200 | 268 | 191 | 34.4% | 76.6% | 0.504 | 74.0% | 87.5% | 73.3% | 93.8% | 37.5% | 1037 |
-| PDF · pdftotext -layout (poppler) · fixed 2000/200 | 96 | 448 | 34.4% | 95.3% | 0.547 | 44.8% | 89.6% | 48.3% | 56.2% | 4.2% | 2296 |
+
+## Dense retrieval — nomic-ai/nomic-embed-text-v1.5
+
+| Pipeline | Chunks | Avg tokens/chunk | R@1 | R@5 | MRR@10 | R@1k tokens | R@2k tokens | Table R@1k | Prose R@1k | List R@1k | Ctx tokens @5 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| JDF · jdf chunk (section, 512 tok) | 192 | 163 | 76.6% | 99.0% | 0.864 | 99.0% | 100.0% | 98.3% | 100.0% | 100.0% | 754 |
+| PDF → jdf convert → jdf chunk (section, 512 tok) | 216 | 158 | 80.2% | 98.4% | 0.884 | 99.0% | 99.5% | 98.3% | 100.0% | 100.0% | 719 |
+| PDF · PyMuPDF get_text() · fixed 1000/200 | 153 | 221 | 41.7% | 91.1% | 0.606 | 81.8% | 98.4% | 80.0% | 85.4% | 83.3% | 1226 |
+| PDF · PyMuPDF get_text() · fixed 2000/200 | 90 | 334 | 63.0% | 99.0% | 0.760 | 77.1% | 99.5% | 82.5% | 77.1% | 50.0% | 1781 |
+| PDF · pdfplumber extract_text() · fixed 1000/200 | 150 | 222 | 42.2% | 91.1% | 0.608 | 80.7% | 99.0% | 79.2% | 85.4% | 79.2% | 1219 |
+| PDF · pdfplumber extract_text() · fixed 2000/200 | 90 | 333 | 63.5% | 97.9% | 0.763 | 77.1% | 99.0% | 82.5% | 77.1% | 50.0% | 1773 |
+| PDF · pypdf extract_text() · fixed 1000/200 | 151 | 221 | 41.1% | 92.2% | 0.605 | 83.3% | 97.9% | 81.7% | 87.5% | 83.3% | 1224 |
+| PDF · pypdf extract_text() · fixed 2000/200 | 90 | 333 | 63.0% | 97.4% | 0.759 | 77.1% | 99.0% | 82.5% | 77.1% | 50.0% | 1774 |
 
 ## BM25 (lexical, offline)
 
@@ -76,17 +68,29 @@ Hit rule: same document AND chunk contains answer string AND row/subject key (wh
 | PDF · pdfplumber extract_text() · fixed 2000/200 | 90 | 333 | 84.4% | 100.0% | 0.918 | 97.9% | 100.0% | 99.2% | 97.9% | 91.7% | 1744 |
 | PDF · pypdf extract_text() · fixed 1000/200 | 151 | 221 | 75.0% | 100.0% | 0.863 | 99.5% | 100.0% | 100.0% | 100.0% | 95.8% | 1193 |
 | PDF · pypdf extract_text() · fixed 2000/200 | 90 | 333 | 84.4% | 100.0% | 0.918 | 97.9% | 100.0% | 99.2% | 97.9% | 91.7% | 1755 |
-| PDF · pdftotext -layout (poppler) · fixed 1000/200 | 268 | 191 | 68.2% | 87.0% | 0.766 | 85.9% | 91.1% | 89.2% | 93.8% | 54.2% | 1016 |
-| PDF · pdftotext -layout (poppler) · fixed 2000/200 | 96 | 448 | 73.4% | 99.5% | 0.852 | 92.7% | 98.4% | 92.5% | 95.8% | 87.5% | 2193 |
 
 ## JDF-only properties
 
 - Chunk hashes verified: **yes** (every committed chunk's `hash` is sha256(text)[:12]).
 - Edit one paragraph in d01 → `jdf embed --incremental` re-embeds **1 of 192** chunks in the corpus (8 chunks in that document). A PDF pipeline has no stable chunk identity: re-extract, re-chunk, re-embed everything.
 
-## Misses (dense:nomic-embed-text, JDF pipeline)
+## Misses (dense:BAAI/bge-small-en-v1.5, JDF pipeline)
 
-- q136 (rank 8)
-- q152 (rank 8)
+- q004 (rank 9)
+- q007 (rank 6)
+- q012 (rank 6)
+- q023 (rank 7)
+- q029 (rank 6)
+- q053 (rank 9)
+- q080 (rank 6)
+- q100 (rank 6)
+- q117 (rank 6)
+- q119 (rank 10)
+- q141 (rank 6)
+- q148 (rank 7)
+- q151 (rank 8)
+- q164 (rank 9)
+- q180 (rank 6)
+- q191 (rank 7)
 
 Per-question ranks for every pipeline are in `results/latest.json` → `pipelines[].perQuestion`.
