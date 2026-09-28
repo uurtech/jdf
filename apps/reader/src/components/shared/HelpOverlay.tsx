@@ -8,6 +8,8 @@ const SECTIONS: { title: string; rows: { keys: string[]; label: string }[] }[] =
   {
     title: "File",
     rows: [
+      { keys: ["⌘", "N"], label: "New document" },
+      { keys: ["⇧", "⌘", "N"], label: "New window" },
       { keys: ["⌘", "O"], label: "Open" },
       { keys: ["⌘", "S"], label: "Save as JDF" },
       { keys: ["⌘", "⇧", "E"], label: "Export PDF" },

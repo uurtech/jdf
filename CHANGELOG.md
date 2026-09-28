@@ -11,6 +11,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · semantic-ish
 - **Metric-compatible fonts.** The importer maps PDF fonts to open families with the same glyph widths — Carlito (Calibri), Caladea (Cambria), Arimo (Arial/Helvetica), Tinos (Times New Roman), Cousine (Courier New), Gelasio (Georgia) — and uses PDF.js font flags (serif / monospace / bold / italic) for unknown names. jdf.js loads them from Google Fonts when a document uses them; the reader bundles the Latin subsets (`apps/reader/public/fonts`, SIL OFL). Converted lines now have the PDF's width: no more wrapped table-of-contents entries, paragraphs that grow into the heading below, or statements taller than their page box.
 - Fake-bold duplicate detection tolerates a slightly larger offset (management-report bullet lists were drawn twice).
 
+### Added — desktop reader: New document
+- Welcome screen "New Document" button, toolbar "New" and ⌘N start a blank A4 document in the editor (Insert bar, undo, everything as for an opened file). It lives in memory until the first ⌘S, which asks for a location; auto-save switches on from then. Closing the window or starting another document while an untitled one has changes asks to save. New window moved to ⇧⌘N.
+
 ### Fixed — 0.2.6 regression: authored forms with 8 mm checkbox rows rendered a checkbox stretched across the row
 - Compact rendering of imported PDF widgets now applies only to fields **without a label** (imported widgets never have one); the site's fillable demo and any hand-written form keep their normal controls. Compact checkboxes are square. The parity gate now fails when a labelled field hides its label or a checkbox renders wider than 24 px in either renderer.
 

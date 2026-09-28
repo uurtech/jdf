@@ -25,6 +25,8 @@ interface ToolbarProps {
   onZoomOut: () => void;
   onZoomReset: () => void;
   onOpen: () => void;
+  /** Start a blank document (⌘N). */
+  onNew: () => void;
   onClose: () => void;
   onPageChange: (page: number) => void;
   onToggleSidebar: () => void;
@@ -59,9 +61,12 @@ export function Toolbar(props: ToolbarProps) {
         <div class="w-7 h-7 rounded-md bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-sm">
           <span class="text-white font-bold text-[10px]">JDF</span>
         </div>
+        <button onClick={props.onNew} class="px-2.5 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="New document (⌘N)">
+          New
+        </button>
         <Show when={props.onNewWindow}>
-          <button onClick={props.onNewWindow!} class="px-2.5 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="New window (⌘N)">
-            New
+          <button onClick={props.onNewWindow!} class="px-2.5 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="New window (⇧⌘N)">
+            Window
           </button>
         </Show>
         <button onClick={props.onOpen} class="px-2.5 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="Open (⌘O)">

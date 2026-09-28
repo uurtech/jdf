@@ -3,6 +3,7 @@ import { For, Show, createSignal, onMount, onCleanup } from "solid-js";
 interface WelcomeScreenProps {
   recentFiles: string[];
   onOpen: () => void;
+  onNew: () => void;
   onOpenPath: (path: string) => void;
   onClearRecent: () => void;
 }
@@ -49,6 +50,16 @@ export function WelcomeScreen(props: WelcomeScreenProps) {
               <path d="M2 3.5a1 1 0 0 1 1-1h3l1.5 1.5H11a1 1 0 0 1 1 1V11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5Z" />
             </svg>
             Open Document
+          </button>
+          <button
+            onClick={props.onNew}
+            class="px-5 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 hover:border-blue-500 text-gray-800 dark:text-gray-100 text-sm font-medium rounded-lg transition-colors shadow-sm inline-flex items-center gap-2"
+            title="New document (⌘N)"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3.5 1.5h5l2.5 2.5v8a1 1 0 0 1-1 1h-6.5a1 1 0 0 1-1-1v-9.5a1 1 0 0 1 1-1Z" /><path d="M7 5.5v4M5 7.5h4" />
+            </svg>
+            New Document
           </button>
           <p class="text-[11px] text-gray-400 dark:text-gray-500">or drop a file anywhere</p>
         </div>

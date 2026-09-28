@@ -99,6 +99,7 @@ export default function App() {
     const d = doc();
     if (!cur || !d) return;
     if (cur.type !== "jdf" && cur.type !== "jdfx") return;
+    if (!cur.path) return; // untitled: nowhere to write yet — the user saves with ⌘S
     setSavingState("saving");
     try {
       if (cur.type === "jdfx") {
@@ -269,6 +270,27 @@ export default function App() {
     if (!history.canRedo()) return;
     history.redo();
     maybeAutoSaveAfterHistoryStep();
+  }
+
+  /**
+   * Start a blank document: one empty A4 page, no file yet. It lives in memory
+   * until the first ⌘S / Save, which asks for a location; auto-save stays off
+   * while `path` is empty. Goes through the same edit/undo/autosave pipeline
+   * as an opened file once saved.
+   */
+  async function newDocument() {
+    if (loaded() && !(await closeDocument())) return;
+    const blank: JdfDocument = {
+      $jdf: "1.0.0",
+      meta: { title: "Untitled", pageSize: "A4", pageOrientation: "portrait" },
+      pages: [{ elements: [] }],
+    } as JdfDocument;
+    setLoaded({ path: "", type: "jdf" });
+    history.reset(blank);
+    setViewMode("jdf");
+    setCurrentPage(0);
+    setSavingState("idle");
+    setDirty(true);
   }
 
   async function loadJdf(path: string) {
@@ -444,7 +466,7 @@ export default function App() {
       const win = getCurrentWindow();
       const unlisten = await win.onCloseRequested(async (e) => {
         const hasPendingJdfSave = !!saveTimer;
-        const hasUnsavedImport = dirty() && loaded() && !isEditableFile();
+        const hasUnsavedImport = dirty() && loaded() && (!isEditableFile() || !loaded()!.path); // imports and untitled documents have no file to auto-save to
         if (!hasPendingJdfSave && !hasUnsavedImport) return;
         e.preventDefault();
         try {
@@ -474,7 +496,7 @@ export default function App() {
     // interceptor — calling `close()` from inside the same JS context can
     // race with our own interceptor and silently no-op.
     try {
-      if (dirty() && loaded() && !isEditableFile()) {
+      if (dirty() && loaded() && (!isEditableFile() || !loaded()!.path)) {
         const { ask } = await import("@tauri-apps/plugin-dialog");
         const answer = await ask(
           "You have unsaved changes. Do you want to save before closing?",
@@ -502,9 +524,10 @@ export default function App() {
   async function closeDocument(): Promise<boolean> {
     // Internal helper — clear the loaded doc and return to welcome screen.
     // Not wired to any visible button anymore, kept for future use.
-    if (isEditableFile()) {
+    if (isEditableFile() && loaded()?.path) {
       await flushPendingSave();
     } else if (dirty() && doc()) {
+      // Markdown/PDF views and an untitled document (no file yet): ask.
       const { ask } = await import("@tauri-apps/plugin-dialog");
       const answer = await ask(
         "You have unsaved changes. Do you want to save before closing?",
@@ -545,7 +568,8 @@ export default function App() {
 
     if (meta && e.key === "z" && !e.shiftKey) { e.preventDefault(); performUndo(); }
     else if (meta && (e.key === "Z" || (e.shiftKey && e.key.toLowerCase() === "z") || e.key === "y")) { e.preventDefault(); performRedo(); }
-    else if (meta && e.key === "n") { e.preventDefault(); openInNewWindow(); }
+    else if (meta && e.key === "n" && !e.shiftKey) { e.preventDefault(); newDocument(); }
+    else if (meta && (e.key === "N" || (e.shiftKey && e.key.toLowerCase() === "n"))) { e.preventDefault(); openInNewWindow(); }
     else if (meta && e.key === "o") { e.preventDefault(); openFile(); }
     else if (meta && e.key === "p") { e.preventDefault(); window.print(); }
     else if (meta && e.key === "d") { e.preventDefault(); toggleDark(); }
@@ -597,7 +621,7 @@ export default function App() {
     try {
       const { shouldUseJdfx, packJdfx } = await import("./jdfx");
       const useJdfx = shouldUseJdfx(d);
-      const stem = d.meta?.title || basename(cur.path).replace(/\.[^.]+$/, "");
+      const stem = d.meta?.title || (cur.path ? basename(cur.path).replace(/\.[^.]+$/, "") : "Untitled");
       const { save } = await import("@tauri-apps/plugin-dialog");
       const path = await save({
         filters: useJdfx
@@ -653,11 +677,12 @@ export default function App() {
       <div class={`h-screen flex flex-col relative ${darkMode() ? "dark" : ""} bg-white dark:bg-slate-900`}>
         {/* Windows runs frameless (tauri.windows.conf.json) and draws its own title bar; macOS/Linux keep native chrome. */}
         <Show when={navigator.userAgent.includes("Windows")}>
-          <TitleBar title={loaded() ? basename(loaded()!.path) + " — JDF Reader" : "JDF Reader"} />
+          <TitleBar title={loaded() ? (loaded()!.path ? basename(loaded()!.path) : "Untitled") + " — JDF Reader" : "JDF Reader"} />
         </Show>
         <Toolbar
           document={doc()}
-          fileName={loaded() ? basename(loaded()!.path) : undefined}
+          fileName={loaded() ? (loaded()!.path ? basename(loaded()!.path) : "Untitled") : undefined}
+          onNew={newDocument}
           fileType={loaded()?.type}
           isMarkdown={isMarkdown()}
           isEditableFile={isEditableFile()}
@@ -725,6 +750,7 @@ export default function App() {
             <WelcomeScreen
               recentFiles={recentFiles()}
               onOpen={openFile}
+              onNew={newDocument}
               onOpenPath={openByExtension}
               onClearRecent={clearRecent}
             />

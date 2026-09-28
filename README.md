@@ -792,7 +792,8 @@ jq -s 'map(.. | select(.type=="input" or .type=="select") | {name, value})' inbo
 | Shortcut | Action |
 |---|---|
 | `Cmd+O` / `Cmd+W` | Open / close |
-| `Cmd+N` | New window |
+| `Cmd+N` | New document (blank A4 page; first save asks for a location) |
+| `Shift+Cmd+N` | New window |
 | `Cmd+S` / `Cmd+Shift+E` | Save As `.jdf` / Export PDF |
 | `Cmd+Z` / `Cmd+Shift+Z` | Undo / redo |
 | `Cmd+F` | Search |
