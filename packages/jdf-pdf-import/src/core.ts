@@ -335,6 +335,11 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
     clip: undefined as { d: string; x: number; y: number; w: number; h: number } | undefined,
     fill: "#000000",
     stroke: "#000000",
+    // Blend mode from the ExtGState (BM). JDF has no blend modes; a multiply /
+    // darken layer is approximated by opacity ∝ how dark it is (a light-grey
+    // "light streak" over a blue banner becomes nearly transparent instead of
+    // an opaque grey blob), a screen / lighten layer by how light it is.
+    blend: "normal" as string,
     lineWidth: 1,
     fillAlpha: 1,
     strokeAlpha: 1,
@@ -348,6 +353,21 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
     rise: 0,
   };
   const snapshot = () => ({ ...gs, ctm: [...gs.ctm] });
+  const luma = (hex: string | undefined) => {
+    const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || "");
+    return m ? (0.2126 * parseInt(m[1], 16) + 0.7152 * parseInt(m[2], 16) + 0.0722 * parseInt(m[3], 16)) / 255 : 0.5;
+  };
+  const groupStack: { blend: string; alpha: number }[] = [];
+  const isNormal = (b: string) => b === "normal" || b === "source-over" || b === "compatible";
+  const fillOpacity = (color?: string) => {
+    let alpha = gs.fillAlpha;
+    let b = gs.blend;
+    for (let q = groupStack.length - 1; q >= 0; q--) { alpha *= groupStack[q].alpha; if (isNormal(b)) b = groupStack[q].blend; }
+    const l = luma(color ?? gs.fill);
+    if (b === "multiply" || b === "darken" || b === "color-burn" || b === "colorburn") return alpha * Math.max(0.08, 1 - l);
+    if (b === "screen" || b === "lighten" || b === "color-dodge" || b === "colordodge") return alpha * Math.max(0.08, l);
+    return alpha;
+  };
   const stack: ReturnType<typeof snapshot>[] = [];
 
   const textOps: TextOp[] = [];
@@ -423,7 +443,7 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
         gradient: isFill ? gs.fillGradient : undefined,
         stroke: isStroke ? gs.stroke : undefined,
         strokeWidth: isStroke ? gs.lineWidth * PT_TO_MM : undefined,
-        opacity: isFill ? gs.fillAlpha : gs.strokeAlpha,
+        opacity: isFill ? fillOpacity() : gs.strokeAlpha,
       });
     }
     pathRects = [];
@@ -445,7 +465,7 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
         gradient: isFill ? gs.fillGradient : undefined,
         stroke: isStroke ? gs.stroke : undefined,
         strokeWidth: isStroke ? gs.lineWidth * PT_TO_MM : undefined,
-        opacity: isFill ? gs.fillAlpha : gs.strokeAlpha,
+        opacity: isFill ? fillOpacity() : gs.strokeAlpha,
       });
     } else if (pathSegments.length === 2 && pathSegments[0].type === "M" && pathSegments[1].type === "L") {
       const a = pathSegments[0].pts;
@@ -546,7 +566,7 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
           gradient: isFill ? gs.fillGradient : undefined,
           stroke: isStroke ? gs.stroke : undefined,
           strokeWidth: isStroke ? gs.lineWidth * PT_TO_MM : undefined,
-          opacity: isFill ? gs.fillAlpha : gs.strokeAlpha,
+          opacity: isFill ? fillOpacity() : gs.strokeAlpha,
           path: thin ? undefined : d,
         });
       }
@@ -573,11 +593,17 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
       // expects the consumer to apply that matrix — ignoring it put every
       // nested drawing at the wrong place (or off-page) for Word/InDesign PDFs.
       stack.push(snapshot());
+      // A form is composited as a group with the blend mode / alpha in force
+      // when it is painted; inside it they reset to Normal / 1 (PDF 11.6.6).
+      // Remember the group's values and apply them to every fill inside.
+      groupStack.push({ blend: gs.blend, alpha: gs.fillAlpha });
+      gs.blend = "normal"; gs.fillAlpha = 1;
       const matrix = args[0];
       if (Array.isArray(matrix) && matrix.length === 6) gs.ctm = multiplyCtm(matrix as number[], gs.ctm);
     } else if (fn === OPS.paintFormXObjectEnd) {
       const s = stack.pop();
       if (s) Object.assign(gs, s);
+      groupStack.pop();
     } else if (fn === OPS.beginText) {
       tm = [1, 0, 0, 1, 0, 0];
       tlm = [1, 0, 0, 1, 0, 0];
@@ -658,6 +684,7 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
           if (key === "LW") gs.lineWidth = val;
           else if (key === "ca") gs.fillAlpha = val;
           else if (key === "CA") gs.strokeAlpha = val;
+          else if (key === "BM") gs.blend = String(Array.isArray(val) ? val[0] : val).toLowerCase();
         }
       }
     } else if (fn === OPS.showText) {
@@ -745,7 +772,23 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
       const isStroke = fn === OPS.stroke || fn === OPS.fillStroke || fn === OPS.eoFillStroke || fn === OPS.closeFillStroke || fn === OPS.closeStroke || fn === OPS.closeEOFillStroke;
       flushPath(isFill, isStroke);
     } else if (fn === OPS.endPath || fn === OPS.clip || fn === OPS.eoClip) {
-      if (fn !== OPS.endPath) gs.clip = clipFromPath();
+      if (fn !== OPS.endPath) {
+        // Clips intersect: a page-wide cover often nests three or four clip
+        // paths (a guide line, a diagonal band, the page box). Painting the
+        // newest one alone spilled art that the PDF never shows.
+        const c = clipFromPath();
+        const prev = gs.clip;
+        if (c && prev) {
+          const x0 = Math.max(c.x, prev.x), y0 = Math.max(c.y, prev.y);
+          const x1 = Math.min(c.x + c.w, prev.x + prev.w), y1 = Math.min(c.y + c.h, prev.y + prev.h);
+          if (x1 <= x0 || y1 <= y0) gs.clip = { d: "", x: x0, y: y0, w: 0, h: 0 };
+          // Keep the newer path's outline (a diagonal streak stays a streak);
+          // the page box clips the rest at render time. Only a path-less
+          // outer clip that is smaller than the new one narrows to the box.
+          else if (c.d || !prev.d) gs.clip = c.d ? c : { d: "", x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+          else gs.clip = prev;
+        } else gs.clip = c ?? prev;
+      }
       pathSegments = [];
       pathRects = [];
       pathRect = null;
@@ -755,11 +798,22 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
       // `sh`: paint the current clip (or the whole page) with a shading. Gradient
       // banners and cover art arrive this way; they used to be dropped, leaving
       // white titles on a white page.
-      const ir = args[0];
+      // PDF.js hands `sh` either the shading IR itself or the id of a pattern
+      // object on the page ("pattern_p0_1") — resolve the id first, or every
+      // gradient banner is silently dropped (a 10-K cover lost its whole
+      // blue design and the white title on it).
+      let ir = args[0];
+      if (typeof ir === "string") {
+        try {
+          const store = ir.startsWith("g_") ? page.commonObjs : page.objs;
+          ir = typeof store?.has === "function" && store.has(ir) ? store.get(ir) : null;
+        } catch { ir = null; }
+      }
       const g = irToGradient(ir, (x, y) => toViewport(...(Object.values(tx(gs.ctm, x, y)) as [number, number])));
       const avg = Array.isArray(ir) && ir[0] === "RadialAxial" ? averageStops(ir[3]) : null;
-      if (g || avg) {
-        const area = gs.clip ?? { d: "", x: 0, y: 0, w: viewport.width, h: viewport.height };
+      const clipArea = gs.clip;
+      if ((g || avg) && !(clipArea && (clipArea.w < 0.5 || clipArea.h < 0.5))) {
+        const area = clipArea ?? { d: "", x: 0, y: 0, w: viewport.width, h: viewport.height };
         shapes.push({
           seq: opIndex,
           kind: area.d ? "path" : "rect",
@@ -767,7 +821,7 @@ async function walkOps(page: any, OPS: any, viewport: any): Promise<ParsedOps> {
           width: Math.max(0.1, area.w * PT_TO_MM), height: Math.max(0.1, area.h * PT_TO_MM),
           fill: avg ?? (g ? g.stops[0].color : undefined),
           gradient: g ?? undefined,
-          opacity: gs.fillAlpha,
+          opacity: fillOpacity(avg ?? g?.stops[0].color),
           path: area.d || undefined,
         });
       }

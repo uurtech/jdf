@@ -107,7 +107,7 @@ export function PageRenderer(props: PageRendererProps) {
 
   return (
     <div
-      class="jdf-page page-shadow rounded-sm relative bg-white"
+      class="jdf-page page-shadow rounded-sm relative bg-white overflow-hidden"
       style={{
         width: `${unitToPx(dimensions().width)}px`,
         "min-height": `${unitToPx(dimensions().height)}px`,

@@ -192,7 +192,9 @@
   background: var(--jdfjs-page-bg);
   border-radius: 2px;
   box-shadow: var(--jdfjs-shadow);
-  overflow: visible;
+  /* A page clips like paper: cover art drawn past the page box (imported
+     PDFs do this all the time) must not bleed onto the next page. */
+  overflow: hidden;
 }
 
 .jdfjs-header,

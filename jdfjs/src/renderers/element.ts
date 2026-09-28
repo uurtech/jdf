@@ -39,7 +39,7 @@ export function renderElement(el: Element, ctx: RenderContext): HTMLElement | nu
     case "video": inner = renderVideo(el, ctx); break;
     case "table": inner = renderTable(el, ctx); break;
     case "list": inner = renderList(el, ctx); break;
-    case "shape": inner = renderShape(el); break;
+    case "shape": inner = renderShape(el, ctx); break;
     case "collapsible": inner = renderCollapsible(el, ctx); break;
     case "toc": inner = renderToc(el, ctx); break;
     case "input": inner = renderFormInput(el, ctx); break;
@@ -457,9 +457,12 @@ function buildItems(parent: HTMLElement, items: ListItem[], def: "ordered" | "un
 
 // ── shape ───────────────────────────────────────────────────────────────────
 let gradientSeq = 0;
-function renderShape(el: ShapeElement): HTMLElement {
+function renderShape(el: ShapeElement, ctx: RenderContext): HTMLElement {
   const wrap = document.createElement("div");
   wrap.className = "jdfjs-shape";
+  // style.opacity (imported blend-mode approximations, watermarks) and any
+  // other style on the shape — the reader's ShapeElement applies the same.
+  applyStyle(wrap, resolveStyle(el.style, ctx.styles));
   wrap.style.width = "100%";
   wrap.style.height = "100%";
 

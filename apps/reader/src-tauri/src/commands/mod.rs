@@ -758,10 +758,17 @@ fn draw_element(
                 let n = cols.len() as f32;
                 Some(Rgb::new(cols.iter().map(|c| c.r).sum::<f32>() / n, cols.iter().map(|c| c.g).sum::<f32>() / n, cols.iter().map(|c| c.b).sum::<f32>() / n, None))
             });
+            // No ExtGState alpha on this layer API: approximate `style.opacity`
+            // by blending the colours toward the (white) page, and skip fills
+            // that are nearly transparent (blend-mode "light streak" overlays).
+            let opacity = el.get("style").and_then(|s| s.get("opacity")).and_then(|o| o.as_f64()).unwrap_or(1.0).clamp(0.0, 1.0) as f32;
+            if opacity < 0.15 { return; }
+            let fade = |c: Rgb| Rgb::new(1.0 - (1.0 - c.r) * opacity, 1.0 - (1.0 - c.g) * opacity, 1.0 - (1.0 - c.b) * opacity, None);
+            let fill = fill.map(fade);
             let stroke_obj = el.get("stroke");
             let stroke_color = stroke_obj
                 .and_then(|s| s.get("color").and_then(|c| c.as_str()))
-                .and_then(parse_color);
+                .and_then(parse_color).map(fade);
             let stroke_width = stroke_obj
                 .and_then(|s| s.get("width").and_then(|w| w.as_f64()))
                 .unwrap_or(0.3) as f32;
