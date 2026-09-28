@@ -203,7 +203,7 @@
       "type": "object",
       "required": ["type", "name"],
       "properties": {
-        "type": { "const": "input" },
+        "type": { "const": "input" }, "id": { "type": "string" },
         "name": { "type": "string", "minLength": 1 },
         "inputType": { "type": "string", "enum": ["text","number","email","url","tel","date","time","datetime-local","password","color"] },
         "value": { "type": "string" },
@@ -222,7 +222,7 @@
       "type": "object",
       "required": ["type", "name"],
       "properties": {
-        "type": { "const": "textarea" },
+        "type": { "const": "textarea" }, "id": { "type": "string" },
         "name": { "type": "string", "minLength": 1 },
         "value": { "type": "string" },
         "placeholder": { "type": "string" },
@@ -240,7 +240,7 @@
       "type": "object",
       "required": ["type", "name"],
       "properties": {
-        "type": { "const": "checkbox" },
+        "type": { "const": "checkbox" }, "id": { "type": "string" },
         "name": { "type": "string", "minLength": 1 },
         "checked": { "type": "boolean" },
         "label": { "type": "string" },
@@ -256,7 +256,7 @@
       "type": "object",
       "required": ["type", "name", "options"],
       "properties": {
-        "type": { "const": "select" },
+        "type": { "const": "select" }, "id": { "type": "string" },
         "name": { "type": "string", "minLength": 1 },
         "options": {
           "type": "array",
@@ -285,7 +285,7 @@
       "type": "object",
       "required": ["type", "name"],
       "properties": {
-        "type": { "const": "signature" },
+        "type": { "const": "signature" }, "id": { "type": "string" },
         "name": { "type": "string", "minLength": 1 },
         "value": { "type": "string" },
         "label": { "type": "string" },
@@ -301,7 +301,7 @@
       "type": "object",
       "required": ["type", "content"],
       "properties": {
-        "type": { "const": "text" },
+        "type": { "const": "text" }, "id": { "type": "string" },
         "content": { "type": "string" },
         "style": { "$ref": "#/definitions/StyleRef" },
         "position": { "$ref": "#/definitions/Position" },
@@ -318,7 +318,7 @@
       "type": "object",
       "required": ["type", "runs"],
       "properties": {
-        "type": { "const": "richtext" },
+        "type": { "const": "richtext" }, "id": { "type": "string" },
         "runs": {
           "type": "array",
           "items": {
@@ -395,7 +395,7 @@
       "type": "object",
       "required": ["type", "rows"],
       "properties": {
-        "type": { "const": "table" },
+        "type": { "const": "table" }, "id": { "type": "string" },
         "columns": {
           "type": "array",
           "items": { "type": "object", "properties": { "width": { "oneOf": [{ "type": "string" }, { "type": "number" }] }, "header": { "type": "string" }, "align": { "type": "string", "enum": ["left","center","right","justify"] } } }
@@ -418,7 +418,7 @@
       "type": "object",
       "required": ["type", "items"],
       "properties": {
-        "type": { "const": "list" },
+        "type": { "const": "list" }, "id": { "type": "string" },
         "items": {
           "type": "array",
           "items": { "type": "object", "required": ["content"], "properties": { "content": { "type": "string" }, "style": { "$ref": "#/definitions/StyleRef" }, "children": { "type": "array", "items": { "$ref": "#/definitions/ListElement/properties/items/items" } }, "listType": { "type": "string", "enum": ["ordered","unordered"] } } }
@@ -433,7 +433,7 @@
       "type": "object",
       "required": ["type", "shape"],
       "properties": {
-        "type": { "const": "shape" },
+        "type": { "const": "shape" }, "id": { "type": "string" },
         "shape": { "type": "string", "enum": ["rect","circle","ellipse","line","path"] },
         "position": { "$ref": "#/definitions/Position" }, "width": { "type": "number" }, "height": { "type": "number" },
         "fill": { "type": "string" },
@@ -459,7 +459,7 @@
       "type": "object",
       "required": ["type", "title", "elements"],
       "properties": {
-        "type": { "const": "collapsible" },
+        "type": { "const": "collapsible" }, "id": { "type": "string" },
         "title": { "type": "string" },
         "elements": { "type": "array", "items": { "$ref": "#/definitions/Element" } },
         "expanded": { "type": "boolean" },
@@ -471,7 +471,7 @@
       "type": "object",
       "required": ["type"],
       "properties": {
-        "type": { "const": "toc" }, "title": { "type": "string" },
+        "type": { "const": "toc" }, "id": { "type": "string" }, "title": { "type": "string" },
         "position": { "$ref": "#/definitions/Position" }, "width": { "type": "number" },
         "depth": { "type": "integer", "minimum": 1, "maximum": 6 },
         "style": { "$ref": "#/definitions/StyleRef" }

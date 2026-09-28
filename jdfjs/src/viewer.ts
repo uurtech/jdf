@@ -37,6 +37,37 @@ export interface JDFViewerOptions {
    * of triggering a manual download.
    */
   onFormChange?: (doc: JdfDocument, change: { path: (string | number)[]; field: string; value: unknown }) => void;
+  /**
+   * Called when the user clicks an element. `id` is the element's `id`
+   * (`data-jdf-id` in the DOM; the PDF importer writes `p<page>-e<n>`),
+   * `path` its location in the document, `pageIndex` 0-based.
+   */
+  onElementClick?: (info: ElementClickInfo) => void;
+}
+
+export interface ElementClickInfo {
+  id?: string;
+  type: string;
+  pageIndex: number;
+  path: (string | number)[];
+  element: Element;
+  node: HTMLElement;
+  event: MouseEvent;
+}
+
+/**
+ * What `viewer.highlight()` accepts: an element id, or a box on a page in
+ * document units (mm, relative to the page's content area — the same
+ * coordinates the elements' `position`/`width`/`height` use). `page` is 0-based.
+ */
+export type HighlightTarget = string | { page: number; x: number; y: number; width: number; height: number; color?: string };
+export interface HighlightOptions {
+  /** Outline/background colour (any CSS colour). Default: amber. */
+  color?: string;
+  /** Remove previous highlights first. Default: true. */
+  clear?: boolean;
+  /** Scroll the first target into view. Default: true. */
+  scroll?: boolean;
 }
 
 export interface JDFViewerInstance {
@@ -59,6 +90,22 @@ export interface JDFViewerInstance {
    * Returns false when no such video exists.
    */
   seek: (elementId: string, seconds: number) => boolean;
+  /**
+   * Highlight elements (by `id`) or arbitrary boxes (mm on a page) — the
+   * retrieval-side counterpart of `jdf chunk` / review annotations. Returns the
+   * number of targets that were found. Previous highlights are cleared unless
+   * `{ clear: false }`; the first target is scrolled into view unless
+   * `{ scroll: false }`.
+   */
+  highlight: (target: HighlightTarget | HighlightTarget[], options?: HighlightOptions) => number;
+  /** Remove every highlight added by `highlight()`. */
+  clearHighlights: () => void;
+  /** Scroll an element (by `id`) into view; `{ highlight: true }` also highlights it. Returns false when the id is unknown. */
+  scrollToElement: (elementId: string, options?: { highlight?: boolean; block?: ScrollLogicalPosition }) => boolean;
+  /** The DOM node rendered for an element id, or null. */
+  getElementNode: (elementId: string) => HTMLElement | null;
+  /** Subscribe to element clicks (in addition to the `onElementClick` option). Returns an unsubscribe function. */
+  onElementClick: (listener: (info: ElementClickInfo) => void) => () => void;
   /** Tear down — removes DOM and event listeners */
   destroy: () => void;
   /**
@@ -174,6 +221,8 @@ export class JDFViewer {
   private sidebarEl: HTMLDivElement | null = null;
   private root!: HTMLDivElement;
   private observer: IntersectionObserver | null = null;
+  private clickListeners = new Set<(info: ElementClickInfo) => void>();
+  private highlightBoxes: HTMLElement[] = [];
   // System dark-mode subscription — needs explicit cleanup so a SPA route
   // change that destroys the viewer doesn't leave a listener attached to
   // the matchMedia query.
@@ -245,6 +294,7 @@ export class JDFViewer {
 
     this.pagesEl = document.createElement("div");
     this.pagesEl.className = "jdfjs-pages";
+    this.pagesEl.addEventListener("click", (ev) => this.handleElementClick(ev));
     body.appendChild(this.pagesEl);
 
     this.root.appendChild(body);
@@ -417,6 +467,111 @@ export class JDFViewer {
     const go = () => { video.currentTime = Math.max(0, seconds); video.play().catch(() => { /* autoplay policy — user can press play */ }); };
     if (video.readyState >= 1) go(); else video.addEventListener("loadedmetadata", go, { once: true });
     return true;
+  }
+
+  /** Wrapper node of the element with this id (both renderers write `data-jdf-id`). */
+  getElementNode(elementId: string): HTMLElement | null {
+    if (!this.pagesEl) return null;
+    return this.pagesEl.querySelector<HTMLElement>(`[data-jdf-id="${String(elementId).replace(/["\\]/g, "\\$&")}"]`);
+  }
+
+  private pageIndexOf(node: HTMLElement): number {
+    const wrap = node.closest<HTMLElement>(".jdfjs-page-wrapper");
+    const idx = wrap ? Number(wrap.getAttribute("data-page-index")) : NaN;
+    return Number.isNaN(idx) ? -1 : idx;
+  }
+
+  scrollToElement(elementId: string, options: { highlight?: boolean; block?: ScrollLogicalPosition } = {}): boolean {
+    const node = this.getElementNode(elementId);
+    if (!node) return false;
+    const idx = this.pageIndexOf(node);
+    if (idx >= 0 && idx !== this.currentPage) { this.currentPage = idx; this.options.onPageChange?.(idx); }
+    node.scrollIntoView({ block: options.block ?? "center", inline: "nearest" });
+    if (options.highlight) this.highlight(elementId, { scroll: false });
+    return true;
+  }
+
+  highlight(target: HighlightTarget | HighlightTarget[], options: HighlightOptions = {}): number {
+    if (options.clear !== false) this.clearHighlights();
+    const targets = Array.isArray(target) ? target : [target];
+    let found = 0;
+    let first: HTMLElement | null = null;
+    for (const t of targets) {
+      if (typeof t === "string") {
+        const node = this.getElementNode(t);
+        if (!node) continue;
+        node.classList.add("jdfjs-highlight");
+        if (options.color) node.style.setProperty("--jdfjs-highlight-color", options.color);
+        first = first ?? node; found++;
+      } else {
+        const pageWrap = this.pagesEl.querySelector<HTMLElement>(`.jdfjs-page-wrapper[data-page-index="${t.page}"] .jdfjs-page-content`);
+        if (!pageWrap) continue;
+        const box = document.createElement("div");
+        box.className = "jdfjs-highlight-box";
+        box.style.left = `${unitToPx(t.x)}px`;
+        box.style.top = `${unitToPx(t.y)}px`;
+        box.style.width = `${unitToPx(Math.max(0.5, t.width))}px`;
+        box.style.height = `${unitToPx(Math.max(0.5, t.height))}px`;
+        const color = t.color ?? options.color;
+        if (color) box.style.setProperty("--jdfjs-highlight-color", color);
+        pageWrap.appendChild(box);
+        this.highlightBoxes.push(box);
+        first = first ?? box; found++;
+      }
+    }
+    if (first && options.scroll !== false) {
+      const idx = this.pageIndexOf(first);
+      if (idx >= 0 && idx !== this.currentPage) { this.currentPage = idx; this.options.onPageChange?.(idx); }
+      first.scrollIntoView({ block: "center", inline: "nearest" });
+    }
+    return found;
+  }
+
+  clearHighlights() {
+    if (!this.pagesEl) return;
+    for (const n of Array.from(this.pagesEl.querySelectorAll<HTMLElement>(".jdfjs-highlight"))) {
+      n.classList.remove("jdfjs-highlight");
+      n.style.removeProperty("--jdfjs-highlight-color");
+    }
+    for (const b of this.highlightBoxes) b.remove();
+    this.highlightBoxes = [];
+  }
+
+  onElementClick(listener: (info: ElementClickInfo) => void): () => void {
+    this.clickListeners.add(listener);
+    return () => { this.clickListeners.delete(listener); };
+  }
+
+  private handleElementClick(ev: MouseEvent) {
+    if (!this.options.onElementClick && !this.clickListeners.size) return;
+    const start = ev.target instanceof HTMLElement ? ev.target : null;
+    const node = start?.closest<HTMLElement>("[data-jdf-type]");
+    if (!node || !this.pagesEl.contains(node)) return;
+    const pageIndex = this.pageIndexOf(node);
+    if (pageIndex < 0) return;
+    // Locate the element in the document: by id when it has one, otherwise by
+    // its index among the page's top-level elements.
+    const id = node.dataset.jdfId;
+    const page = this.doc.pages[pageIndex];
+    let path: (string | number)[] | null = null;
+    let element: Element | undefined;
+    const walk = (els: Element[], base: (string | number)[]) => {
+      els.forEach((e, i) => {
+        if (path) return;
+        if (id != null && (e as any).id === id) { path = [...base, i]; element = e; return; }
+        if ((e as any).elements) walk((e as any).elements, [...base, i, "elements"]);
+      });
+    };
+    if (id != null) walk(page?.elements ?? [], ["pages", pageIndex, "elements"]);
+    if (!path && node.parentElement?.classList.contains("jdfjs-page-content")) {
+      const i = Array.prototype.indexOf.call(node.parentElement.children, node);
+      const el = page?.elements?.[i];
+      if (el) { path = ["pages", pageIndex, "elements", i]; element = el; }
+    }
+    if (!path || !element) return;
+    const info: ElementClickInfo = { id, type: node.dataset.jdfType ?? (element as any).type, pageIndex, path, element, node, event: ev };
+    this.options.onElementClick?.(info);
+    for (const l of this.clickListeners) l(info);
   }
 
   private renderPage(page: Page, pageIndex: number, styles: Record<string, Style>): HTMLDivElement {
@@ -732,6 +887,11 @@ export class JDFViewer {
       getZoom: () => this.getZoom(),
       goToPage: (i: number) => this.goToPage(i),
       seek: (elementId: string, seconds: number) => this.seek(elementId, seconds),
+      highlight: (t: HighlightTarget | HighlightTarget[], o?: HighlightOptions) => this.highlight(t, o),
+      clearHighlights: () => this.clearHighlights(),
+      scrollToElement: (id: string, o?: { highlight?: boolean; block?: ScrollLogicalPosition }) => this.scrollToElement(id, o),
+      getElementNode: (id: string) => this.getElementNode(id),
+      onElementClick: (l: (info: ElementClickInfo) => void) => this.onElementClick(l),
       getCurrentPage: () => this.getCurrentPage(),
       setDocument: (d: JdfDocument) => this.setDocument(d),
       destroy: () => this.destroy(),

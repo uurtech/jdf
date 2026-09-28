@@ -541,6 +541,16 @@ const v = await embed("#viewer", "/doc.jdf", {
 v.goToPage(2);
 v.setZoom(1.5);
 
+// 1b. Point at elements — every element can carry an `id` (the PDF importer
+//     writes `p<page>-e<n>`); both renderers expose it as `data-jdf-id`.
+v.scrollToElement("p3-e12", { highlight: true });     // a retrieval hit
+v.highlight(["p3-e12", "p3-e13"], { color: "#22c55e" }); // several ids
+v.highlight({ page: 2, x: 20, y: 80, width: 120, height: 8 }); // a box in mm
+v.clearHighlights();
+v.onElementClick(({ id, type, pageIndex, element }) => console.log(id, type, pageIndex));
+// With the <jdf> tag: el.addEventListener("jdf-ready", e => e.detail.viewer.highlight("p1-e2"))
+//                     el.addEventListener("jdf-element-click", e => console.log(e.detail.id))
+
 // 2. Render an in-memory document (no fetch)
 import type { JdfDocument } from "@uurtech/jdf";
 const doc: JdfDocument = { $jdf: "1.0.0", meta: { title: "Hi" }, pages: [...] };

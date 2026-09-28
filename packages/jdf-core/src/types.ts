@@ -48,6 +48,8 @@ export interface HeaderFooter {
 
 export interface TextElement {
   type: "text";
+  /** Stable element id — both renderers write it as `data-jdf-id`; `viewer.highlight()` / `scrollToElement()` and RAG results point back to it. */
+  id?: string;
   content: string;
   style?: StyleRef;
   position?: Position;
@@ -75,6 +77,8 @@ export interface RichTextRun {
 
 export interface RichTextElement {
   type: "richtext";
+  /** Stable element id — both renderers write it as `data-jdf-id`; `viewer.highlight()` / `scrollToElement()` and RAG results point back to it. */
+  id?: string;
   runs: RichTextRun[];
   style?: StyleRef;
   position?: Position;
@@ -173,6 +177,8 @@ export interface TableBorders { outer?: boolean; inner?: boolean; color?: string
 
 export interface TableElement {
   type: "table";
+  /** Stable element id — both renderers write it as `data-jdf-id`; `viewer.highlight()` / `scrollToElement()` and RAG results point back to it. */
+  id?: string;
   columns?: TableColumn[];
   headers?: string[];
   rows: TableCellValue[][];
@@ -195,6 +201,8 @@ export interface ListItem {
 
 export interface ListElement {
   type: "list";
+  /** Stable element id — both renderers write it as `data-jdf-id`; `viewer.highlight()` / `scrollToElement()` and RAG results point back to it. */
+  id?: string;
   items: ListItem[];
   listType?: ListType;
   ordered?: boolean;
@@ -207,6 +215,8 @@ export interface ShapeStroke { color?: string; width?: number; }
 
 export interface ShapeElement {
   type: "shape";
+  /** Stable element id — both renderers write it as `data-jdf-id`; `viewer.highlight()` / `scrollToElement()` and RAG results point back to it. */
+  id?: string;
   shape: ShapeType;
   position?: Position;
   width?: number;
@@ -225,6 +235,8 @@ export interface ShapeElement {
 
 export interface CollapsibleElement {
   type: "collapsible";
+  /** Stable element id — both renderers write it as `data-jdf-id`; `viewer.highlight()` / `scrollToElement()` and RAG results point back to it. */
+  id?: string;
   title: string;
   elements: Element[];
   expanded?: boolean;
@@ -235,6 +247,8 @@ export interface CollapsibleElement {
 
 export interface TocElement {
   type: "toc";
+  /** Stable element id — both renderers write it as `data-jdf-id`; `viewer.highlight()` / `scrollToElement()` and RAG results point back to it. */
+  id?: string;
   position?: Position;
   width?: number;
   depth?: number;
@@ -251,6 +265,8 @@ export interface TocElement {
  */
 export interface FormInputElement {
   type: "input";
+  /** Stable element id — both renderers write it as `data-jdf-id`; `viewer.highlight()` / `scrollToElement()` and RAG results point back to it. */
+  id?: string;
   /** Stable field name — used by RAG / scripts to look the value up by key
    *  instead of by position. Required. */
   name: string;
@@ -277,6 +293,8 @@ export interface FormInputElement {
 
 export interface FormTextareaElement {
   type: "textarea";
+  /** Stable element id — both renderers write it as `data-jdf-id`; `viewer.highlight()` / `scrollToElement()` and RAG results point back to it. */
+  id?: string;
   name: string;
   value?: string;
   placeholder?: string;
@@ -292,6 +310,8 @@ export interface FormTextareaElement {
 
 export interface FormCheckboxElement {
   type: "checkbox";
+  /** Stable element id — both renderers write it as `data-jdf-id`; `viewer.highlight()` / `scrollToElement()` and RAG results point back to it. */
+  id?: string;
   name: string;
   /** True when the box is ticked. Default false. */
   checked?: boolean;
@@ -311,6 +331,8 @@ export interface FormSelectOption {
 
 export interface FormSelectElement {
   type: "select";
+  /** Stable element id — both renderers write it as `data-jdf-id`; `viewer.highlight()` / `scrollToElement()` and RAG results point back to it. */
+  id?: string;
   name: string;
   options: FormSelectOption[];
   /** Currently-selected option value (empty string = none selected). */
@@ -330,6 +352,8 @@ export interface FormSelectElement {
 
 export interface FormSignatureElement {
   type: "signature";
+  /** Stable element id — both renderers write it as `data-jdf-id`; `viewer.highlight()` / `scrollToElement()` and RAG results point back to it. */
+  id?: string;
   name: string;
   /** base64 PNG of the rendered signature, or empty string. */
   value?: string;

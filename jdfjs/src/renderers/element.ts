@@ -56,6 +56,7 @@ export function renderElement(el: Element, ctx: RenderContext): HTMLElement | nu
   }
   if (!inner) return null;
   wrap.dataset.jdfType = String((el as any).type);
+  if ((el as any).id != null) wrap.dataset.jdfId = String((el as any).id);
   wrap.appendChild(inner);
   return wrap;
 }

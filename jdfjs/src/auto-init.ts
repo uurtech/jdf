@@ -76,6 +76,12 @@ function processElement(el: Element) {
     .then((inst) => {
       VIEWER_INSTANCES.set(el, inst);
       maybeAttachSaveButton(container, inst);
+      // Element clicks bubble out as a DOM event so a plain <jdf> tag can be
+      // wired without touching the instance: el.addEventListener("jdf-element-click", …)
+      inst.onElementClick((info) => container.dispatchEvent(new CustomEvent("jdf-element-click", { detail: info, bubbles: true })));
+      // Hand the instance to the host: `el.addEventListener("jdf-ready", e => e.detail.viewer.highlight(…))`
+      // or `getViewer(el)` after the fact.
+      container.dispatchEvent(new CustomEvent("jdf-ready", { detail: { viewer: inst }, bubbles: true }));
     })
     .catch((err) => {
       if ((err as Error)?.name === "AbortError") return; // src changed mid-fetch
@@ -200,6 +206,11 @@ function watchForNewTargets() {
 }
 
 /** Manually trigger a scan — for SPAs that mount content asynchronously. */
+/** The viewer instance behind a `<jdf>` element (once it has rendered), or undefined. */
+export function getViewer(el: Element): JDFViewerInstance | undefined {
+  return VIEWER_INSTANCES.get(el);
+}
+
 export function jdf(root: ParentNode = document) {
   scan(root);
 }

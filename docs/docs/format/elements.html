@@ -25,6 +25,7 @@
       <table>
         <thead><tr><th>Field</th><th>Type</th><th>Default</th></tr></thead>
         <tbody>
+          <tr><td><code>id</code></td><td>Stable element id (string). Both renderers write it as <code>data-jdf-id</code>; <code>viewer.highlight()</code> / <code>scrollToElement()</code> and RAG results point back to it. The PDF importer writes <code>p&lt;page&gt;-e&lt;n&gt;</code>.</td></tr>
           <tr><td><code>position</code></td><td><code>{x, y}</code> in mm (or doc unit)</td><td>flow with previous</td></tr>
           <tr><td><code>width</code></td><td>number</td><td>content area width</td></tr>
           <tr><td><code>height</code></td><td>number</td><td>auto-size</td></tr>

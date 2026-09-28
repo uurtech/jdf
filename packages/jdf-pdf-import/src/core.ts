@@ -1768,12 +1768,14 @@ export async function importPdfToJdf(
           runs.push(run);
         });
         const style: any = { fontSize: Math.round(first.fontSize * 10) / 10, fontFamily: base.cls.family, lineHeight: 1 };
+        const rowHeight = Math.round(first.fontSize * PT_TO_MM * 100) / 100;
         if (first.opacity < 0.999) style.opacity = Math.round(first.opacity * 100) / 100;
         const rt: any = {
           type: "richtext",
           runs,
           position: { x: Math.max(0, Math.round(first.x * 100) / 100), y: Math.max(0, Math.round(Math.min(...row.map((i) => lines[i].y)) * 100) / 100) },
           width: Math.max(2, Math.round(Math.max(first.fontSize * PT_TO_MM, Math.min(measuredW, cap)) * 100) / 100),
+          height: rowHeight,
           style,
         };
         // Size/face of the row = the run carrying most characters ("BERT" + small-caps "LARGE" + body text → body).
@@ -1813,6 +1815,8 @@ export async function importPdfToJdf(
         content: l.text,
         position: { x: Math.max(0, Math.round(l.x * 100) / 100), y: Math.max(0, Math.round(l.y * 100) / 100) },
         width: Math.max(2, Math.round(elWidth * 100) / 100),
+        // One line at lineHeight 1: the box is exactly one em tall.
+        height: Math.round(l.fontSize * PT_TO_MM * 100) / 100,
         style,
       };
       // Heading detection: bold AND clearly larger than the page's body text.
@@ -1844,6 +1848,7 @@ export async function importPdfToJdf(
         prev.content = `${prev.content} ${text.content}`.replace(/\s+/g, " ");
         prev.tocEntry = prev.content;
         prev.width = Math.max(prev.width ?? 0, text.width ?? 0);
+        prev.height = Math.round((text.position!.y + (text.height ?? 0) - prev.position!.y) * 100) / 100;
         return;
       }
       lineMeta.set(text, { w: Math.max(l.fontSize * PT_TO_MM, extent(l)), size: l.fontSize, face: fontKey(l.fontName) });
@@ -1906,6 +1911,10 @@ export async function importPdfToJdf(
       // Radio groups and unknown types fall through silently.
     }
 
+    // Deterministic element ids (`p<page>-e<index>`, 1-based): both renderers
+    // write them as data-jdf-id, so a retrieval hit or a review note can be
+    // highlighted and scrolled to; same PDF → same ids, run after run.
+    elements.forEach((e: any, k) => { if (e.id == null) e.id = `p${pi}-e${k + 1}`; });
     pages.push({
       id: `page-${pi}`,
       pageSize: { width: Math.round(pageW * PT_TO_MM * 100) / 100, height: Math.round(pageH * PT_TO_MM * 100) / 100 },

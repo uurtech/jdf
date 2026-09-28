@@ -104,7 +104,9 @@ function merge<T extends Placed>(para: T[], meta: WeakMap<object, LineMeta>, pag
   // With line-height L the browser adds (L − 1)/2 em of half-leading above the
   // first line, so the box moves up by that much to keep the baselines put.
   const y = Math.max(0, first.position!.y - ((lineHeight - 1) / 2) * lineH);
-  const base: any = { position: { x, y: Math.round(y * 100) / 100 }, width: Math.round(width * 100) / 100, style };
+  // Box height = the lines at their pitch (the last line gets a full pitch too).
+  const height = Math.round(para.length * lineHeight * lineH * 100) / 100;
+  const base: any = { position: { x, y: Math.round(y * 100) / 100 }, width: Math.round(width * 100) / 100, height, style };
   if (allText) {
     const content = para.map((e) => String(e.content ?? "").trim().replace(/[ \t]+/g, " ")).join(joiner());
     const { height: _hh, ...firstRest } = first as any;
