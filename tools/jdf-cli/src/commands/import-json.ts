@@ -95,6 +95,34 @@ export async function importJson(
   console.log(`Open with: open -a "JDF Reader" "${output}"`);
 }
 
+/**
+ * Forgive the shapes models naturally emit and the schema does not accept:
+ * list items as plain strings (→ `{ content }`), nested `children` likewise,
+ * table `rows` given as an object map. Applied to every page of every shape
+ * below, recursively into collapsible sections.
+ */
+function normaliseElements(elements: any[]): any[] {
+  return elements.map((e) => {
+    if (!e || typeof e !== "object") return e;
+    if (e.type === "list" && Array.isArray(e.items)) {
+      const fix = (items: any[]): any[] => items.map((it) => {
+        if (typeof it === "string" || typeof it === "number") return { content: String(it) };
+        if (it && typeof it === "object" && Array.isArray(it.children)) return { ...it, children: fix(it.children) };
+        return it;
+      });
+      return { ...e, items: fix(e.items) };
+    }
+    if (e.type === "table" && e.rows && !Array.isArray(e.rows) && typeof e.rows === "object") {
+      return { ...e, rows: Object.values(e.rows) };
+    }
+    if (e.type === "collapsible" && Array.isArray(e.elements)) return { ...e, elements: normaliseElements(e.elements) };
+    return e;
+  });
+}
+function normalisePages(pages: any[]): Page[] {
+  return pages.map((p) => (p && typeof p === "object" && Array.isArray(p.elements) ? { ...p, elements: normaliseElements(p.elements) } : p)) as Page[];
+}
+
 function normaliseToJdf(input: any, title: string): JdfDocument {
   // Shape 1: already a full JDF doc. Build a fresh object so we never
   // mutate the caller's parsed input — earlier the meta merge ran in-place
@@ -114,7 +142,7 @@ function normaliseToJdf(input: any, title: string): JdfDocument {
       ...(input.resources ? { resources: input.resources } : {}),
       ...(input.header ? { header: input.header } : {}),
       ...(input.footer ? { footer: input.footer } : {}),
-      pages: input.pages as Page[],
+      pages: normalisePages(input.pages),
     };
   }
 
@@ -139,7 +167,7 @@ function normaliseToJdf(input: any, title: string): JdfDocument {
         ...(input.resources ? { resources: input.resources } : {}),
         ...(input.header ? { header: input.header } : {}),
         ...(input.footer ? { footer: input.footer } : {}),
-        pages: input.pages as Page[],
+        pages: normalisePages(input.pages),
       };
     }
     if (Array.isArray(input.elements)) {
@@ -167,7 +195,7 @@ function wrapElements(elements: Element[], title: string, meta?: any): JdfDocume
     pages: [
       {
         id: "page-1",
-        elements,
+        elements: normaliseElements(elements),
       } as Page,
     ],
   };

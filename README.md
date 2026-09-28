@@ -877,6 +877,27 @@ The next surface area, grouped by theme. Items at the top of each group are sche
 - **Linux & Windows code signing** — sign `.deb` / `.rpm` / `.msi` / `.exe` artifacts in the GitHub Actions release workflow.
 - **Auto-bump CDN pins on release** — `scripts/release.sh` rewrites every `unpkg.com/@uurtech/jdf@<old>` reference in `README.md`, `jdfjs/README.md`, and `docs/**/*.html` to the new version before tagging. Removes a class of "demo broke after release" bugs.
 
+## Verification — `pnpm verify`
+
+One command runs every check the project has, locally, on the built artifacts. Green means the claims in this README hold on your machine; a red line names the surface that is broken.
+
+```bash
+pnpm install
+pnpm verify              # ≈5 min on an M-series Mac · add "-- --quick" to skip the Python benchmark verification
+```
+
+| Step | What it proves |
+|---|---|
+| typecheck · build · `cargo test` | TypeScript across all packages; jdf.js and reader bundles; Rust export/validate/search |
+| parity | every element type renders on all three surfaces; labelled form fields keep their labels, checkboxes stay checkbox-sized |
+| tables · order · regress | PDF importer: 120/120 tables, reading order, every corpus PDF converts exactly as the committed fingerprint says |
+| **visual** | every `ref_docs/*.pdf` page (first 3) rendered by poppler vs converted + rendered by jdf.js vs the desktop reader, scored and compared with `packages/jdf-pdf-import/regress/visual-baseline.json`; side-by-side sheets land in `verify-out/visual/` |
+| **cli** | `validate` on every fixture; `convert` pdf/json/md → valid, deterministic output with ids and heights; AcroForm fields survive; `.jdfx` round-trip; `chunk` deterministic; `rag` writes an index; `embed` produces vectors through a local Ollama |
+| **forms** | the fillable demo renders with every label and normal controls, gets filled, Save downloads a `.jdf` that validates and reopens in the reader with the same values; an imported PDF form (HCFA-1500) renders compact widgets inside their boxes in both renderers |
+| bench | `python rag_bench.py --verify` and `cost_bench.py --verify` reproduce the published numbers from the committed corpus |
+
+Prerequisites: pnpm, Rust toolchain, Python 3, poppler (`pdftoppm`), Google Chrome (Playwright drives it), optionally Ollama for the embedding step and ImageMagick for the side-by-side sheets. `ref_docs/` is a local folder of PDFs you want covered; it is gitignored, only fingerprints and scores are committed, and the checks skip gracefully when it is absent.
+
 ## Contributing
 
 JDF is open source — fork the repo, hack on it, open a pull request. `CONTRIBUTING.md` has the full guide; the short version:

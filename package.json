@@ -9,6 +9,10 @@
     "tauri": "pnpm --filter @jdf/reader tauri",
     "typecheck": "pnpm -r typecheck",
     "parity": "node scripts/parity-check.mjs",
+    "verify": "bash scripts/verify-all.sh",
+    "verify:visual": "node scripts/verify/visual.mjs",
+    "verify:forms": "node scripts/verify/forms.mjs",
+    "verify:cli": "bash scripts/verify/cli.sh",
     "bench:render": "pnpm --filter @jdf/bench render"
   }
 }

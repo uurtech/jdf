@@ -200,6 +200,16 @@ The JDF-vs-PDF RAG benchmark is **Python** (`bench/rag_bench.py` accuracy, `benc
 
 User talks Turkish. Replies in Turkish. Code comments, file paths, commit messages, technical terms remain in English.
 
+## ⚠️ `pnpm verify` — the whole system, one command, before any claim and any release
+
+`pnpm verify` (`scripts/verify-all.sh`) runs every check the project has: typecheck, both builds, `cargo test`, the parity gate, `verify:tables`, `verify:order`, `verify:regress`, **`scripts/verify/visual.mjs`** (every ref_docs/ PDF page vs its jdf.js render vs its reader render, scored against `packages/jdf-pdf-import/regress/visual-baseline.json`, side-by-side sheets in `verify-out/visual/`), **`scripts/verify/cli.sh`** (validate / convert pdf·json·md·jdfx / chunk determinism / rag / embed via local Ollama), **`scripts/verify/forms.mjs`** (fill the fillable demo, click Save, validate the download, reopen it in the reader, imported HCFA form compact in both renderers) and the Python benchmark `--verify`. `release.sh` Step 0 runs the same set minus the benchmark.
+
+Rules:
+1. **Never tell the user something works unless `pnpm verify` is green on the built artifacts.** "Typecheck passed" and "parity passed" are not evidence that a form looks right or a PDF page matches — that is what steps 8–10 are for. If a step cannot run (no Chrome, no Ollama, no poppler), say which and why.
+2. **Every user-visible surface gets a check in this suite when it is added or changed.** A renderer rule, a CLI flag, a form behaviour, an importer heuristic: extend `visual.mjs` / `forms.mjs` / `cli.sh` in the same change. The 0.2.6 checkbox regression shipped because nothing looked at the rendered form.
+3. **Visual scores only go up.** `visual.mjs` fails when a page scores more than 0.02 below its baseline. Accept a drop only after looking at the sheet and explaining why in the commit; refresh with `node scripts/verify/visual.mjs --update`. New PDFs in `ref_docs/` join the baseline the same way.
+4. **`pnpm verify` must run on a fresh clone with the documented prerequisites** (pnpm, Rust, Python 3, poppler, Google Chrome, optional Ollama). Do not depend on files in /tmp or on this machine.
+
 ## ⚠️ THE NO-REGRESSION RULE — a PDF that converted well must keep converting well
 
 The user drops real PDFs into `ref_docs/` (gitignored, third-party — never commit them) and expects every one of them to keep converting exactly as well after every importer change. "It got better on my new PDF" is worthless if an older PDF got worse. This is enforced by a gate, not by memory:

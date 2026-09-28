@@ -63,3 +63,5 @@ ref_docs/
 
 # release.sh ↔ publish-dmg.sh handoff (draft release id)
 .release-id
+# pnpm verify artifacts (side-by-side sheets, CLI outputs)
+verify-out/

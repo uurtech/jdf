@@ -54,6 +54,12 @@ node scripts/parity-check.mjs
 pnpm --filter @jdf/pdf-import verify:tables
 pnpm --filter @jdf/pdf-import verify:order
 pnpm --filter @jdf/pdf-import verify:regress
+# What a user sees: PDF vs jdf.js vs reader side by side (scored against the
+# visual baseline), the CLI end to end, and the fillable demo filled, saved,
+# validated and reopened in the reader. Red here = no release.
+node scripts/verify/visual.mjs
+bash scripts/verify/cli.sh
+node scripts/verify/forms.mjs
 
 echo ""
 echo "═══════════════════════════════════════════════════════════"

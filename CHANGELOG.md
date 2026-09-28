@@ -11,6 +11,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · semantic-ish
 - **Metric-compatible fonts.** The importer maps PDF fonts to open families with the same glyph widths — Carlito (Calibri), Caladea (Cambria), Arimo (Arial/Helvetica), Tinos (Times New Roman), Cousine (Courier New), Gelasio (Georgia) — and uses PDF.js font flags (serif / monospace / bold / italic) for unknown names. jdf.js loads them from Google Fonts when a document uses them; the reader bundles the Latin subsets (`apps/reader/public/fonts`, SIL OFL). Converted lines now have the PDF's width: no more wrapped table-of-contents entries, paragraphs that grow into the heading below, or statements taller than their page box.
 - Fake-bold duplicate detection tolerates a slightly larger offset (management-report bullet lists were drawn twice).
 
+### Added — `pnpm verify`: the whole system, one command
+- `scripts/verify-all.sh` runs typecheck, both builds, `cargo test`, parity, `verify:tables/order/regress`, the new visual match (`scripts/verify/visual.mjs`: every ref_docs PDF page vs jdf.js vs the reader, scored against `regress/visual-baseline.json`, side-by-side sheets), the CLI end to end (`scripts/verify/cli.sh`: validate, convert pdf/json/md/jdfx, chunk determinism, rag, embed via local Ollama) and the forms flow (`scripts/verify/forms.mjs`: fill the demo, Save, validate, reopen in the reader; imported HCFA form) and the Python benchmark `--verify`. `release.sh` Step 0 runs the same checks.
+- Found by the suite: `jdf convert x.json` now accepts list items as plain strings (what models emit) and table rows as an object map; textareas fill their element box instead of a fixed 60 px minimum (imported 12 mm textareas overflowed their cell).
+
 ### Added — desktop reader: New document
 - Welcome screen "New Document" button, toolbar "New" and ⌘N start a blank A4 document in the editor (Insert bar, undo, everything as for an opened file). It lives in memory until the first ⌘S, which asks for a location; auto-save switches on from then. Closing the window or starting another document while an untitled one has changes asks to save. New window moved to ⇧⌘N.
 

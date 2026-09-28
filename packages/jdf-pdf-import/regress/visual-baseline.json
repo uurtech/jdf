@@ -1,0 +1,171 @@
+{
+ "spec/examples/sample.pdf": {
+  "pages": {
+   "p1": 0.971,
+   "p2": 0.94,
+   "p3": 0.923
+  },
+  "reader": 0.98
+ },
+ "ref_docs/432938035-HCFA1500-10-Arial-Blue-1155-1.pdf": {
+  "pages": {
+   "p1": 0.95
+  },
+  "reader": 0.949
+ },
+ "ref_docs/648210547-Gyani-Mediassist-2.pdf": {
+  "pages": {
+   "p1": 0.983
+  },
+  "reader": 0.98
+ },
+ "ref_docs/FAB-FS-Q1-2026-English.pdf": {
+  "pages": {
+   "p1": 0.994,
+   "p2": 0.92,
+   "p3": 0.978
+  },
+  "reader": 0.993
+ },
+ "ref_docs/FAB-FS-Q2-2026-English.pdf": {
+  "pages": {
+   "p1": 0.99,
+   "p2": 0.925,
+   "p3": 0.97
+  },
+  "reader": 0.992
+ },
+ "ref_docs/FINAL Annual Report.pdf": {
+  "pages": {
+   "p1": 0.956,
+   "p2": 1,
+   "p3": 0.918
+  },
+  "reader": 0.994
+ },
+ "ref_docs/FINAL PDFS_2023AnnualReport_Bookmarked for Online posting.pdf": {
+  "pages": {
+   "p1": 0.967,
+   "p2": 0.943,
+   "p3": 0.985
+  },
+  "reader": 0.995
+ },
+ "ref_docs/FINAL PROOF for Online Posting PDFS_2024ProxyStatement No blank pages.pdf": {
+  "pages": {
+   "p1": 0.985,
+   "p2": 0.95,
+   "p3": 0.99
+  },
+  "reader": 0.991
+ },
+ "ref_docs/Health-Insurance-Claim-Form-Sample.pdf": {
+  "pages": {
+   "p1": 0.965,
+   "p2": 0.904
+  },
+  "reader": 0.986
+ },
+ "ref_docs/Mgt report_2-12-26.pdf": {
+  "pages": {
+   "p1": 0.997,
+   "p2": 0.98,
+   "p3": 0.973
+  },
+  "reader": 0.999
+ },
+ "ref_docs/PDF Solutions 2024 Annual Report.pdf": {
+  "pages": {
+   "p1": 0.981,
+   "p2": 0.942,
+   "p3": 0.974
+  },
+  "reader": 0.996
+ },
+ "ref_docs/PDF Solutions_Typeset Proxy_v2_Host.pdf": {
+  "pages": {
+   "p1": 0.947,
+   "p2": 0.961,
+   "p3": 0.969
+  },
+  "reader": 0.989
+ },
+ "ref_docs/PDFS_2025ProxyStatement_BMK.pdf": {
+  "pages": {
+   "p1": 0.997,
+   "p2": 0.983,
+   "p3": 0.988
+  },
+  "reader": 0.994
+ },
+ "ref_docs/Q126_Management REport EX-99.2_clean_pn60.pdf": {
+  "pages": {
+   "p1": 0.999,
+   "p2": 0.987,
+   "p3": 0.985
+  },
+  "reader": 0.999
+ },
+ "ref_docs/Q226+Mgt+Report.pdf": {
+  "pages": {
+   "p1": 0.997,
+   "p2": 0.988,
+   "p3": 0.985
+  },
+  "reader": 0.995
+ },
+ "ref_docs/Sample filled Claim Form.pdf": {
+  "pages": {
+   "p1": 0.856,
+   "p2": 0.887,
+   "p3": 0.861
+  },
+  "reader": 0.891
+ },
+ "ref_docs/Sample-Financial-Statements-1.pdf": {
+  "pages": {
+   "p1": 0.951,
+   "p2": 0.953,
+   "p3": 0.951
+  },
+  "reader": 0.964
+ },
+ "ref_docs/UPDATED_WITH_Insurance_Policy_Sample_PCA_Claims_Packet_as_of_27_Feb_2025.pdf": {
+  "pages": {
+   "p1": 0.906,
+   "p2": 0.892,
+   "p3": 0.824
+  },
+  "reader": 0.976
+ },
+ "ref_docs/basic-understanding-of-a-companys-financials.pdf": {
+  "pages": {
+   "p1": 0.994,
+   "p2": 0.995,
+   "p3": 0.998
+  },
+  "reader": 0.997
+ },
+ "ref_docs/partnercentral-selling-api.pdf": {
+  "pages": {
+   "p1": 0.994,
+   "p2": 0.986,
+   "p3": 0.875
+  },
+  "reader": 0.866
+ },
+ "ref_docs/sample.pdf": {
+  "pages": {
+   "p1": 0.971,
+   "p2": 0.94,
+   "p3": 0.923
+  },
+  "reader": 0.98
+ },
+ "ref_docs/Özgeçmiş.pdf": {
+  "pages": {
+   "p1": 0.986
+  },
+  "reader": 0.993
+ }
+}
