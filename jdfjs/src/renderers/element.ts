@@ -720,8 +720,11 @@ function commitFormChange(ctx: RenderContext, field: string, value: unknown) {
  * the control sits inside the form's printed cell instead of covering the
  * labels around it. Same rule in the reader's FormElement.
  */
-function compactField(wrap: HTMLElement, el: { height?: number }) {
-  if (el.height == null || el.height >= 9) return;
+function compactField(wrap: HTMLElement, el: { height?: number; label?: string }) {
+  // Only unlabelled fields: an authored form's 8 mm checkbox row with a label
+  // is a normal field (compacting it stretched the box across the row and
+  // broke the fillable demo on the site, 0.2.6).
+  if (el.height == null || el.height >= 9 || el.label) return;
   wrap.classList.add("jdfjs-form-compact");
   wrap.style.fontSize = `${Math.max(7, Math.min(12, Math.round(el.height * 3.7795 * 0.62)))}px`;
 }

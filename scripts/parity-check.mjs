@@ -113,6 +113,22 @@ try {
       try { await page.waitForSelector(".jdfjs-page", { timeout: 15000 }); await page.waitForTimeout(400); } catch { errors.push("no .jdfjs-page rendered"); }
       const got = await page.evaluate(() => [...document.querySelectorAll(".jdfjs-page-content [data-jdf-type]")].filter((n) => !n.parentElement.closest("[data-jdf-type]")).map((n) => n.dataset.jdfType));
       const unknown = await page.evaluate(() => document.body.innerText.match(/\[unknown:[^\]]*\]/g) || []);
+      // Forms must look like forms: every labelled field shows its label and no
+      // checkbox is stretched (0.2.6 compacted an authored 8 mm checkbox row and
+      // the site's fillable demo broke while every tally still matched).
+      const formProblems = await page.evaluate(() => {
+        const out = [];
+        for (const f of document.querySelectorAll(".jdfjs-form-field")) {
+          const lab = f.querySelector(".jdfjs-form-label, .jdfjs-form-checkbox-label");
+          if (lab && !(lab.offsetWidth && lab.offsetHeight)) out.push(`hidden label "${lab.textContent.trim().slice(0, 30)}"`);
+        }
+        for (const c of document.querySelectorAll('input[type="checkbox"]')) {
+          const r = c.getBoundingClientRect();
+          if (r.width > 24 || r.height > 24) out.push(`checkbox ${Math.round(r.width)}×${Math.round(r.height)}px`);
+        }
+        return out;
+      });
+      errors.push(...formProblems);
       ok(errors.length === 0 && unknown.length === 0 && tally(got) === tally(expected), `jdf.js renders ${f} (${expected.length} elements)${errors.length ? ` — errors: ${errors.slice(0, 2).join(" | ")}` : ""}${unknown.length ? ` — ${unknown.join(" ")}` : ""}${tally(got) !== tally(expected) ? ` — got [${tally(got)}] expected [${tally(expected)}]` : ""}`);
       await page.close();
     }
@@ -148,6 +164,19 @@ try {
       } catch (e) { errors.push(`open failed: ${String(e.message).split("\n")[0]}`); }
       const got = await page.evaluate(() => [...document.querySelectorAll(".jdf-page [data-jdf-type]")].filter((n) => !n.parentElement.closest("[data-jdf-type]") && (() => { try { const p = JSON.parse(n.dataset.elementPath || "[]"); return p.length === 4 && p[0] === "pages" && p[2] === "elements"; } catch { return false; } })()).map((n) => n.dataset.jdfType));
       const unknown = await page.evaluate(() => document.body.innerText.match(/\[unknown:[^\]]*\]/g) || []);
+      const formProblems = await page.evaluate(() => {
+        const out = [];
+        for (const f of document.querySelectorAll(".jdfjs-form-field")) {
+          const lab = f.querySelector(".jdfjs-form-label, .jdfjs-form-checkbox-label");
+          if (lab && !(lab.offsetWidth && lab.offsetHeight)) out.push(`hidden label "${lab.textContent.trim().slice(0, 30)}"`);
+        }
+        for (const c of document.querySelectorAll('input[type="checkbox"]')) {
+          const r = c.getBoundingClientRect();
+          if (r.width > 24 || r.height > 24) out.push(`checkbox ${Math.round(r.width)}×${Math.round(r.height)}px`);
+        }
+        return out;
+      });
+      errors.push(...formProblems);
       const toast = await page.evaluate(() => document.body.innerText.match(/Open failed[^\n]*/)?.[0] || "");
       ok(errors.length === 0 && unknown.length === 0 && !toast && tally(got) === tally(expected), `reader renders ${f} (${expected.length} elements)${errors.length ? ` — errors: ${errors.slice(0, 2).join(" | ")}` : ""}${unknown.length ? ` — ${unknown.join(" ")}` : ""}${toast ? ` — ${toast}` : ""}${tally(got) !== tally(expected) ? ` — got [${tally(got)}] expected [${tally(expected)}]` : ""}`);
       await page.close();

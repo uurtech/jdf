@@ -31,8 +31,9 @@ interface FormProps<T> {
 
 /** Same rule as jdf.js `compactField`: a box shorter than 9 mm (an imported
  *  PDF-form widget) drops label/padding and sizes its font to the box. */
-function compact(el: { height?: number }): { cls: string; css: Record<string, string> } {
-  if (el.height == null || el.height >= 9) return { cls: "", css: {} };
+function compact(el: { height?: number; label?: string }): { cls: string; css: Record<string, string> } {
+  // Unlabelled fields only — see jdf.js compactField.
+  if (el.height == null || el.height >= 9 || el.label) return { cls: "", css: {} };
   return { cls: " jdfjs-form-compact", css: { "font-size": `${Math.max(7, Math.min(12, Math.round(el.height * 3.7795 * 0.62)))}px` } };
 }
 
