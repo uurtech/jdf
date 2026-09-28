@@ -210,7 +210,7 @@ GH_UPLOADS="https://uploads.github.com/repos/$GH_OWNER/$GH_REPO"
 
 # Delete existing release for this tag if present (for re-runs)
 # Drafts are not reachable via /releases/tags/:tag, so list and match by tag_name.
-EXISTING_JSON=$(curl -sL -H "Authorization: Bearer $GITHUB_TOKEN" \
+EXISTING_JSON=$(curl -sL -m 60 --retry 3 --retry-delay 5 -H "Authorization: Bearer $GITHUB_TOKEN" \
   -H "Accept: application/vnd.github+json" \
   "$GH_API/releases?per_page=50")
 EXISTING=$(echo "$EXISTING_JSON" | TAG="$TAG" node -e "
@@ -221,17 +221,17 @@ EXISTING=$(echo "$EXISTING_JSON" | TAG="$TAG" node -e "
 
 if [[ -n "$EXISTING" ]]; then
   echo "→ Deleting existing release $TAG (id=$EXISTING) to recreate"
-  curl -sL -X DELETE -H "Authorization: Bearer $GITHUB_TOKEN" \
+  curl -sL -m 60 --retry 3 --retry-delay 5 -X DELETE -H "Authorization: Bearer $GITHUB_TOKEN" \
     -H "Accept: application/vnd.github+json" \
     "$GH_API/releases/$EXISTING" >/dev/null || true
 fi
 # Always try to delete the tag too — orphaned tags break tag re-creation
-curl -sL -X DELETE -H "Authorization: Bearer $GITHUB_TOKEN" \
+curl -sL -m 60 --retry 3 --retry-delay 5 -X DELETE -H "Authorization: Bearer $GITHUB_TOKEN" \
   -H "Accept: application/vnd.github+json" \
   "$GH_API/git/refs/tags/$TAG" >/dev/null 2>&1 || true
 
 echo "→ Creating GitHub release $TAG"
-RELEASE_JSON=$(curl -sL -X POST -H "Authorization: Bearer $GITHUB_TOKEN" \
+RELEASE_JSON=$(curl -sL -m 60 --retry 3 --retry-delay 5 -X POST -H "Authorization: Bearer $GITHUB_TOKEN" \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
   "$GH_API/releases" \
@@ -261,7 +261,7 @@ if [[ -z "$RELEASE_ID" ]]; then
 fi
 
 echo "→ Uploading dmg → release $RELEASE_ID"
-curl -sL -X POST \
+curl -sL -m 60 --retry 3 --retry-delay 5 -X POST \
   -H "Authorization: Bearer $GITHUB_TOKEN" \
   -H "Content-Type: application/octet-stream" \
   --data-binary "@$DMG" \
