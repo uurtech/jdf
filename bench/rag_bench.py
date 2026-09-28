@@ -223,9 +223,16 @@ class Embedder:
         self._st = None
         if self.provider == "st":
             from sentence_transformers import SentenceTransformer
-            self._st = SentenceTransformer(self.model, trust_remote_code="nomic" in self.model)
-            import sentence_transformers
-            self.version = f"sentence-transformers {sentence_transformers.__version__}"
+            import sentence_transformers, torch
+            # Device: RAG_BENCH_DEVICE (cuda / cuda:1 / mps / cpu) or whatever torch
+            # picks. Printed so a GPU box can see at a glance that it is used —
+            # note that cached embeddings (.cache/emb-*.json) never touch the GPU.
+            device = os.environ.get("RAG_BENCH_DEVICE") or ("cuda" if torch.cuda.is_available() else "mps" if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available() else "cpu")
+            self._st = SentenceTransformer(self.model, trust_remote_code="nomic" in self.model, device=device)
+            dev = str(self._st.device)
+            name = torch.cuda.get_device_name(self._st.device) if dev.startswith("cuda") else dev
+            self.version = f"sentence-transformers {sentence_transformers.__version__} · torch {torch.__version__} · {dev} ({name})"
+            print(f"  · embedder {spec}: {dev} ({name}); cache {self.cache_file.name}: {len(self.cache)} vectors already computed", file=sys.stderr)
         else:
             import urllib.request
             self.host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")

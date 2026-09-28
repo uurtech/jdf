@@ -18,6 +18,9 @@ python rag_bench.py --embedder ollama:nomic-embed-text,st:BAAI/bge-base-en-v1.5
 python rag_bench.py --embedder none                   # BM25 only — no model download, runs in seconds
 python cost_bench.py                                  # RAG cost, 1,000 files per format (--files 10000 for more)
 python rag_bench.py --verify                          # re-run and compare with results/latest.json
+# GPU: the sentence-transformers embedder picks CUDA automatically and prints
+# "embedder st:<model>: cuda:0 (<GPU name>)" at start; force with RAG_BENCH_DEVICE=cuda:1|cpu.
+# Cached vectors in .cache/emb-*.json are reused and never touch the GPU — delete them for a real GPU run.
 python cost_bench.py --verify
 ```
 
