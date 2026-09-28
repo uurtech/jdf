@@ -32,7 +32,7 @@
         "embedCalls": 1239
       }
     ],
-    "headline": "dense:BAAI/bge-small-en-v1.5",
+    "headline": "dense:nomic-ai/nomic-embed-text-v1.5",
     "settings": {
       "pdfChunking": [
         {

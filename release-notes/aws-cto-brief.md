@@ -18,7 +18,7 @@ JDF is an MIT-licensed JSON document format plus a CLI (`@uurtech/jdf-cli`), a w
 
 Two benchmarks ship in the repo, both Python, both re-runnable with `--verify`:
 
-- **Labelled corpus** (`bench/rag_bench.py`): 24 generated reports, 192 questions with exact ground truth, 4 PDF parsers × 2 chunk sizes vs `jdf chunk`, BM25 + 5 embedding models. Headline (nomic-embed-text, chunk-size-neutral "answer inside the first 1,000 tokens"): JDF 99.0% vs best PDF parser 83.3%, with 38% fewer LLM context tokens per question and 16× cheaper re-indexing after an edit.
+- **Labelled corpus** (`bench/rag_bench.py`): 24 generated reports, 192 questions with exact ground truth, 4 PDF parsers × 2 chunk sizes vs `jdf chunk`, BM25 + 5 embedding models. Headline (nomic-embed-text, chunk-size-neutral "answer inside the first 1,000 tokens"): JDF 99.0% vs best PDF parser 83.3%, with 41% fewer LLM context tokens per question and 15× cheaper re-indexing after an edit (GPU run, NVIDIA L40S, 2026-09-28).
 - **Real corpus** (`bench/byoc.py`): public PDFs — arXiv papers incl. a two-column one, two AWS whitepapers — with questions derived from the documents. Same pipelines, same hit rule. Honest result: on prose-heavy real PDFs converted JDF is at parity with the best parsers (BM25: 96.9% vs 97.7–98.4% answer-in-first-1,000-tokens, equal top-1) while handing the LLM the fewest tokens; the large gap in the labelled benchmark comes from tables and structure, which reports have and papers mostly do not. Point it at your own folder: `python bench/byoc.py --pdf ./s3-mirror`. Nothing leaves the machine.
 
 Full tables, method and caveats: `bench/README.md` and https://jdf.dev/docs/benchmark.html.

@@ -160,7 +160,7 @@ page = replaceBlock(page, "cost", costTableHtml);
 fs.writeFileSync(benchPage, page);
 
 // docs/bench.json
-fs.writeFileSync(path.join(repo, "docs/bench.json"), JSON.stringify({ accuracy: acc, cost }, null, 2) + "\n");
+fs.writeFileSync(path.join(repo, "docs/bench.json"), JSON.stringify({ accuracy: { ...acc, headline }, cost }, null, 2) + "\n");
 
 // README.md
 const readmePath = path.join(repo, "README.md");
