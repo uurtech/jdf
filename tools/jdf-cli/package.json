@@ -1,6 +1,6 @@
 {
   "name": "@uurtech/jdf-cli",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Command-line tool for the JDF (JSON Document Format) — validate and convert documents.",
   "license": "MIT",
   "author": "Ugur Kazdal <ugur@jdf.dev>",
