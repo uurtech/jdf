@@ -14,6 +14,13 @@ const costFile = path.join(repo, "bench/results/cost-latest.json");
 const cost = fs.existsSync(costFile) ? JSON.parse(fs.readFileSync(costFile, "utf8")) : null;
 
 const pc = (x) => `${(x * 100).toFixed(1)}%`;
+// "x86_64" says nothing about a GPU box: append the accelerator recorded in the
+// embedder version strings ("… · cuda:0 (NVIDIA L40S)") when there is one.
+const machineLabel = (run) => {
+  const embs = run.embeddings ?? (run.embedding ? [run.embedding] : []);
+  const gpu = embs.map((e) => /\((NVIDIA[^)]*|AMD[^)]*|Apple[^)]*)\)/.exec(e.version || "")?.[1]).find(Boolean);
+  return gpu ? `${run.machine.cpu} + ${gpu}` : run.machine.cpu;
+};
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const int = (x) => Math.round(x).toLocaleString("en-US");
 const usd = (x) => (x >= 1 ? `$${x.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })}` : `$${x.toFixed(4)}`);
@@ -26,6 +33,15 @@ const retrieverLabel = (r) => (r === "bm25" ? "BM25 (lexical)" : shortModel(r));
 const jdf = acc.pipelines.find((p) => p.id === "jdf");
 const pdfs = acc.pipelines.filter((p) => p.format === "pdf");
 const HEADLINE_METRIC = "recallAt1000Tok";
+// Default tab = the strongest retriever (highest mean R@1k-tok across *all*
+// pipelines — a statement about the embedding model, not about JDF), so the
+// card opens on the model people would actually deploy. rag_bench.py records
+// the first embedder as headline, which depends on the order of the --embedder
+// list; every retriever stays one click away in the tabs.
+const headline = retrievers.filter((r) => r !== "bm25").sort((a, b) => {
+  const mean = (r) => acc.pipelines.reduce((n, p) => n + p.retrievers[r].all[HEADLINE_METRIC], 0) / acc.pipelines.length;
+  return mean(b) - mean(a);
+})[0] ?? acc.headline; // eslint-disable-line
 
 // Hero rows: JDF + each PDF parser at its best config for the headline metric under the headline retriever.
 function heroRows(retriever, metric) {
@@ -48,7 +64,7 @@ const METRICS = {
   ctxTokensTop5: { label: "tokens handed to the LLM for the top-5 chunks · lower is better", fmt: int, higher: false },
 };
 const heroData = {
-  date: acc.date, machine: acc.machine, corpus: acc.corpus, jdfOnly: acc.jdfOnly, headline: acc.headline,
+  date: acc.date, machine: acc.machine, corpus: acc.corpus, jdfOnly: acc.jdfOnly, headline,
   retrievers: retrievers.map((r) => ({ id: r, label: retrieverLabel(r) })),
   metrics: Object.fromEntries(Object.entries(METRICS).map(([k, m]) => [k, { label: m.label, higher: m.higher }])),
   // rows[retriever] = [{name, version, jdf, values{metric}, display{metric}}]
@@ -58,13 +74,13 @@ const heroData = {
     display: Object.fromEntries(Object.entries(METRICS).map(([m, d]) => [m, d.fmt(p.retrievers[r].all[m])])),
   }))])),
 };
-const firstRows = heroData.rows[acc.headline];
+const firstRows = heroData.rows[headline];
 const STATIC_METRIC = "ctxTokensTop5"; // what the card shows before JS runs (and by default): fewer tokens to the LLM
 const heroStatic = firstRows.map((r) => {
   const max = Math.max(...firstRows.map((x) => x.values[STATIC_METRIC]));
   return `          <li class="bench-row${r.jdf ? " is-jdf" : ""}" style="--w:${((r.values[STATIC_METRIC] / max) * 100).toFixed(1)}%"><div class="bench-name">${esc(r.name)}<span class="bench-ver">${esc(r.version)}</span></div><div class="bench-track"><div class="bench-bar"></div></div><div class="bench-time">${esc(r.display[STATIC_METRIC])}</div></li>`;
 }).join("\n");
-const heroTabs = retrievers.map((r) => `          <button class="bench-tab${r === acc.headline ? " is-active" : ""}" role="tab" data-bench-retriever="${esc(r)}">${esc(retrieverLabel(r))}</button>`).join("\n");
+const heroTabs = retrievers.map((r) => `          <button class="bench-tab${r === headline ? " is-active" : ""}" role="tab" data-bench-retriever="${esc(r)}">${esc(retrieverLabel(r))}</button>`).join("\n");
 
 // Full accuracy table (HTML) — one block per retriever.
 function accTableHtml() {
@@ -78,7 +94,7 @@ ${acc.pipelines.map((p) => `            <tr${p.format === "jdf" ? ' class="is-jd
           </tbody>
         </table></div>`).join("\n");
 }
-const accNote = `        <p class="rag-bench-note">R@1k tokens = the answer was inside the first 1,000 tokens of retrieved context (chunk-size neutral: a 2,000-character PDF chunk “hits” more often at top-1 simply because it is a quarter of the document, and then costs 3× the tokens). Hit = right document and the chunk contains both the answer and its row/subject key. ${acc.corpus.documents} documents, ${acc.corpus.pages} pages, ${acc.corpus.questions} questions (${acc.corpus.byType.table} table cells, ${acc.corpus.byType.prose} prose, ${acc.corpus.byType.list} list). Embeddings run locally (${acc.embeddings.map((e) => `${e.model} via ${e.version}`).join("; ")}). JDF chunk hashes verified; editing one paragraph re-embeds <strong>${acc.jdfOnly.chunksReembedded} of ${acc.jdfOnly.corpusChunks}</strong> chunks. ${esc(acc.machine.cpu)}, ${acc.date}.</p>`;
+const accNote = `        <p class="rag-bench-note">R@1k tokens = the answer was inside the first 1,000 tokens of retrieved context (chunk-size neutral: a 2,000-character PDF chunk “hits” more often at top-1 simply because it is a quarter of the document, and then costs 3× the tokens). Hit = right document and the chunk contains both the answer and its row/subject key. ${acc.corpus.documents} documents, ${acc.corpus.pages} pages, ${acc.corpus.questions} questions (${acc.corpus.byType.table} table cells, ${acc.corpus.byType.prose} prose, ${acc.corpus.byType.list} list). Embeddings run locally (${acc.embeddings.map((e) => `${e.model} via ${e.version}`).join("; ")}). JDF chunk hashes verified; editing one paragraph re-embeds <strong>${acc.jdfOnly.chunksReembedded} of ${acc.jdfOnly.corpusChunks}</strong> chunks. ${esc(machineLabel(acc))}, ${acc.date}.</p>`;
 
 // ── cost table ──────────────────────────────────────────────────────────────
 function costRows() {
@@ -107,7 +123,7 @@ const costTableHtml = cost ? `        <div class="bench-table-wrap"><table class
 ${costRows().map(([name, f]) => `            <tr><td>${esc(name)}</td>${costSides.map((s) => `<td${s.id === "jdf" ? ' class="is-jdf"' : ""}>${f(s)}</td>`).join("")}</tr>`).join("\n")}
           </tbody>
         </table></div>
-        <p class="rag-bench-note">${int(cost.files)} files per format = the ${cost.corpusDocuments}-document corpus cycled. Tokens are counted from the chunks each pipeline produces (ceil(chars/4), both sides); embedding time is measured throughput on ${esc(cost.machine.cpu)} (${cost.date}) applied to the totals. Prices from <code>bench/prices.json</code> (as of ${esc(Object.values(cost.prices.embedding)[0].as_of)}); edit it for your provider — the benchmark never calls a paid API. The PDF column is the PDF pipeline that scored best in the accuracy run. <strong>Scaling:</strong> figures are measured at ${int(cost.files)} documents and ${int(cost.queries)} queries; anything at other volumes (10,000 documents, 10M queries) is a linear estimate, not a measurement — index and re-index costs scale with documents, query cost scales with questions asked. Re-index: JDF re-embeds only chunks whose content hash changed (<code>jdf embed --incremental</code>); a PDF has no chunk identity, so an edit means re-chunking and re-embedding the whole document.</p>` : "";
+        <p class="rag-bench-note">${int(cost.files)} files per format = the ${cost.corpusDocuments}-document corpus cycled. Tokens are counted from the chunks each pipeline produces (ceil(chars/4), both sides); embedding time is measured throughput on ${esc(machineLabel(cost))} (${cost.date}) applied to the totals. Prices from <code>bench/prices.json</code> (as of ${esc(Object.values(cost.prices.embedding)[0].as_of)}); edit it for your provider — the benchmark never calls a paid API. The PDF column is the PDF pipeline that scored best in the accuracy run. <strong>Scaling:</strong> figures are measured at ${int(cost.files)} documents and ${int(cost.queries)} queries; anything at other volumes (10,000 documents, 10M queries) is a linear estimate, not a measurement — index and re-index costs scale with documents, query cost scales with questions asked. Re-index: JDF re-embeds only chunks whose content hash changed (<code>jdf embed --incremental</code>); a PDF has no chunk identity, so an edit means re-chunking and re-embedding the whole document.</p>` : "";
 
 // Cost summary for the hero card (JDF vs best-accuracy PDF parser = first PDF side).
 const pdfCost = costSides.find((s) => s.id !== "jdf");
@@ -150,11 +166,11 @@ fs.writeFileSync(path.join(repo, "docs/bench.json"), JSON.stringify({ accuracy: 
 const readmePath = path.join(repo, "README.md");
 let md = fs.readFileSync(readmePath, "utf8");
 const mdAcc = [
-  `| Pipeline | Chunks | ${retrievers.map((r) => `${retrieverLabel(r)} R@1k tok`).join(" | ")} | ${retrieverLabel(acc.headline)} top-1 | Ctx tokens @5 |`,
+  `| Pipeline | Chunks | ${retrievers.map((r) => `${retrieverLabel(r)} R@1k tok`).join(" | ")} | ${retrieverLabel(headline)} top-1 | Ctx tokens @5 |`,
   `|---|---:|${retrievers.map(() => "---:").join("|")}|---:|---:|`,
-  ...acc.pipelines.map((p) => { const b = (s) => (p.format === "jdf" ? `**${s}**` : p.format === "jdf-converted" ? `*${s}*` : s); return `| ${b(p.label)} | ${p.chunks} | ${retrievers.map((r) => b(pc(p.retrievers[r].all.recallAt1000Tok))).join(" | ")} | ${b(pc(p.retrievers[acc.headline].all.recall1))} | ${int(p.retrievers[acc.headline].all.ctxTokensTop5)} |`; }),
+  ...acc.pipelines.map((p) => { const b = (s) => (p.format === "jdf" ? `**${s}**` : p.format === "jdf-converted" ? `*${s}*` : s); return `| ${b(p.label)} | ${p.chunks} | ${retrievers.map((r) => b(pc(p.retrievers[r].all.recallAt1000Tok))).join(" | ")} | ${b(pc(p.retrievers[headline].all.recall1))} | ${int(p.retrievers[headline].all.ctxTokensTop5)} |`; }),
   "",
-  `R@1k tok = answer found within the first 1,000 tokens of retrieved context (chunk-size neutral). ${acc.corpus.documents} documents / ${acc.corpus.pages} pages / ${acc.corpus.questions} questions. All embeddings local. Editing one paragraph re-embeds **${acc.jdfOnly.chunksReembedded} of ${acc.jdfOnly.corpusChunks}** JDF chunks; a PDF pipeline re-embeds the whole document. ${acc.machine.cpu}, ${acc.date}. Full tables incl. top-1/top-5/MRR per model: [\`bench/results/report.md\`](bench/results/report.md).`,
+  `R@1k tok = answer found within the first 1,000 tokens of retrieved context (chunk-size neutral). ${acc.corpus.documents} documents / ${acc.corpus.pages} pages / ${acc.corpus.questions} questions. All embeddings local. Editing one paragraph re-embeds **${acc.jdfOnly.chunksReembedded} of ${acc.jdfOnly.corpusChunks}** JDF chunks; a PDF pipeline re-embeds the whole document. ${machineLabel(acc)}, ${acc.date}. Full tables incl. top-1/top-5/MRR per model: [\`bench/results/report.md\`](bench/results/report.md).`,
 ].join("\n");
 md = replaceBlock(md, "results", mdAcc);
 if (cost) {
@@ -163,7 +179,7 @@ if (cost) {
     `|---|${costSides.map(() => "---:").join("|")}|`,
     ...costRows().map(([name, f]) => `| ${name} | ${costSides.map((s) => (s.id === "jdf" ? `**${f(s)}**` : f(s))).join(" | ")} |`),
     "",
-    `${int(cost.files)} files per format (${cost.corpusDocuments}-document corpus cycled); tokens counted from each pipeline's chunks, embedding time measured on ${cost.machine.cpu}, ${cost.date}. Other volumes (10,000 documents, 10M queries) are linear estimates, not measurements. Prices: [\`bench/prices.json\`](bench/prices.json). Method: [\`bench/README.md\`](bench/README.md).`,
+    `${int(cost.files)} files per format (${cost.corpusDocuments}-document corpus cycled); tokens counted from each pipeline's chunks, embedding time measured on ${machineLabel(cost)}, ${cost.date}. Other volumes (10,000 documents, 10M queries) are linear estimates, not measurements. Prices: [\`bench/prices.json\`](bench/prices.json). Method: [\`bench/README.md\`](bench/README.md).`,
   ].join("\n");
   md = replaceBlock(md, "cost", mdCost);
 }
