@@ -95,11 +95,18 @@ for attempt in $(seq 1 12); do
   echo "  … tarball not on the registry yet (attempt $attempt), retrying in 15 s"
   sleep 15
 done
-if ! file "$CLI_TARBALL_TMP" | grep -q gzip; then echo "✗ $CLI_TARBALL_URL never became a tarball — Formula not updated"; exit 1; fi
+FORMULA_PATH="$REPO_ROOT/Formula/jdf-cli.rb"
+if ! file "$CLI_TARBALL_TMP" | grep -q gzip; then
+  # The registry can take 10+ minutes to serve a fresh scoped tarball (0.2.7).
+  # Do not abort the release: ship everything else, leave the Formula alone and
+  # tell the operator to run scripts/update-cli-formula.sh once it is there.
+  echo "⚠  $CLI_TARBALL_URL is not served yet — Formula/jdf-cli.rb left at its previous version."
+  echo "   Later: bash scripts/update-cli-formula.sh   (fetches, hashes, updates repo + tap, commits, pushes)"
+  FORMULA_PATH=""
+fi
 CLI_SHA256=$(shasum -a 256 "$CLI_TARBALL_TMP" | awk '{print $1}')
 rm -f "$CLI_TARBALL_TMP"
-FORMULA_PATH="$REPO_ROOT/Formula/jdf-cli.rb"
-if [[ -f "$FORMULA_PATH" ]]; then
+if [[ -n "$FORMULA_PATH" && -f "$FORMULA_PATH" ]]; then
   sed -i.bak -E "s|^  url \".*\"|  url \"$CLI_TARBALL_URL\"|" "$FORMULA_PATH"
   sed -i.bak -E "s|^  version \"[^\"]+\"|  version \"$CLI_VER\"|" "$FORMULA_PATH"
   sed -i.bak -E "s|^  sha256 \"[a-f0-9]+\"|  sha256 \"$CLI_SHA256\"|" "$FORMULA_PATH"
