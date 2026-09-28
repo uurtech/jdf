@@ -42,7 +42,10 @@ jobs:
     name: Rust check (${{ matrix.os }})
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-latest, windows-latest]
+        # Linux + Windows only. macOS is built, signed and notarized locally by
+        # scripts/release.sh; a CI macOS job would only burn minutes (and the
+        # retired macos-13 runners queued forever).
+        os: [ubuntu-22.04, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
