@@ -301,7 +301,10 @@ rm -rf "/Applications/JDF Reader.app"
 # `tauri build --bundles dmg` cleans the .app during dmg packaging, so we
 # extract the .app back out of the dmg.
 MOUNT_POINT=$(mktemp -d)
-hdiutil attach "$DMG" -nobrowse -mountpoint "$MOUNT_POINT" -quiet
+# The dmg carries a licence agreement: `-quiet` makes hdiutil cancel the attach
+# instead of prompting (killed the 0.2.5 run here), so answer "Y" on stdin and
+# keep the output. Failing to install locally must not abort the release.
+printf 'Y\n' | hdiutil attach "$DMG" -nobrowse -mountpoint "$MOUNT_POINT" >/dev/null 2>&1 || echo "  ⚠  could not attach dmg for local install (release itself is unaffected)"
 APP_IN_DMG="$MOUNT_POINT/JDF Reader.app"
 if [[ -d "$APP_IN_DMG" ]]; then
   cp -R "$APP_IN_DMG" /Applications/
