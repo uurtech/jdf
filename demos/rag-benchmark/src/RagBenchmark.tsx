@@ -266,7 +266,7 @@ const Outro: React.FC = () => {
       <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", opacity: a.opacity, transform: `translate(${a.shake}px,0) scale(${a.scale})` }}>
         <Glitch on={a.glitch}><div style={{ fontSize: 84, fontWeight: 900, letterSpacing: -2 }}>MEASURED. <span style={{ color: C.jdf }}>NOT CLAIMED.</span></div></Glitch>
         <div style={{ marginTop: 28, fontFamily: mono, fontSize: 30, color: C.good }}><span style={{ color: C.soft }}>$ </span>{cmd}<span style={{ opacity: Math.floor(f / 3) % 2 ? 0 : 1 }}>▌</span></div>
-        <div style={{ marginTop: 26, fontSize: 20, color: C.soft }}>uurtech.github.io/jdf · bench/ · {acc.date}</div>
+        <div style={{ marginTop: 26, fontSize: 20, color: C.soft }}>jdf.dev · bench/ · {acc.date}</div>
       </div>
       <Flash at={T.outro} />
     </div>

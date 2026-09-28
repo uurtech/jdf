@@ -406,7 +406,7 @@ python cost_bench.py           # RAG cost at 1,000 files per format
 python rag_bench.py --verify   # re-run and fail on any discrepancy with the published numbers
 ```
 
-The corpus is synthetic on purpose — a retrieval benchmark needs ground truth for every question, which public PDF corpora don't provide; the generator, every document, every question and every retrieved rank are in [`bench/`](bench/README.md). Full write-up: [docs/benchmark](https://uurtech.github.io/jdf/docs/benchmark.html). If you run the pipelines on your own corpus, please [open an issue](https://github.com/uurtech/jdf/issues) with the numbers.
+The corpus is synthetic on purpose — a retrieval benchmark needs ground truth for every question, which public PDF corpora don't provide; the generator, every document, every question and every retrieved rank are in [`bench/`](bench/README.md). Full write-up: [docs/benchmark](https://jdf.dev/docs/benchmark.html). If you run the pipelines on your own corpus, please [open an issue](https://github.com/uurtech/jdf/issues) with the numbers.
 
 A minimal RAG ingestor for JDF is a single loop — no PDF library, no layout heuristics, no chunker config:
 
