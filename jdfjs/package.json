@@ -3,7 +3,7 @@
   "version": "0.2.6",
   "description": "Render JDF (JSON Document Format) documents in the browser. Drop-in replacement for embedding PDFs — point at a .jdf file and it appears on the page, fully styled, searchable, with a clickable TOC.",
   "license": "MIT",
-  "author": "Ugur Kazdal <ugur@uurtech.com>",
+  "author": "Ugur Kazdal <ugur@jdf.dev>",
   "homepage": "https://github.com/uurtech/jdf#readme",
   "repository": {
     "type": "git",

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Core TypeScript types and utilities for JDF (JSON Document Format)",
   "license": "MIT",
-  "author": "Ugur Kazdal <ugur@uurtech.dev>",
+  "author": "Ugur Kazdal <ugur@jdf.dev>",
   "repository": {
     "type": "git",
     "url": "https://github.com/uurtech/jdf.git",

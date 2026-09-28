@@ -3,7 +3,7 @@
   "version": "0.2.6",
   "description": "Command-line tool for the JDF (JSON Document Format) — validate and convert documents.",
   "license": "MIT",
-  "author": "Ugur Kazdal",
+  "author": "Ugur Kazdal <ugur@jdf.dev>",
   "homepage": "https://github.com/uurtech/jdf#readme",
   "repository": {
     "type": "git",

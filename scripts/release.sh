@@ -86,7 +86,16 @@ echo ""
 echo "→ Updating CLI Homebrew Formula (Formula/jdf-cli.rb)"
 CLI_TARBALL_URL="https://registry.npmjs.org/${CLI_NAME}/-/jdf-cli-${CLI_VER}.tgz"
 CLI_TARBALL_TMP="$(mktemp)"
-curl -sL "$CLI_TARBALL_URL" -o "$CLI_TARBALL_TMP"
+# The registry serves the tarball a little after `npm publish` returns; a
+# too-early fetch gets a 21-byte "Not found" JSON whose sha256 went into the
+# Formula for 0.2.5 and 0.2.6. Retry until the body is a real gzip.
+for attempt in $(seq 1 12); do
+  curl -sL "$CLI_TARBALL_URL" -o "$CLI_TARBALL_TMP"
+  if file "$CLI_TARBALL_TMP" | grep -q gzip; then break; fi
+  echo "  … tarball not on the registry yet (attempt $attempt), retrying in 15 s"
+  sleep 15
+done
+if ! file "$CLI_TARBALL_TMP" | grep -q gzip; then echo "✗ $CLI_TARBALL_URL never became a tarball — Formula not updated"; exit 1; fi
 CLI_SHA256=$(shasum -a 256 "$CLI_TARBALL_TMP" | awk '{print $1}')
 rm -f "$CLI_TARBALL_TMP"
 FORMULA_PATH="$REPO_ROOT/Formula/jdf-cli.rb"

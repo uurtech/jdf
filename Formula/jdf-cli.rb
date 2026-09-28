@@ -3,7 +3,7 @@ class JdfCli < Formula
   homepage "https://github.com/uurtech/jdf"
   url "https://registry.npmjs.org/@uurtech/jdf-cli/-/jdf-cli-0.2.6.tgz"
   version "0.2.6"
-  sha256 "c8d3eae160a892e32837db3dcae515e843e5383fef52b8141940c8bcf8b6d59f"
+  sha256 "c8255cef2b71e0d2ab408fd238aa8edd83fba982540ff10c7a0458a4aa628486"
   license "MIT"
 
   depends_on "node"

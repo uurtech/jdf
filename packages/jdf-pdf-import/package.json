@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "PDF → JDF converter — single algorithm, two entry points (browser DOM canvas, node @napi-rs/canvas).",
   "license": "MIT",
-  "author": "Ugur Kazdal",
+  "author": "Ugur Kazdal <ugur@jdf.dev>",
   "homepage": "https://github.com/uurtech/jdf#readme",
   "repository": {
     "type": "git",
