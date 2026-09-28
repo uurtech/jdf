@@ -12,6 +12,8 @@ Everything else is held equal: same content, same embedding models, same lexical
 ```bash
 git clone https://github.com/uurtech/jdf && cd jdf/bench
 pip install -r requirements.txt
+# fresh (GPU) machine, one shot — venv, CUDA torch, deps, GPU check, both benchmarks:
+./run_gpu.sh            # add --fresh to recompute every embedding; EMBEDDERS=… FILES=… to override
 
 python rag_bench.py                                   # BM25 + local embeddings (default: BAAI/bge-small-en-v1.5)
 python rag_bench.py --embedder ollama:nomic-embed-text,st:BAAI/bge-base-en-v1.5

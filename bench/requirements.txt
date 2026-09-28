@@ -5,4 +5,9 @@ pdfplumber>=0.11
 pypdf>=4.0
 # retrieval
 numpy>=1.26
-sentence-transformers>=3.0   # dense retriever; skip with --embedder none or use --embedder ollama:<model>
+sentence-transformers>=3.0,<6   # dense retriever; skip with --embedder none or use --embedder ollama:<model>
+transformers>=4.41,<5           # nomic-ai/nomic-embed-text-v1.5's remote code still calls get_extended_attention_mask (removed in transformers 5)
+einops>=0.7                     # required by nomic-ai/nomic-embed-text-v1.5 (trust_remote_code model)
+# torch: sentence-transformers pulls it in; on a GPU box install the CUDA build FIRST
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124   (Python 3.12/3.13; no 3.14 wheels yet)
+# pdftotext pipeline needs poppler on PATH: apt install poppler-utils / brew install poppler
