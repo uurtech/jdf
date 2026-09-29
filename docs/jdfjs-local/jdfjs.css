@@ -290,7 +290,10 @@ jdf {
 
 textarea.jdfjs-form-control {
   resize: vertical;
-  min-height: 60px;
+  /* Fill the element's box (the field wrapper has the element's height); a
+     fixed 60 px minimum made a 12 mm imported textarea overflow its printed cell. */
+  min-height: 0;
+  flex: 1 1 auto;
   line-height: 1.4;
 }
 
