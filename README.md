@@ -959,10 +959,16 @@ Thanks to everyone who has helped shape JDF — code, design, docs, feedback.
         <sub><b>DenizSAHIN570</b></sub>
       </a>
     </td>
+    <td align="center">
+      <a href="https://github.com/hasandenli" title="Hasan Denli (hasandenli)">
+        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/13583959&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="hasandenli" /><br />
+        <sub><b>hasandenli</b></sub>
+      </a>
+    </td>
   </tr>
 </table>
 
-[@uurtech](https://github.com/uurtech) · [@feyzademirel](https://github.com/feyzademirel) · [@rcpzen](https://github.com/rcpzen) · [@uguracikgoz](https://github.com/uguracikgoz) · [@EienMosu](https://github.com/EienMosu) · [@nanda1505](https://github.com/nanda1505) · [@DenizSAHIN570](https://github.com/DenizSAHIN570)
+[@uurtech](https://github.com/uurtech) · [@feyzademirel](https://github.com/feyzademirel) · [@rcpzen](https://github.com/rcpzen) · [@uguracikgoz](https://github.com/uguracikgoz) · [@EienMosu](https://github.com/EienMosu) · [@nanda1505](https://github.com/nanda1505) · [@DenizSAHIN570](https://github.com/DenizSAHIN570) · [@hasandenli](https://github.com/hasandenli)
 
 ## License
 
