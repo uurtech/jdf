@@ -43,7 +43,11 @@ async function loadNodePdfJs() {
     }
     const workerPath = require_.resolve("pdfjs-dist/build/pdf.worker.mjs");
     if (lib.GlobalWorkerOptions) {
-      lib.GlobalWorkerOptions.workerSrc = workerPath;
+      // The fake worker `import()`s this string. Node's ESM loader rejects
+      // bare absolute paths on Windows ("Received protocol 'd:'"), so hand
+      // it a proper file:// URL on every platform.
+      const { pathToFileURL } = await import("node:url");
+      lib.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href;
     }
     // Sibling asset directories shipped in the pdfjs-dist package.
     const { dirname, join } = await import("node:path");
