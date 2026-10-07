@@ -924,12 +924,11 @@ Thanks to everyone who has helped shape JDF — code, design, docs, feedback.
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/tonioduma" title="uurtech">
+      <a href="https://github.com/tonioduma" title="tonioduma">
         <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/5675890&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="uurtech" /><br />
         <sub><b>tonioduma</b></sub>
       </a>
     </td>
-    
     <td align="center">
       <a href="https://github.com/feyzademirel" title="feyzademirel">
         <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/46006881&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="feyzademirel" /><br />
