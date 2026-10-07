@@ -925,7 +925,7 @@ Thanks to everyone who has helped shape JDF — code, design, docs, feedback.
     </td>
     <td align="center">
       <a href="https://github.com/tonioduma" title="tonioduma">
-        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/5675890&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="uurtech" /><br />
+        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/5675890&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="tonioduma" /><br />
         <sub><b>tonioduma</b></sub>
       </a>
     </td>
