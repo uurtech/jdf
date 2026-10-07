@@ -919,7 +919,7 @@ Thanks to everyone who has helped shape JDF — code, design, docs, feedback.
   <tr>
     <td align="center">
       <a href="https://github.com/uurtech" title="uurtech">
-        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/54368192&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="uurtech" /><br />
+        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/5675890&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="uurtech" /><br />
         <sub><b>uurtech</b></sub>
       </a>
     </td>
