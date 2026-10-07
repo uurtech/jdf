@@ -919,13 +919,13 @@ Thanks to everyone who has helped shape JDF — code, design, docs, feedback.
   <tr>
     <td align="center">
       <a href="https://github.com/uurtech" title="uurtech">
-        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/5675890&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="uurtech" /><br />
+        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/54368192&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="uurtech" /><br />
         <sub><b>uurtech</b></sub>
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/tonioduma" title="tonioduma">
-        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/5675890&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="tonioduma" /><br />
+        <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/54368192&w=72&h=72&mask=circle&fit=cover" width="72" height="72" alt="tonioduma" /><br />
         <sub><b>tonioduma</b></sub>
       </a>
     </td>
@@ -968,7 +968,7 @@ Thanks to everyone who has helped shape JDF — code, design, docs, feedback.
   </tr>
 </table>
 
-[@uurtech](https://github.com/uurtech) · [@feyzademirel](https://github.com/feyzademirel) · [@rcpzen](https://github.com/rcpzen) · [@uguracikgoz](https://github.com/uguracikgoz) · [@EienMosu](https://github.com/EienMosu) · [@nanda1505](https://github.com/nanda1505) · [@DenizSAHIN570](https://github.com/DenizSAHIN570)
+[@uurtech](https://github.com/uurtech) · [@tonioduma](https://github.com/tonioduma) ·  [@feyzademirel](https://github.com/feyzademirel) · [@rcpzen](https://github.com/rcpzen) · [@uguracikgoz](https://github.com/uguracikgoz) · [@EienMosu](https://github.com/EienMosu) · [@nanda1505](https://github.com/nanda1505) · [@DenizSAHIN570](https://github.com/DenizSAHIN570)
 
 ## License
 
