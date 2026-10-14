@@ -123,13 +123,13 @@ const costTableHtml = cost ? `        <div class="bench-table-wrap"><table class
 ${costRows().map(([name, f]) => `            <tr><td>${esc(name)}</td>${costSides.map((s) => `<td${s.id === "jdf" ? ' class="is-jdf"' : ""}>${f(s)}</td>`).join("")}</tr>`).join("\n")}
           </tbody>
         </table></div>
-        <p class="rag-bench-note">${int(cost.files)} files per format = the ${cost.corpusDocuments}-document corpus cycled. Tokens are counted from the chunks each pipeline produces (ceil(chars/4), both sides); embedding time is measured throughput on ${esc(machineLabel(cost))} (${cost.date}) applied to the totals. Prices from <code>bench/prices.json</code> (as of ${esc(Object.values(cost.prices.embedding)[0].as_of)}); edit it for your provider — the benchmark never calls a paid API. The PDF column is the PDF pipeline that scored best in the accuracy run. <strong>Scaling:</strong> figures are measured at ${int(cost.files)} documents and ${int(cost.queries)} queries; anything at other volumes (10,000 documents, 10M queries) is a linear estimate, not a measurement — index and re-index costs scale with documents, query cost scales with questions asked. Re-index: JDF re-embeds only chunks whose content hash changed (<code>jdf embed --incremental</code>); a PDF has no chunk identity, so an edit means re-chunking and re-embedding the whole document.</p>` : "";
+        <p class="rag-bench-note">${int(cost.files)} files per format = the ${cost.corpusDocuments}-document corpus cycled. Tokens are counted from the chunks each pipeline produces (ceil(chars/4), both sides); embedding time is measured throughput on ${esc(machineLabel(cost))} (${cost.date}) applied to the totals. Prices from <code>bench/prices.json</code> (as of ${esc(Object.values(cost.prices.embedding)[0].as_of)}); edit it for your provider — the benchmark never calls a paid API. The PDF column is the PDF pipeline that scored best in the accuracy run. <strong>Scaling:</strong> figures are measured at ${int(cost.files)} documents and ${int(cost.queries)} queries; anything at other volumes is a linear estimate, not a measurement — index and re-index costs scale with documents, query cost scales with questions asked. Re-index: JDF re-embeds only chunks whose content hash changed (<code>jdf embed --incremental</code>); a PDF has no chunk identity, so an edit means re-chunking and re-embedding the whole document.</p>` : "";
 
 // Cost summary for the hero card (JDF vs best-accuracy PDF parser = first PDF side).
 const pdfCost = costSides.find((s) => s.id !== "jdf");
 const jdfCost = costSides.find((s) => s.id === "jdf");
 const costData = cost && pdfCost ? {
-  files: cost.files, ek: Object.keys(cost.prices.embedding)[0], lk: Object.keys(cost.prices.llm_input)[0],
+  files: cost.files, queries: cost.queries, ek: Object.keys(cost.prices.embedding)[0], lk: Object.keys(cost.prices.llm_input)[0],
   embedLabel: cost.prices.embedding[Object.keys(cost.prices.embedding)[0]].label, llmLabel: cost.prices.llm_input[Object.keys(cost.prices.llm_input)[0]].label,
   jdf: { acc: jdfCost.accuracy?.recallAt1000Tok, tokens: jdfCost.embedTokens, usd: jdfCost.embedUsd[Object.keys(cost.prices.embedding)[0]], reindexUsd: jdfCost.reindex.usd[Object.keys(cost.prices.embedding)[0]], queryUsd: jdfCost.query?.usd[Object.keys(cost.prices.llm_input)[0]] },
   pdf: { label: pdfCost.label, acc: pdfCost.accuracy?.recallAt1000Tok, tokens: pdfCost.embedTokens, usd: pdfCost.embedUsd[Object.keys(cost.prices.embedding)[0]], reindexUsd: pdfCost.reindex.usd[Object.keys(cost.prices.embedding)[0]], queryUsd: pdfCost.query?.usd[Object.keys(cost.prices.llm_input)[0]] },
@@ -179,7 +179,7 @@ if (cost) {
     `|---|${costSides.map(() => "---:").join("|")}|`,
     ...costRows().map(([name, f]) => `| ${name} | ${costSides.map((s) => (s.id === "jdf" ? `**${f(s)}**` : f(s))).join(" | ")} |`),
     "",
-    `${int(cost.files)} files per format (${cost.corpusDocuments}-document corpus cycled); tokens counted from each pipeline's chunks, embedding time measured on ${machineLabel(cost)}, ${cost.date}. Other volumes (10,000 documents, 10M queries) are linear estimates, not measurements. Prices: [\`bench/prices.json\`](bench/prices.json). Method: [\`bench/README.md\`](bench/README.md).`,
+    `${int(cost.files)} files per format (${cost.corpusDocuments}-document corpus cycled); tokens counted from each pipeline's chunks, embedding time measured on ${machineLabel(cost)}, ${cost.date}. Other volumes are linear estimates, not measurements. Prices: [\`bench/prices.json\`](bench/prices.json). Method: [\`bench/README.md\`](bench/README.md).`,
   ].join("\n");
   md = replaceBlock(md, "cost", mdCost);
 }

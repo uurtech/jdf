@@ -380,21 +380,21 @@ R@1k tok = answer found within the first 1,000 tokens of retrieved context (chun
 **RAG cost — 1,000 PDF files vs 1,000 JDF files.** Same pipeline, only the input format differs: chunks → embeddings → vector store → top-5 context → LLM. Tokens counted from the chunks each pipeline produces, dollars from published prices (`bench/prices.json`); the benchmark never calls a paid API.
 
 <!-- bench:cost:start -->
-| Per 1,000 documents | JDF · jdf chunk (section) | PDF · pdfplumber extract_text() · fixed 1000/200 |
+| Per 10,000 documents | JDF · jdf chunk (section) | PDF · pdfplumber extract_text() · fixed 1000/200 |
 |---|---:|---:|
 | Accuracy · answer in first 1,000 tokens (BAAI/bge-small-en-v1.5) | **96.9%** | 75.0% |
 | Accuracy · top-1 hit | **46.9%** | 34.9% |
-| Chunks | **8,000** | 6,249 |
-| Embedding tokens, initial index | **1,305,820** | 1,385,673 |
-| Embedding cost · OpenAI text-embedding-3-small | **$0.0261** | $0.0277 |
-| Local embedding time · bge-small-en-v1.5 (measured throughput) | **17.5 s** | 6.4 s |
-| Vector-store payload | **5.8 MB** | 5.6 MB |
-| Re-embed tokens when one paragraph changes in every document | **91,000** | 1,402,000 |
-| Re-index cost · OpenAI text-embedding-3-small | **$0.0018** | $0.0280 |
-| LLM input tokens per 1,000,000 queries (top-5 context) | **716,317,708** | 1,210,218,750 |
-| LLM input cost · Claude Sonnet 5 input | **$1,432.64** | $2,420.44 |
+| Chunks | **80,000** | 62,499 |
+| Embedding tokens, initial index | **13,057,945** | 13,857,048 |
+| Embedding cost · OpenAI text-embedding-3-small | **$0.2612** | $0.2771 |
+| Local embedding time · bge-small-en-v1.5 (measured throughput) | **8.4 min** | 6.4 min |
+| Vector-store payload | **57.5 MB** | 55.9 MB |
+| Re-embed tokens when one paragraph changes in every document | **910,000** | 14,020,000 |
+| Re-index cost · OpenAI text-embedding-3-small | **$0.0182** | $0.2804 |
+| LLM input tokens per 10,000,000 queries (top-5 context) | **7,163,177,083** | 12,102,187,500 |
+| LLM input cost · Claude Sonnet 5 input | **$14,326.35** | $24,204.38 |
 
-1,000 files per format (24-document corpus cycled); tokens counted from each pipeline's chunks, embedding time measured on x86_64 + NVIDIA L40S, 2026-09-28. Other volumes (10,000 documents, 10M queries) are linear estimates, not measurements. Prices: [`bench/prices.json`](bench/prices.json). Method: [`bench/README.md`](bench/README.md).
+10,000 files per format (24-document corpus cycled); tokens counted from each pipeline's chunks, embedding time measured on Apple M5, 2026-10-14. Other volumes are linear estimates, not measurements. Prices: [`bench/prices.json`](bench/prices.json). Method: [`bench/README.md`](bench/README.md).
 <!-- bench:cost:end -->
 
 Reproduce it — Python only, no Node toolchain:

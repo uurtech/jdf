@@ -20289,28 +20289,28 @@
     ]
   },
   "cost": {
-    "date": "2026-09-28",
+    "date": "2026-10-14",
     "machine": {
-      "cpu": "x86_64",
-      "platform": "Linux-7.0.0-1013-aws-x86_64-with-glibc2.43",
-      "python": "3.14.4"
+      "cpu": "Apple M5",
+      "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+      "python": "3.14.6"
     },
-    "files": 1000,
+    "files": 10000,
     "corpusDocuments": 24,
     "pdfPipeline": "pdf-pdfplumber-1000",
     "pdfChunking": {
       "chars": 1000,
       "overlap": 200
     },
-    "queries": 1000000,
+    "queries": 10000000,
     "embedding": {
       "provider": "st",
       "model": "BAAI/bge-small-en-v1.5",
-      "version": "sentence-transformers 5.7.0 · torch 2.14.0+cu130 · cuda:0 (NVIDIA L40S)",
+      "version": "sentence-transformers 6.0.1 · torch 2.14.0 · mps:0 (mps:0)",
       "measuredOn": "first 2000 unique chunks per pipeline",
       "tokensPerSecond": {
-        "jdf": 74737.4806939267,
-        "pdfplumber": 217005.35584377687
+        "jdf": 25818.729679688102,
+        "pdfplumber": 36230.27857004535
       }
     },
     "prices": {
@@ -20367,7 +20367,7 @@
         "id": "jdf",
         "label": "JDF · jdf chunk (section)",
         "version": "0.2.2",
-        "files": 1000,
+        "files": 10000,
         "perDoc": {
           "d01": {
             "chunks": 8,
@@ -20497,34 +20497,34 @@
           "mrr10": 0.6455915178571429,
           "retriever": "dense:BAAI/bge-small-en-v1.5"
         },
-        "chunks": 8000,
-        "embedTokens": 1305820,
-        "chunkStoreBytes": 5752468,
+        "chunks": 80000,
+        "embedTokens": 13057945,
+        "chunkStoreBytes": 57523843,
         "embedUsd": {
-          "openai-text-embedding-3-small": 0.0261164,
-          "openai-text-embedding-3-large": 0.1697566,
-          "cohere-embed-v4": 0.1566984
+          "openai-text-embedding-3-small": 0.2611589,
+          "openai-text-embedding-3-large": 1.69753285,
+          "cohere-embed-v4": 1.5669534
         },
-        "localEmbedSeconds": 17.472090146411816,
+        "localEmbedSeconds": 505.7547432425709,
         "reindex": {
           "chunksPerEditedDoc": 1,
           "tokensPerEditedDoc": 91,
-          "tokensAllDocsEdited": 91000,
+          "tokensAllDocsEdited": 910000,
           "usd": {
-            "openai-text-embedding-3-small": 0.00182,
-            "openai-text-embedding-3-large": 0.01183,
-            "cohere-embed-v4": 0.01092
+            "openai-text-embedding-3-small": 0.0182,
+            "openai-text-embedding-3-large": 0.1183,
+            "cohere-embed-v4": 0.1092
           }
         },
         "query": {
           "ctxTokensPerQuery": 716.3177083333334,
-          "queries": 1000000,
-          "inputTokens": 716317708.3333334,
+          "queries": 10000000,
+          "inputTokens": 7163177083.333334,
           "usd": {
-            "claude-sonnet-5": 1432.6354166666667,
-            "claude-haiku-4-5": 716.3177083333334,
-            "claude-opus-5": 3581.588541666667,
-            "openai-gpt-4o-mini": 107.44765625000001
+            "claude-sonnet-5": 14326.354166666668,
+            "claude-haiku-4-5": 7163.177083333334,
+            "claude-opus-5": 35815.88541666667,
+            "openai-gpt-4o-mini": 1074.4765625
           }
         }
       },
@@ -20532,7 +20532,7 @@
         "id": "pdfplumber",
         "label": "PDF · pdfplumber extract_text() · fixed 1000/200",
         "version": "0.11.10",
-        "files": 1000,
+        "files": 10000,
         "perDoc": {
           "d01": {
             "chunks": 6,
@@ -20662,34 +20662,34 @@
           "mrr10": 0.5338748346560847,
           "retriever": "dense:BAAI/bge-small-en-v1.5"
         },
-        "chunks": 6249,
-        "embedTokens": 1385673,
-        "chunkStoreBytes": 5588311,
+        "chunks": 62499,
+        "embedTokens": 13857048,
+        "chunkStoreBytes": 55884436,
         "embedUsd": {
-          "openai-text-embedding-3-small": 0.02771346,
-          "openai-text-embedding-3-large": 0.18013749,
-          "cohere-embed-v4": 0.16628075999999997
+          "openai-text-embedding-3-small": 0.27714096000000005,
+          "openai-text-embedding-3-large": 1.8014162400000002,
+          "cohere-embed-v4": 1.66284576
         },
-        "localEmbedSeconds": 6.385432260932547,
+        "localEmbedSeconds": 382.47147267194345,
         "reindex": {
           "chunksPerEditedDoc": 6,
           "tokensPerEditedDoc": 1402,
-          "tokensAllDocsEdited": 1402000,
+          "tokensAllDocsEdited": 14020000,
           "usd": {
-            "openai-text-embedding-3-small": 0.02804,
-            "openai-text-embedding-3-large": 0.18226,
-            "cohere-embed-v4": 0.16823999999999997
+            "openai-text-embedding-3-small": 0.2804,
+            "openai-text-embedding-3-large": 1.8226,
+            "cohere-embed-v4": 1.6824
           }
         },
         "query": {
           "ctxTokensPerQuery": 1210.21875,
-          "queries": 1000000,
-          "inputTokens": 1210218750,
+          "queries": 10000000,
+          "inputTokens": 12102187500,
           "usd": {
-            "claude-sonnet-5": 2420.4375,
-            "claude-haiku-4-5": 1210.21875,
-            "claude-opus-5": 6051.09375,
-            "openai-gpt-4o-mini": 181.5328125
+            "claude-sonnet-5": 24204.375,
+            "claude-haiku-4-5": 12102.1875,
+            "claude-opus-5": 60510.9375,
+            "openai-gpt-4o-mini": 1815.328125
           }
         }
       }

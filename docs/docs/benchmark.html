@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RAG benchmark — JDF vs PDF — JDF</title>
-  <meta name="description" content="Reproducible benchmark: the same documents as PDF and as JDF through identical RAG pipelines — retrieval accuracy per embedding model, and indexing/re-indexing/query cost at 1,000 documents." />
+  <meta name="description" content="Reproducible benchmark: the same documents as PDF and as JDF through identical RAG pipelines — retrieval accuracy per embedding model, and indexing/re-indexing/query cost at 10,000 documents." />
   <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
   <link rel="stylesheet" href="../docs.css" />
   <link rel="stylesheet" href="../style.css" media="print" onload="this.media='all'" />
@@ -127,25 +127,25 @@ python rag_bench.py --verify             # re-run and compare with the published
 <!-- bench:table:end -->
 
       <h2>RAG cost — 1,000 PDF files vs 1,000 JDF files</h2>
-      <p>Same pipeline on both sides, only the input format differs: chunks → embeddings → vector store → top-5 context → LLM. The 24-document corpus is cycled to 1,000 files per format; embedding tokens are counted from the chunks each pipeline produces; embedding time is measured throughput; dollar figures are tokens × the published prices in <code>bench/prices.json</code>. The benchmark never calls a paid API.</p>
+      <p>Same pipeline on both sides, only the input format differs: chunks → embeddings → vector store → top-5 context → LLM. The 24-document corpus is cycled to 10,000 files per format; embedding tokens are counted from the chunks each pipeline produces; embedding time is measured throughput; dollar figures are tokens × the published prices in <code>bench/prices.json</code>. The benchmark never calls a paid API.</p>
 <!-- bench:cost:start -->
         <div class="bench-table-wrap"><table class="bench-table bench-cost">
-          <thead><tr><th>Per 1,000 documents</th><th class="is-jdf">JDF · jdf chunk (section)</th><th>PDF · pdfplumber extract_text() · fixed 1000/200</th></tr></thead>
+          <thead><tr><th>Per 10,000 documents</th><th class="is-jdf">JDF · jdf chunk (section)</th><th>PDF · pdfplumber extract_text() · fixed 1000/200</th></tr></thead>
           <tbody>
             <tr><td>Accuracy · answer in first 1,000 tokens (BAAI/bge-small-en-v1.5)</td><td class="is-jdf">96.9%</td><td>75.0%</td></tr>
             <tr><td>Accuracy · top-1 hit</td><td class="is-jdf">46.9%</td><td>34.9%</td></tr>
-            <tr><td>Chunks</td><td class="is-jdf">8,000</td><td>6,249</td></tr>
-            <tr><td>Embedding tokens, initial index</td><td class="is-jdf">1,305,820</td><td>1,385,673</td></tr>
-            <tr><td>Embedding cost · OpenAI text-embedding-3-small</td><td class="is-jdf">$0.0261</td><td>$0.0277</td></tr>
-            <tr><td>Local embedding time · bge-small-en-v1.5 (measured throughput)</td><td class="is-jdf">17.5 s</td><td>6.4 s</td></tr>
-            <tr><td>Vector-store payload</td><td class="is-jdf">5.8 MB</td><td>5.6 MB</td></tr>
-            <tr><td>Re-embed tokens when one paragraph changes in every document</td><td class="is-jdf">91,000</td><td>1,402,000</td></tr>
-            <tr><td>Re-index cost · OpenAI text-embedding-3-small</td><td class="is-jdf">$0.0018</td><td>$0.0280</td></tr>
-            <tr><td>LLM input tokens per 1,000,000 queries (top-5 context)</td><td class="is-jdf">716,317,708</td><td>1,210,218,750</td></tr>
-            <tr><td>LLM input cost · Claude Sonnet 5 input</td><td class="is-jdf">$1,432.64</td><td>$2,420.44</td></tr>
+            <tr><td>Chunks</td><td class="is-jdf">80,000</td><td>62,499</td></tr>
+            <tr><td>Embedding tokens, initial index</td><td class="is-jdf">13,057,945</td><td>13,857,048</td></tr>
+            <tr><td>Embedding cost · OpenAI text-embedding-3-small</td><td class="is-jdf">$0.2612</td><td>$0.2771</td></tr>
+            <tr><td>Local embedding time · bge-small-en-v1.5 (measured throughput)</td><td class="is-jdf">8.4 min</td><td>6.4 min</td></tr>
+            <tr><td>Vector-store payload</td><td class="is-jdf">57.5 MB</td><td>55.9 MB</td></tr>
+            <tr><td>Re-embed tokens when one paragraph changes in every document</td><td class="is-jdf">910,000</td><td>14,020,000</td></tr>
+            <tr><td>Re-index cost · OpenAI text-embedding-3-small</td><td class="is-jdf">$0.0182</td><td>$0.2804</td></tr>
+            <tr><td>LLM input tokens per 10,000,000 queries (top-5 context)</td><td class="is-jdf">7,163,177,083</td><td>12,102,187,500</td></tr>
+            <tr><td>LLM input cost · Claude Sonnet 5 input</td><td class="is-jdf">$14,326.35</td><td>$24,204.38</td></tr>
           </tbody>
         </table></div>
-        <p class="rag-bench-note">1,000 files per format = the 24-document corpus cycled. Tokens are counted from the chunks each pipeline produces (ceil(chars/4), both sides); embedding time is measured throughput on x86_64 + NVIDIA L40S (2026-09-28) applied to the totals. Prices from <code>bench/prices.json</code> (as of 2026-09-12); edit it for your provider — the benchmark never calls a paid API. The PDF column is the PDF pipeline that scored best in the accuracy run. <strong>Scaling:</strong> figures are measured at 1,000 documents and 1,000,000 queries; anything at other volumes (10,000 documents, 10M queries) is a linear estimate, not a measurement — index and re-index costs scale with documents, query cost scales with questions asked. Re-index: JDF re-embeds only chunks whose content hash changed (<code>jdf embed --incremental</code>); a PDF has no chunk identity, so an edit means re-chunking and re-embedding the whole document.</p>
+        <p class="rag-bench-note">10,000 files per format = the 24-document corpus cycled. Tokens are counted from the chunks each pipeline produces (ceil(chars/4), both sides); embedding time is measured throughput on Apple M5 (2026-10-14) applied to the totals. Prices from <code>bench/prices.json</code> (as of 2026-09-12); edit it for your provider — the benchmark never calls a paid API. The PDF column is the PDF pipeline that scored best in the accuracy run. <strong>Scaling:</strong> figures are measured at 10,000 documents and 10,000,000 queries; anything at other volumes is a linear estimate, not a measurement — index and re-index costs scale with documents, query cost scales with questions asked. Re-index: JDF re-embeds only chunks whose content hash changed (<code>jdf embed --incremental</code>); a PDF has no chunk identity, so an edit means re-chunking and re-embedding the whole document.</p>
 <!-- bench:cost:end -->
 
       <h2>Method</h2>
