@@ -34,6 +34,18 @@ async function loadNodePdfJs() {
       if (typeof args[0] === "string" && args[0].includes("`legacy` build")) return;
       origLog.apply(console, args);
     };
+    // pdfjs-dist 4.x's modern build calls Promise.withResolvers (Node 22+)
+    // although it declares node >=20; on Node 18/20 every conversion died with
+    // "Promise.withResolvers is not a function". Spec-exact polyfill, only
+    // installed when missing, so Node 22+ is untouched.
+    if (typeof (Promise as any).withResolvers !== "function") {
+      (Promise as any).withResolvers = function withResolvers<T>() {
+        let resolve!: (v: T | PromiseLike<T>) => void;
+        let reject!: (r?: unknown) => void;
+        const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; });
+        return { promise, resolve, reject };
+      };
+    }
     let lib: any;
     try {
       // @ts-ignore — pdfjs-dist subpath

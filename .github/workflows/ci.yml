@@ -43,11 +43,14 @@ jobs:
     # from source. 0.2.9 shipped with `jdf convert x.pdf` broken on every
     # Windows machine (pdf.js worker path handed to the ESM loader as a bare
     # "C:\..." path, fixed in #16) and nothing here noticed.
-    name: CLI convert (${{ matrix.os }})
+    # Node 20 too: pdfjs-dist 4.x needs Promise.withResolvers (Node 22+) and
+    # the CLI promises node >=18 — node.ts polyfills it; this keeps it honest.
+    name: CLI convert (${{ matrix.os }}, node ${{ matrix.node }})
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        node: [20, 22]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -59,7 +62,7 @@ jobs:
           version: 9
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @uurtech/jdf-cli build

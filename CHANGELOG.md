@@ -6,7 +6,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · semantic-ish
 ## [Unreleased]
 
 ### Fixed — `jdf convert x.pdf` on Windows; reader editing
-- **CLI on Windows** (#16, thanks @EienMosu): every PDF conversion failed before the first page (`Received protocol 'c:'`) because the pdf.js worker path went to Node's ESM loader as a bare `C:\…` path; it is now a `file://` URL. Output is byte-identical on macOS/Linux. CI now builds the CLI bundle and runs `convert` + `validate` on Ubuntu and Windows so this cannot ship again.
+- **CLI on Windows** (#16, thanks @EienMosu): every PDF conversion failed before the first page (`Received protocol 'c:'`) because the pdf.js worker path went to Node's ESM loader as a bare `C:\…` path; it is now a `file://` URL. Output is byte-identical on macOS/Linux.
+- **CLI on Node 18/20:** every PDF conversion failed with `Promise.withResolvers is not a function` — pdfjs-dist 4.x's modern build needs Node 22 although the CLI declares `node >=18`. `@jdf/pdf-import/node` now polyfills it when missing; `sample.pdf` converts byte-identically on Node 18, 20, 22 and 26.
+- CI now builds the CLI bundle and runs `convert` + `validate` on Ubuntu and Windows so this cannot ship again.
 - **Reader hover toolbar could not be clicked** (#11): moving the pointer from an element up to its Move/Duplicate/Delete bar crossed a 2 px gap, the element lost hover and the bar vanished. An invisible bridge keeps it open.
 - **Insert bar placed new elements on top of the page's content** (every type except image/video was dropped at y = 5 mm). They now go below the lowest element, using its rendered height (text, lists and tables carry no `height`), and stay inside the page when it is full. Media inserts use the same measurement.
 - `docs/examples/article.jdf`: the oversized gaps between blocks are gone (#17, thanks @DenizSAHIN570).
