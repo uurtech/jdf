@@ -88,7 +88,7 @@
           "heading": 2,
           "position": {
             "x": 0,
-            "y": 130
+            "y": 114
           },
           "style": "h2",
           "tocEntry": "The premise",
@@ -100,7 +100,7 @@
           "content": "What if a document was just JSON? Open it in any text editor — clean source. Open it in a viewer — a rendered page. Edit either side, the other follows. cat, grep, jq, VS Code, every diff tool already understands JSON. There's nothing left to invent.",
           "position": {
             "x": 0,
-            "y": 146
+            "y": 130
           },
           "style": "body",
           "type": "text",
@@ -110,7 +110,7 @@
           "content": "{\n  \"$jdf\": \"1.0.0\",\n  \"meta\": { \"title\": \"Hello\" },\n  \"pages\": [{ \"elements\": [\n    { \"type\": \"text\", \"content\": \"Hi\", \"heading\": 1 }\n  ]}]\n}\n",
           "position": {
             "x": 0,
-            "y": 195
+            "y": 155
           },
           "style": "code",
           "type": "text",
@@ -173,7 +173,7 @@
           "heading": 2,
           "position": {
             "x": 0,
-            "y": 80
+            "y": 63
           },
           "style": "h2",
           "tocEntry": "Embedding",
@@ -185,7 +185,7 @@
           "content": "Three lines and a tag — your document appears on the page, fully styled, scrollable, with a clickable TOC.",
           "position": {
             "x": 0,
-            "y": 96
+            "y": 79
           },
           "style": "body",
           "type": "text",
@@ -195,7 +195,7 @@
           "content": "<link rel=\"stylesheet\" href=\"https://unpkg.com/jdfjs/dist/jdfjs.css\">\n<script type=\"module\" src=\"https://unpkg.com/jdfjs\"></script>\n<jdf src=\"/whitepaper.jdf\"></jdf>",
           "position": {
             "x": 0,
-            "y": 116
+            "y": 91
           },
           "style": "code",
           "type": "text",
@@ -206,7 +206,7 @@
           "heading": 2,
           "position": {
             "x": 0,
-            "y": 165
+            "y": 120
           },
           "style": "h2",
           "tocEntry": "What's next",
@@ -218,7 +218,7 @@
           "content": "Editor plugins. Real-time collaboration over CRDTs. A rich-text inspector. A Figma-to-JDF converter. The format is small enough that the surface area of useful tooling is enormous — and JSON means the tooling already half-exists.",
           "position": {
             "x": 0,
-            "y": 181
+            "y": 136
           },
           "style": "body",
           "type": "text",
