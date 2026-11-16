@@ -1,5 +1,6 @@
 import { createSignal, Show, onMount, onCleanup, createMemo } from "solid-js";
 import type { JdfDocument, Element } from "@jdf/core";
+import { getPageDimensions, DEFAULT_MARGINS } from "@jdf/core";
 import { DocumentViewer } from "./components/viewer/DocumentViewer";
 import { MarkdownViewer } from "./components/markdown/MarkdownViewer";
 import { JsonViewer } from "./components/json/JsonViewer";
@@ -186,12 +187,42 @@ export default function App() {
       im.src = src;
     });
   }
+  /**
+   * Rendered height of a top-level element in mm, read from the DOM. Text,
+   * lists and tables usually carry no `height` — their box is whatever the
+   * content wraps to — so the data alone underestimates the bottom and an
+   * insert lands on the last paragraph. Screen px → mm via the page's own
+   * rendered width, so zoom doesn't matter.
+   */
+  function renderedHeightMm(d: JdfDocument, pageIndex: number, elIndex: number): number | undefined {
+    if (typeof document === "undefined") return undefined;
+    const sel = `[data-element-path='${JSON.stringify(["pages", pageIndex, "elements", elIndex])}']`;
+    const node = document.querySelector(sel) as HTMLElement | null;
+    const pageNode = node?.closest(".jdf-page") as HTMLElement | null;
+    if (!node || !pageNode) return undefined;
+    const page = d.pages?.[pageIndex] as any;
+    const dims = getPageDimensions(page?.pageSize ?? d.meta?.pageSize ?? "A4", page?.pageOrientation ?? d.meta?.pageOrientation ?? "portrait");
+    const pxPerMm = pageNode.getBoundingClientRect().width / dims.width;
+    const h = node.getBoundingClientRect().height;
+    return pxPerMm > 0 && h > 0 ? h / pxPerMm : undefined;
+  }
   /** Next free y on a page (mm): below the lowest element, so an insert never lands on top of existing content. */
   function nextFreeY(d: JdfDocument, pageIndex: number): number {
     const els = (d.pages?.[pageIndex]?.elements ?? []) as any[];
     let bottom = 0;
-    for (const e of els) if (e?.position) bottom = Math.max(bottom, (e.position.y ?? 0) + (e.height ?? 8));
-    return bottom > 0 ? Math.round((bottom + 4) * 10) / 10 : 5;
+    els.forEach((e, j) => {
+      if (!e?.position) return;
+      const h = Math.max(e.height ?? 0, renderedHeightMm(d, pageIndex, j) ?? 0) || 8;
+      bottom = Math.max(bottom, (e.position.y ?? 0) + h);
+    });
+    const y = bottom > 0 ? Math.round((bottom + 4) * 10) / 10 : 5;
+    // A full page: keep the insert visible at the bottom of the content box
+    // (the page clips overflow) instead of placing it off-page.
+    const page = d.pages?.[pageIndex] as any;
+    const dims = getPageDimensions(page?.pageSize ?? d.meta?.pageSize ?? "A4", page?.pageOrientation ?? d.meta?.pageOrientation ?? "portrait");
+    const m = { ...DEFAULT_MARGINS, ...((d.meta as any)?.margins || {}), ...(page?.margins || {}) };
+    const contentH = dims.height - (m.top ?? 0) - (m.bottom ?? 0);
+    return Math.max(5, Math.min(y, Math.round((contentH - 15) * 10) / 10));
   }
   async function insertMediaFile(filePath: string): Promise<boolean> {
     const d = doc(); if (!d) return false;
@@ -240,6 +271,13 @@ export default function App() {
   function onInsertElement(el: Element) {
     // Image/Video from the Insert bar → pick a real file instead of an empty box.
     if ((el.type === "image" || el.type === "video") && !(el as any).src && !(el as any).resource) { void pickAndInsertMedia(el.type); return; }
+    // Every other type: below the lowest element on the page, not on top of
+    // the page's existing content at y=5 (makeBlankElement's default).
+    const d = doc();
+    if (d && (el as any).position) {
+      const pageIndex = currentPage();
+      el = { ...(el as any), position: { ...(el as any).position, y: nextFreeY(d, pageIndex) } } as Element;
+    }
     appendToPage(currentPage(), el);
   }
   function addPageAfter(pageIndex: number) {

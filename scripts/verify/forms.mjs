@@ -6,7 +6,10 @@
 //   3. that file validates with the CLI and opens in the desktop reader (built
 //      dist, Tauri IPC mocked) with the same values in the same fields;
 //   4. a PDF form imported with `jdf convert` (HCFA-1500, ref_docs/) renders its
-//      widgets compact and inside the printed boxes in both renderers.
+//      widgets compact and inside the printed boxes in both renderers;
+//   5. the reader's hover action bar (edit mode) can actually be reached and
+//      clicked with the pointer (#11);
+//   6. Insert-bar elements land below the page's existing content.
 //
 //   node scripts/verify/forms.mjs
 import fs from "node:fs";
@@ -147,6 +150,74 @@ try {
     await p.locator(".jdf-page").first().screenshot({ path: path.join(outDir, "hcfa-reader.png") });
     await p.close();
   } else console.log("  · ref_docs/ HCFA form not present — imported-form checks skipped");
+
+  // ── 5: reader edit toolbar is reachable (#11) ─────────────────────────────
+  // The hover action bar sits above its element; the pointer has to cross that
+  // gap on the way up. Without the ::after bridge the wrapper got mouseleave
+  // and the bar vanished before Move/Duplicate/Delete could be clicked.
+  console.log("→ reader: hover action bar stays open while the pointer moves onto it");
+  {
+    const { p, errors: aerr } = await openInReader(path.join(repo, "docs/examples/article.jdf"));
+    const targets = p.locator(".jdf-page [data-element-path]");
+    const n = await targets.count();
+    let tried = 0, lost = 0, dup = false;
+    for (let i = 0; i < n && tried < 6; i++) {
+      const el = targets.nth(i);
+      const pathAttr = await el.getAttribute("data-element-path");
+      if (JSON.parse(pathAttr).length !== 4) continue;
+      await el.scrollIntoViewIfNeeded();
+      const r = await el.boundingBox();
+      if (!r || r.height < 10) continue;
+      await p.mouse.move(r.x + r.width - 30, r.y + r.height / 2);
+      await p.waitForTimeout(60);
+      const bar = await p.locator(".jdf-action-bar").boundingBox();
+      if (!bar) { lost++; tried++; continue; }
+      await p.mouse.move(bar.x + bar.width / 2, bar.y + bar.height / 2, { steps: 15 });
+      await p.waitForTimeout(60);
+      tried++;
+      if (await p.locator(".jdf-action-bar").count() !== 1) lost++;
+      else if (!dup) {
+        // the bar must also work: Duplicate adds one element
+        const before = await p.locator('.jdf-page [data-element-path]').count();
+        await p.locator('.jdf-action-bar button[title="Duplicate"]').click();
+        await p.waitForTimeout(150);
+        dup = (await p.locator('.jdf-page [data-element-path]').count()) > before;
+      }
+    }
+    expect(tried >= 4 && lost === 0, `reader: action bar reachable on ${tried - lost}/${tried} elements`);
+    expect(dup, "reader: Duplicate from the action bar adds an element");
+    expect(aerr.length === 0, `reader: no errors (${aerr.slice(0, 1).join("")})`);
+    await p.close();
+  }
+
+  // ── 6: Insert bar places new elements below existing content ──────────────
+  // makeBlankElement defaults to y=5 mm; inserting a Text/Table into a page
+  // that already has content used to drop it on top of the first heading.
+  console.log("→ reader: Insert bar elements land below existing content, not on top of it");
+  {
+    const { p, errors: ierr } = await openInReader(path.join(repo, "docs/examples/article.jdf"));
+    const before = await p.locator('.jdf-page [data-element-path^=\'["pages",0,"elements",\']').count();
+    for (const kind of ["Text", "Table", "List"]) {
+      await p.locator(`button[title="Insert ${kind}"]`).click();
+      await p.waitForTimeout(200);
+    }
+    const res = await p.evaluate((before) => {
+      const top = [...document.querySelectorAll(".jdf-page [data-element-path]")].filter((n) => { const q = JSON.parse(n.dataset.elementPath); return q.length === 4 && q[1] === 0; });
+      const rects = top.map((n) => n.getBoundingClientRect());
+      const overlaps = [];
+      for (let i = before; i < rects.length; i++) for (let j = 0; j < rects.length; j++) {
+        if (i === j || !rects[j].height) continue;
+        const a = rects[i], b = rects[j];
+        if (a.top < b.bottom - 1 && b.top < a.bottom - 1 && a.left < b.right - 1 && b.left < a.right - 1) overlaps.push(`${top[i].dataset.jdfType}#${i} × ${top[j].dataset.jdfType}#${j}`);
+      }
+      return { added: rects.length - before, overlaps };
+    }, before);
+    expect(res.added === 3, `reader: Insert bar added ${res.added}/3 elements to page 1`);
+    expect(res.overlaps.length === 0, `reader: inserted elements overlap nothing${res.overlaps.length ? ` — ${res.overlaps.slice(0, 3).join(", ")}` : ""}`);
+    expect(ierr.length === 0, `reader: no errors (${ierr.slice(0, 1).join("")})`);
+    await p.locator(".jdf-page").first().screenshot({ path: path.join(outDir, "insert-reader.png") });
+    await p.close();
+  }
 } finally {
   await browser.close(); srvRepo.kill(); srvReader.kill();
 }

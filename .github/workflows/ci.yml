@@ -38,6 +38,43 @@ jobs:
       - name: Validate hello-world.jdf
         run: pnpm --filter @uurtech/jdf-cli start validate ../../spec/examples/hello-world.jdf
 
+  cli-convert:
+    # Runs the BUILT CLI bundle (what npm ships as @uurtech/jdf-cli), not tsx
+    # from source. 0.2.9 shipped with `jdf convert x.pdf` broken on every
+    # Windows machine (pdf.js worker path handed to the ESM loader as a bare
+    # "C:\..." path, fixed in #16) and nothing here noticed.
+    name: CLI convert (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @uurtech/jdf-cli build
+      - name: convert PDF → JDF and validate
+        run: |
+          node tools/jdf-cli/dist/index.js convert spec/examples/sample.pdf -o "$RUNNER_TEMP/sample.jdf" --json
+          node tools/jdf-cli/dist/index.js validate "$RUNNER_TEMP/sample.jdf"
+      - name: convert Markdown → JDF and validate
+        run: |
+          printf '# Title\n\nSome *text*.\n\n| a | b |\n|---|---|\n| 1 | 2 |\n' > "$RUNNER_TEMP/doc.md"
+          node tools/jdf-cli/dist/index.js convert "$RUNNER_TEMP/doc.md" -o "$RUNNER_TEMP/doc.jdf"
+          node tools/jdf-cli/dist/index.js validate "$RUNNER_TEMP/doc.jdf"
+      - name: chunk a fixture
+        run: node tools/jdf-cli/dist/index.js chunk spec/examples/flow-report.jdf -o "$RUNNER_TEMP/chunks.jsonl"
+
   rust:
     name: Rust check (${{ matrix.os }})
     strategy:

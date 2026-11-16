@@ -5,6 +5,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · semantic-ish
 
 ## [Unreleased]
 
+### Fixed — `jdf convert x.pdf` on Windows; reader editing
+- **CLI on Windows** (#16, thanks @EienMosu): every PDF conversion failed before the first page (`Received protocol 'c:'`) because the pdf.js worker path went to Node's ESM loader as a bare `C:\…` path; it is now a `file://` URL. Output is byte-identical on macOS/Linux. CI now builds the CLI bundle and runs `convert` + `validate` on Ubuntu and Windows so this cannot ship again.
+- **Reader hover toolbar could not be clicked** (#11): moving the pointer from an element up to its Move/Duplicate/Delete bar crossed a 2 px gap, the element lost hover and the bar vanished. An invisible bridge keeps it open.
+- **Insert bar placed new elements on top of the page's content** (every type except image/video was dropped at y = 5 mm). They now go below the lowest element, using its rendered height (text, lists and tables carry no `height`), and stay inside the page when it is full. Media inserts use the same measurement.
+- `docs/examples/article.jdf`: the oversized gaps between blocks are gone (#17, thanks @DenizSAHIN570).
+- `scripts/verify/forms.mjs` checks both reader fixes (toolbar reachable and Duplicate works; inserted Text/Table/List overlap nothing).
+
 ### Fixed — covers and designed pages convert with their layers, colours and line widths
 - **Paint order.** Shapes and images are emitted in PDF operator order instead of "all shapes, then all images": a banner drawn over a cover photo, or a logo over it, stays on top (FAB interim reports lost both). Text stays last and in reading order.
 - **Gradients and shading.** `shape.gradient` (types, schema, jdf.js, reader; PDF export paints the average colour) — the importer writes it for `sh` shading fills painted through the current clip path and for shading-pattern fills, so gradient banners and cover art are no longer dropped (a 10-K cover lost its whole blue banner and the white title on it).

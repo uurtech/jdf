@@ -259,6 +259,19 @@ html, body {
   z-index: 5;
   user-select: none;
 }
+/* Invisible bridge between the bar and its element (#11). The bar sits a few px
+   above the element's box; without this the pointer crosses empty page on its
+   way up, the wrapper gets mouseleave and the bar vanishes before it can be
+   clicked. The pseudo-element is a descendant of the wrapper, so hovering it
+   keeps the bar open. */
+.jdf-action-bar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 8px;
+}
 .jdf-action-bar button {
   width: 22px;
   height: 22px;
