@@ -35,7 +35,6 @@ export function TextElementView(props: TextElementViewProps) {
 
   const text = () => props.element.content || "";
   const link = () => linkInfo(props.element.link);
-  const isLong = () => text().length > 60 || text().includes("\n");
 
   function handleInternalClick(e: MouseEvent) {
     const l = link();
@@ -74,7 +73,7 @@ export function TextElementView(props: TextElementViewProps) {
       <Editable
         as={tag()}
         value={text()}
-        multiline={isLong()}
+        multiline={!props.element.heading}
         onCommit={(v) => edit.updateField(props.path, "content", v)}
         class="m-0 whitespace-pre-wrap"
         style={css() as any}

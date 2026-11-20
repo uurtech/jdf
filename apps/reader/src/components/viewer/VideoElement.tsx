@@ -88,9 +88,9 @@ export function VideoElementView(props: VideoElementViewProps) {
       </video>
       <Show when={edit.enabled()}>
         <div class="text-[10px] text-gray-400 mt-1">
-          src: <Editable value={props.element.src || ""} onCommit={(v) => edit.updateField(props.path, "src", v)} placeholder="(empty)" />
+          src: <Editable inline value={props.element.src || ""} onCommit={(v) => edit.updateField(props.path, "src", v)} placeholder="(empty)" />
           {" · title: "}
-          <Editable value={props.element.title || ""} onCommit={(v) => edit.updateField(props.path, "title", v)} placeholder="(empty)" />
+          <Editable inline value={props.element.title || ""} onCommit={(v) => edit.updateField(props.path, "title", v)} placeholder="(empty)" />
         </div>
       </Show>
     </div>

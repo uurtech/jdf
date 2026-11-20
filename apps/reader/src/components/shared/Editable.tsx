@@ -3,7 +3,14 @@ import { Dynamic } from "solid-js/web";
 
 interface EditableProps {
   value: string;
+  /** Paragraph-style field: Enter inserts a newline, ⌘/Ctrl+Enter or blur
+   *  commits. Without it Enter commits (Shift+Enter still breaks the line). */
   multiline?: boolean;
+  /** Short one-line value inside a line of other text (image src, alt):
+   *  a plain <input>. Everything else edits in an auto-growing <textarea>
+   *  so the text wraps like the rendered element instead of scrolling
+   *  sideways in a one-line box. */
+  inline?: boolean;
   onCommit: (next: string) => void;
   enabled?: boolean;
   as?: keyof JSX.IntrinsicElements;
@@ -51,8 +58,8 @@ export function Editable(props: EditableProps) {
   function handleKey(e: KeyboardEvent) {
     e.stopPropagation();
     if (e.key === "Escape") { e.preventDefault(); cancel(); }
-    else if (e.key === "Enter" && !props.multiline) { e.preventDefault(); commit(); }
-    else if (e.key === "Enter" && props.multiline && (e.metaKey || e.ctrlKey)) { e.preventDefault(); commit(); }
+    else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); commit(); }
+    else if (e.key === "Enter" && !props.multiline && !e.shiftKey) { e.preventDefault(); commit(); }
   }
 
   function autoGrow(e: InputEvent & { currentTarget: HTMLTextAreaElement }) {
@@ -77,8 +84,9 @@ export function Editable(props: EditableProps) {
         </Dynamic>
       }
     >
-      {props.multiline ? (
+      {!props.inline ? (
         <textarea
+          rows={1}
           ref={(r) => {
             fieldRef = r;
             if (r) { r.style.height = "auto"; r.style.height = r.scrollHeight + "px"; }
@@ -88,7 +96,7 @@ export function Editable(props: EditableProps) {
           onBlur={commit}
           onKeyDown={handleKey}
           class={`${props.class || ""} editable-active`}
-          style={{ width: "100%", "min-height": "1.5em", resize: "none", overflow: "hidden", ...(typeof props.style === "object" ? (props.style as any) : {}) } as any}
+          style={{ display: "block", width: "100%", "min-height": "1.5em", resize: "none", overflow: "hidden", "box-sizing": "border-box", ...(typeof props.style === "object" ? (props.style as any) : {}) } as any}
         />
       ) : (
         <input

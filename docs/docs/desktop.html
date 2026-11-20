@@ -36,7 +36,16 @@ brew install jdf</code></pre>
       </ul>
 
       <h2>Edit a paragraph</h2>
-      <p>Double-click any element. The whole paragraph (or heading, list item, table cell, collapsible title, image src/alt) becomes an inline editor. Type. Press <kbd>Enter</kbd> or click anywhere else — the change saves to disk in ~150 ms.</p>
+      <p>Double-click any element. The whole paragraph (or heading, list item, table cell, collapsible title) opens in a wrapping editor that grows with the text, in the element's own font — no one-line box scrolling sideways. In a paragraph <kbd>Enter</kbd> starts a new line and <kbd>Cmd+Enter</kbd> or a click anywhere else commits; in a heading, list item or table cell <kbd>Enter</kbd> commits and <kbd>Shift+Enter</kbd> breaks the line. <kbd>Esc</kbd> cancels. The change saves to disk in ~150 ms.</p>
+
+      <h2>Edit Markdown</h2>
+      <p>Open a <code>.md</code> file and pick <strong>Edit</strong> in the toolbar (next to <strong>MD</strong> and <strong>Paged</strong>): the source is on the left, a live GitHub-style preview on the right, and every change auto-saves back to the <code>.md</code> file itself. Image paths stay exactly as you wrote them.</p>
+      <ul>
+        <li><kbd>Cmd+B</kbd> / <kbd>Cmd+I</kbd> / <kbd>Cmd+K</kbd> — bold, italic, link around the selection.</li>
+        <li><kbd>Enter</kbd> on a <code>- item</code>, <code>1. item</code> or <code>- [ ] task</code> line continues the list; <kbd>Enter</kbd> on an empty item ends it. <kbd>Tab</kbd> indents.</li>
+        <li><kbd>Cmd+Z</kbd> undoes inside the editor.</li>
+        <li><strong>Paged</strong> follows the source. Edits made in the Paged view itself become a JDF document and are saved as <code>.jdf</code> — they never overwrite your Markdown.</li>
+      </ul>
 
       <h2>Restructure on hover</h2>
       <p>Hover any element. A floating toolbar appears in the top-right corner with <strong>↑ Move up · ↓ Move down · ⧉ Duplicate · × Delete</strong>. No right-click, no menu hunting.</p>
@@ -50,7 +59,8 @@ brew install jdf</code></pre>
       <h2>Memory model</h2>
       <ul>
         <li>A <code>.jdf</code> or <code>.jdfx</code> opens in memory and <strong>auto-saves</strong> to its source file on every commit.</li>
-        <li>A <code>.pdf</code> or <code>.md</code> is converted to JDF in memory only — the original file is never touched. The toolbar shows <code>● Unsaved (in memory)</code> while you edit. Closing the window prompts to save (as <code>.jdfx</code> if assets were embedded, otherwise <code>.jdf</code>) or discard.</li>
+        <li>A <code>.md</code> edited in the <strong>Edit</strong> view auto-saves to the <code>.md</code>.</li>
+        <li>A <code>.pdf</code> (or a <code>.md</code> edited in the Paged view) is converted to JDF in memory only — the original file is never touched. The toolbar shows <code>● Unsaved (in memory)</code> while you edit. Closing the window prompts to save (as <code>.jdfx</code> if assets were embedded, otherwise <code>.jdf</code>) or discard.</li>
         <li>Switch to the JSON view in the toolbar — two-way bound. Edit JSON, blur or <kbd>Cmd+S</kbd>, the rendered view follows. Edit visually, the JSON updates as you go.</li>
       </ul>
 
@@ -88,7 +98,9 @@ brew install jdf</code></pre>
           <tr><td><kbd>Cmd+=</kbd> / <kbd>Cmd+-</kbd> / <kbd>Cmd+0</kbd></td><td>Zoom in / out / reset</td></tr>
           <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>Previous / next page</td></tr>
           <tr><td>Double-click</td><td>Edit element</td></tr>
-          <tr><td><kbd>Enter</kbd> / <kbd>Esc</kbd> / <kbd>Cmd+Enter</kbd></td><td>Commit / cancel / multi-line commit</td></tr>
+          <tr><td><kbd>Enter</kbd> / <kbd>Shift+Enter</kbd> / <kbd>Esc</kbd></td><td>Commit / line break / cancel (headings, cells, list items)</td></tr>
+          <tr><td><kbd>Enter</kbd> / <kbd>Cmd+Enter</kbd></td><td>New line / commit (paragraphs)</td></tr>
+          <tr><td><kbd>Cmd+B</kbd> / <kbd>Cmd+I</kbd> / <kbd>Cmd+K</kbd></td><td>Bold / italic / link (Markdown Edit view)</td></tr>
           <tr><td><kbd>?</kbd></td><td>Show shortcut overlay</td></tr>
         </tbody>
       </table>

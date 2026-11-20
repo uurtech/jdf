@@ -40,7 +40,6 @@ export function RichTextElementView(props: RichTextElementViewProps) {
   const edit = useEdit();
   const containerCss = () => resolveStyle(props.element.style, props.styles);
   const fullText = () => (props.element.runs || []).map((r) => r.text).join("");
-  const isLong = () => fullText().length > 60 || fullText().includes("\n");
 
   function commitWholeParagraph(next: string) {
     const runs = props.element.runs || [];
@@ -97,7 +96,7 @@ export function RichTextElementView(props: RichTextElementViewProps) {
       <Editable
         as="p"
         value={fullText()}
-        multiline={isLong()}
+        multiline
         onCommit={commitWholeParagraph}
         class="m-0 whitespace-pre-wrap"
         style={containerCss() as any}

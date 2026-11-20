@@ -1,7 +1,7 @@
 import { Show } from "solid-js";
 import type { JdfDocument } from "@jdf/core";
 
-export type ViewMode = "jdf" | "markdown" | "json";
+export type ViewMode = "jdf" | "markdown" | "mdedit" | "json";
 
 interface ToolbarProps {
   document: JdfDocument | null;
@@ -146,6 +146,13 @@ export function Toolbar(props: ToolbarProps) {
               class={`px-2.5 py-1 text-[11px] rounded transition-colors ${props.viewMode === "markdown" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-white shadow-sm font-medium" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"}`}
             >
               MD
+            </button>
+            <button
+              onClick={() => props.onSetViewMode("mdedit")}
+              class={`px-2.5 py-1 text-[11px] rounded transition-colors ${props.viewMode === "mdedit" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-white shadow-sm font-medium" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"}`}
+              title="Edit the markdown source (saves to the .md file)"
+            >
+              Edit
             </button>
             <button
               onClick={() => props.onSetViewMode("jdf")}

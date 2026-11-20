@@ -9,7 +9,11 @@
 //      widgets compact and inside the printed boxes in both renderers;
 //   5. the reader's hover action bar (edit mode) can actually be reached and
 //      clicked with the pointer (#11);
-//   6. Insert-bar elements land below the page's existing content.
+//   6. Insert-bar elements land below the page's existing content;
+//   7. inline text editing opens a wrapping <textarea> (not a one-line
+//      <input>) even for short text; paragraphs take Enter as a newline;
+//   8. a .md opens, the Edit view edits the source, autosave writes the .md
+//      and the live preview follows.
 //
 //   node scripts/verify/forms.mjs
 import fs from "node:fs";
@@ -58,7 +62,9 @@ async function openInReader(jdfPath) {
       async invoke(cmd, a) {
         if (cmd === "read_text_file" && a?.path === abs) return new TextDecoder().decode(bin());
         if (cmd === "read_binary_file" && a?.path === abs) return bin().buffer;
-        if (cmd === "save_document" || cmd === "write_binary_file" || cmd === "consume_pending_file") return null;
+        if (cmd === "write_binary_file") { (window.__jdfWrites ||= []).push(new TextDecoder().decode(a)); return null; }
+        if (cmd === "import_markdown_content") return { $jdf: "1.0", meta: { title: a.title }, pages: [{ elements: [{ type: "text", content: a.content.split("\n")[0], position: { x: 20, y: 20 } }] }] };
+        if (cmd === "save_document" || cmd === "consume_pending_file") return null;
         throw new Error(`mock: unhandled ${cmd}`);
       },
     };
@@ -217,6 +223,92 @@ try {
     expect(ierr.length === 0, `reader: no errors (${ierr.slice(0, 1).join("")})`);
     await p.locator(".jdf-page").first().screenshot({ path: path.join(outDir, "insert-reader.png") });
     await p.close();
+  }
+
+  // ── 7: inline text editing uses a wrapping textarea ───────────────────────
+  // Text shorter than 60 chars used to open in <input type=text>: one line,
+  // scrolling sideways, Enter committed — impossible to add a line break.
+  console.log("→ reader: double-click edits text in a wrapping textarea");
+  {
+    const { p, errors: terr } = await openInReader(path.join(repo, "docs/examples/article.jdf"));
+    const pick = async (sel) => {
+      const loc = p.locator(`.jdf-page ${sel}.editable-target`).first();
+      await loc.scrollIntoViewIfNeeded(); return loc;
+    };
+    // a heading (short): textarea, Enter commits
+    const h = await pick(":is(h1,h2,h3)");
+    const hText = (await h.innerText()).trim();
+    await h.dblclick();
+    expect(await p.locator(".jdf-page textarea.editable-active").count() === 1 && await p.locator(".jdf-page input.editable-active").count() === 0, `reader: short heading "${hText.slice(0, 24)}" opens a textarea`);
+    await p.keyboard.press("End");
+    await p.keyboard.type(" — and a much longer tail that has to wrap onto a second line instead of scrolling sideways");
+    const grown = await p.evaluate(() => { const t = document.querySelector("textarea.editable-active"); return t ? t.scrollHeight > parseFloat(getComputedStyle(t).lineHeight || "20") * 1.6 && t.scrollWidth <= t.clientWidth + 1 : false; });
+    expect(grown, "reader: long text wraps and the textarea grows");
+    await p.keyboard.press("Enter");
+    await p.waitForTimeout(150);
+    expect(await p.locator("textarea.editable-active").count() === 0 && (await p.locator(".jdf-page").first().innerText()).includes("much longer tail"), "reader: Enter commits a heading edit");
+    // a paragraph: Enter = newline, ⌘/Ctrl+Enter commits
+    const para = await pick("p");
+    await para.dblclick();
+    await p.keyboard.press("End");
+    await p.keyboard.press("Enter");
+    await p.keyboard.type("second line");
+    expect(await p.locator("textarea.editable-active").count() === 1, "reader: Enter in a paragraph inserts a newline (still editing)");
+    await p.keyboard.press("Control+Enter");
+    await p.waitForTimeout(150);
+    const committed = await p.evaluate(() => [...document.querySelectorAll(".jdf-page p")].some((n) => /\nsecond line/.test(n.innerText)));
+    expect(await p.locator("textarea.editable-active").count() === 0 && committed, "reader: Ctrl+Enter commits the paragraph with its line break");
+    expect(terr.length === 0, `reader: no errors (${terr.slice(0, 1).join("")})`);
+    await p.close();
+  }
+
+  // ── 8: .md files are editable and save back to the .md ────────────────────
+  console.log("→ reader: .md Edit view edits the source and autosaves the file");
+  {
+    const md = path.join(tmp, "notes.md");
+    fs.writeFileSync(md, "# Notes\n\nFirst paragraph.\n\n- one\n");
+    // not openInReader: it waits for .jdf-page, which the MD view never renders
+    const mp = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const me = []; mp.on("pageerror", (e) => me.push(e.message));
+    const b64 = fs.readFileSync(md).toString("base64");
+    await mp.addInitScript(({ abs, b64 }) => {
+      const bin = () => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      window.__TAURI_INTERNALS__ = {
+        metadata: { currentWindow: { label: "main" }, currentWebview: { label: "main", windowLabel: "main" }, windows: [{ label: "main" }] },
+        transformCallback: (cb) => cb, convertFileSrc: (x) => x,
+        async invoke(cmd, a) {
+          if (cmd === "read_text_file" && a?.path === abs) return new TextDecoder().decode(bin());
+          if (cmd === "write_binary_file") { (window.__jdfWrites ||= []).push(new TextDecoder().decode(a)); return null; }
+          if (cmd === "import_markdown_content") return { $jdf: "1.0", meta: { title: a.title }, pages: [{ elements: [{ type: "text", content: a.content.split("\n")[0], position: { x: 20, y: 20 } }] }] };
+          if (cmd === "consume_pending_file") return null;
+          throw new Error(`mock: unhandled ${cmd}`);
+        },
+      };
+      localStorage.setItem("jdf-recent", JSON.stringify([abs])); localStorage.setItem("jdf-first-run-done", "1");
+    }, { abs: md, b64 });
+    await mp.goto(`http://127.0.0.1:${PORT + 1}/`);
+    await mp.getByText("notes.md", { exact: true }).click();
+    await mp.waitForSelector(".markdown-body h1", { timeout: 15000 });
+    await mp.getByRole("button", { name: "Edit", exact: true }).click();
+    const src = mp.locator("textarea[data-md-source]");
+    await src.waitFor({ timeout: 5000 });
+    expect((await src.inputValue()).startsWith("# Notes"), "reader: Edit view shows the markdown source");
+    // caret at the end of "- one"; Enter must continue the list with "- "
+    await src.evaluate((t) => { t.focus(); t.setSelectionRange(t.value.length - 1, t.value.length - 1); });
+    await mp.keyboard.press("Enter");
+    await mp.keyboard.type("two");
+    await mp.keyboard.press("Enter");
+    await mp.keyboard.type("three");
+    await src.evaluate((t) => t.setSelectionRange(t.value.length, t.value.length));
+    await mp.keyboard.type("\n## Added heading\n");
+    await mp.waitForTimeout(900);
+    const writes = await mp.evaluate(() => window.__jdfWrites || []);
+    const last = writes[writes.length - 1] || "";
+    expect(/- one\n- two\n- three\n/.test(last) && last.includes("## Added heading"), `reader: autosave wrote the edited .md (${writes.length} writes)`);
+    expect(await mp.locator(".markdown-body h2", { hasText: "Added heading" }).count() === 1, "reader: live preview shows the new heading");
+    await mp.screenshot({ path: path.join(outDir, "md-edit-reader.png") });
+    expect(me.length === 0, `reader: no errors (${me.slice(0, 1).join("")})`);
+    await mp.close();
   }
 } finally {
   await browser.close(); srvRepo.kill(); srvReader.kill();

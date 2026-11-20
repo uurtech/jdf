@@ -31,8 +31,11 @@ const SECTIONS: { title: string; rows: { keys: string[]; label: string }[] }[] =
   {
     title: "Edit & Navigate",
     rows: [
-      { keys: ["dbl-click"], label: "Edit element (.jdf only)" },
-      { keys: ["Enter"], label: "Commit edit" },
+      { keys: ["dbl-click"], label: "Edit element" },
+      { keys: ["Enter"], label: "Commit (headings, cells) · new line (paragraphs)" },
+      { keys: ["⌘", "Enter"], label: "Commit edit" },
+      { keys: ["⇧", "Enter"], label: "Line break in a heading / cell" },
+      { keys: ["⌘", "B / I / K"], label: "Bold / italic / link (Markdown Edit)" },
       { keys: ["Esc"], label: "Cancel / close" },
       { keys: ["←"], label: "Previous page" },
       { keys: ["→"], label: "Next page" },

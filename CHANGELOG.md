@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · semantic-ish
 
 ## [Unreleased]
 
+### Reader — editable Markdown, wrapping text editor
+- **`.md` files can be edited.** New **Edit** view next to MD / Paged: markdown source on the left, live preview on the right, autosaved back to the `.md` file (local image paths stay as written; only the preview inlines them). ⌘B / ⌘I / ⌘K wrap the selection, Enter continues `-`/`1.`/`- [ ]` lists, Tab indents, ⌘Z is native undo. The Paged view is rebuilt from the source; edits made *in* the Paged view are still saved as `.jdf` (a JDF → Markdown writer does not exist) and are never overwritten by a re-parse.
+- **Inline text editing opens a wrapping, auto-growing textarea** for every text, rich text, list item, table cell and section title. Text under 60 characters used to open in a one-line `<input>`, scrolling sideways and impossible to break. Paragraphs: Enter = new line, ⌘/Ctrl+Enter or click-away commits. Headings, cells and list items: Enter commits, Shift+Enter breaks the line. Image/video `src`/`alt` stay single-line inputs.
+- `scripts/verify/forms.mjs` checks both (short heading → textarea that wraps and grows; paragraph newline + commit; `.md` Edit view autosaves the file and the preview follows).
+
 ### Fixed — `jdf convert x.pdf` on Windows; reader editing
 - **CLI on Windows** (#16, thanks @EienMosu): every PDF conversion failed before the first page (`Received protocol 'c:'`) because the pdf.js worker path went to Node's ESM loader as a bare `C:\…` path; it is now a `file://` URL. Output is byte-identical on macOS/Linux.
 - **CLI on Node 18/20:** every PDF conversion failed with `Promise.withResolvers is not a function` — pdfjs-dist 4.x's modern build needs Node 22 although the CLI declares `node >=18`. `@jdf/pdf-import/node` now polyfills it when missing; `sample.pdf` converts byte-identically on Node 18, 20, 22 and 26.

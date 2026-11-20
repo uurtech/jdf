@@ -67,9 +67,9 @@ export function ImageElementView(props: ImageElementViewProps) {
       />
       <Show when={edit.enabled()}>
         <div class="text-[10px] text-gray-400 mt-1">
-          src: <Editable value={props.element.src || ""} onCommit={(v) => edit.updateField(props.path, "src", v)} placeholder="(empty)" />
+          src: <Editable inline value={props.element.src || ""} onCommit={(v) => edit.updateField(props.path, "src", v)} placeholder="(empty)" />
           {" · alt: "}
-          <Editable value={props.element.alt || ""} onCommit={(v) => edit.updateField(props.path, "alt", v)} placeholder="(empty)" />
+          <Editable inline value={props.element.alt || ""} onCommit={(v) => edit.updateField(props.path, "alt", v)} placeholder="(empty)" />
         </div>
       </Show>
     </div>

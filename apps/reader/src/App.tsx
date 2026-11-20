@@ -3,6 +3,7 @@ import type { JdfDocument, Element } from "@jdf/core";
 import { getPageDimensions, DEFAULT_MARGINS } from "@jdf/core";
 import { DocumentViewer } from "./components/viewer/DocumentViewer";
 import { MarkdownViewer } from "./components/markdown/MarkdownViewer";
+import { MarkdownEditor } from "./components/markdown/MarkdownEditor";
 import { JsonViewer } from "./components/json/JsonViewer";
 import { Toolbar, type ViewMode } from "./components/shared/Toolbar";
 import { Sidebar } from "./components/shared/Sidebar";
@@ -32,7 +33,10 @@ import { PasswordPrompt } from "./components/shared/PasswordPrompt";
 interface LoadedFile {
   path: string;
   type: "jdf" | "jdfx" | "md" | "pdf";
+  /** Markdown with local images inlined as data: URLs — what the MD preview renders. */
   rawMarkdown?: string;
+  /** Markdown exactly as on disk — what the Edit view edits and autosave writes. */
+  mdSource?: string;
 }
 
 function basename(p: string): string {
@@ -69,6 +73,12 @@ export default function App() {
   const [passwordRequest, setPasswordRequest] = createSignal<{ retry: boolean; resolve: (pw: string | null) => void } | null>(null);
 
   let saveTimer: number | undefined;
+  // .md editing: the source autosaves through saveTimer like a .jdf; the
+  // preview + Paged document are rebuilt on a slower debounce because
+  // inlining local images and re-parsing touch the disk / Rust side.
+  let mdSourceChanged = false;
+  let mdRebuildTimer: number | undefined;
+  let mdRebuildSeq = 0;
 
   const isMarkdown = createMemo(() => loaded()?.type === "md");
   const isEditableFile = createMemo(() => {
@@ -98,6 +108,19 @@ export default function App() {
   async function autoSaveCurrent() {
     const cur = loaded();
     const d = doc();
+    if (cur?.type === "md" && mdSourceChanged && cur.path && cur.mdSource != null) {
+      mdSourceChanged = false;
+      setSavingState("saving");
+      try {
+        await writeBinaryFile(cur.path, new TextEncoder().encode(cur.mdSource));
+        flashSaved();
+      } catch (e: any) {
+        mdSourceChanged = true;
+        setSavingState("error");
+        setError5s(`Auto-save failed: ${e}`);
+      }
+      return;
+    }
     if (!cur || !d) return;
     if (cur.type !== "jdf" && cur.type !== "jdfx") return;
     if (!cur.path) return; // untitled: nowhere to write yet — the user saves with ⌘S
@@ -129,6 +152,42 @@ export default function App() {
   function scheduleAutoSave() {
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => { saveTimer = undefined; autoSaveCurrent(); }, SAVE_DEBOUNCE_MS);
+  }
+
+  function onMarkdownSourceChange(src: string) {
+    const cur = loaded();
+    if (!cur || cur.type !== "md" || src === cur.mdSource) return;
+    setLoaded({ ...cur, mdSource: src });
+    mdSourceChanged = true;
+    scheduleAutoSave();
+    if (mdRebuildTimer) clearTimeout(mdRebuildTimer);
+    mdRebuildTimer = window.setTimeout(() => { mdRebuildTimer = undefined; rebuildMarkdown(); }, 300);
+  }
+
+  async function rebuildMarkdown() {
+    const cur = loaded();
+    if (!cur || cur.type !== "md" || cur.mdSource == null) return;
+    const seq = ++mdRebuildSeq;
+    const src = cur.mdSource;
+    try {
+      const { preprocessMarkdownImages } = await import("./import/markdownImages");
+      const preview = await preprocessMarkdownImages(src, cur.path);
+      if (seq !== mdRebuildSeq || loaded()?.path !== cur.path) return;
+      setLoaded({ ...loaded()!, rawMarkdown: preview });
+      // Paged edits on a .md can only be saved as .jdf; never overwrite them
+      // with a re-parse of the source.
+      if (dirty()) return;
+      const { invoke } = await import("@tauri-apps/api/core");
+      const title = basename(cur.path).replace(/\.(md|markdown)$/i, "") || "Document";
+      const parsed = await invoke<JdfDocument>("import_markdown_content", { content: preview, title });
+      if (seq !== mdRebuildSeq || loaded()?.path !== cur.path || dirty()) return;
+      if (parsed?.pages) {
+        history.reset(parsed);
+        if (currentPage() >= parsed.pages.length) setCurrentPage(Math.max(0, parsed.pages.length - 1));
+      }
+    } catch (e: any) {
+      if (seq === mdRebuildSeq) setError5s(typeof e === "string" ? e : String(e));
+    }
   }
 
   function commit(next: JdfDocument) {
@@ -426,7 +485,8 @@ export default function App() {
       const { invoke } = await import("@tauri-apps/api/core");
       const parsed = await invoke<JdfDocument>("import_markdown_content", { content: raw, title });
       if (parsed?.pages) {
-        setLoaded({ path, type: "md", rawMarkdown: raw });
+        mdSourceChanged = false;
+        setLoaded({ path, type: "md", rawMarkdown: raw, mdSource: rawOriginal });
         history.reset(parsed);
         setViewMode("markdown");
         setCurrentPage(0);
@@ -776,6 +836,18 @@ export default function App() {
               <Show when={viewMode() === "json"}>
                 <JsonViewer document={doc()!} editable={isEditableFile()} onCommit={commitFullDoc} />
               </Show>
+              <Show when={viewMode() === "mdedit" && loaded()?.mdSource != null}>
+                {/* keyed on the path: a newly opened .md remounts the uncontrolled textarea */}
+                <Show when={loaded()!.path} keyed>
+                  <MarkdownEditor
+                    source={loaded()!.mdSource!}
+                    preview={loaded()!.rawMarkdown ?? ""}
+                    zoom={zoom()}
+                    searchQuery={mdSearchQuery()}
+                    onChange={onMarkdownSourceChange}
+                  />
+                </Show>
+              </Show>
               <Show when={viewMode() === "markdown" && loaded()?.rawMarkdown != null}>
                 <MarkdownViewer content={loaded()!.rawMarkdown!} zoom={zoom()} searchQuery={mdSearchQuery()} />
               </Show>
@@ -798,9 +870,9 @@ export default function App() {
         <Show when={showSearch() && doc()}>
           <SearchPanel
             document={doc()!}
-            mode={viewMode() === "markdown" ? "markdown" : "jdf"}
+            mode={viewMode() === "markdown" || viewMode() === "mdedit" ? "markdown" : "jdf"}
             markdownContent={loaded()?.rawMarkdown}
-            onNavigate={(p) => { setCurrentPage(p); setShowSearch(false); if (viewMode() === "markdown") setViewMode("jdf"); }}
+            onNavigate={(p) => { setCurrentPage(p); setShowSearch(false); if (viewMode() === "markdown" || viewMode() === "mdedit") setViewMode("jdf"); }}
             onMarkdownQueryChange={setMdSearchQuery}
             onClose={() => { setShowSearch(false); setMdSearchQuery(""); }}
           />
